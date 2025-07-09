@@ -13,24 +13,31 @@ import { calculateTaxes as calculateTaxesCore } from '../core/tax.js';
 import { calculateWithdrawalPlan as calculateWithdrawalCore } from '../core/withdrawal.js';
 import { recalculateAll, debouncedRecalculateAll, autoSyncWithdrawalCapital } from '../app.js';
 
+// Import state management
+import * as state from '../state.js';
+
 // Import DOM functions
 import { 
-    updateScenarioSliderValue, 
-    updateWithdrawalSliderValue,
-    updateTeilfreistellungToggleState,
-    updateComparisonTeilfreistellungState,
     updateScenarioCheckboxVisibility,
-    updateWithdrawalResults
+    showNotification,
+    updateScenarioSliderValue as domUpdateScenarioSliderValue,
+    updateWithdrawalResults,
+    updateWithdrawalTable
 } from './dom.js';
 
 // Import chart functions
 import { updateBudgetPieChart } from './budgetChart.js';
+import { updateMainChart, updateContributionsGainsChart } from './mainChart.js';
+import { updateWithdrawalChart, createIntegratedTimeline } from './withdrawalChart.js';
 
 // Import feature functions
 import { loadComparisonProfiles } from '../features/profileManager.js';
+import { addNewScenario, switchToScenario } from '../features/scenarioManager.js';
 
-// Import state management
-import * as state from '../state.js';
+// Import core calculation functions
+import { runScenario } from '../core/accumulation.js';
+
+
 
 // ===================================
 // WRAPPER FUNCTIONS FOR CALCULATIONS
@@ -160,22 +167,22 @@ function calculateTaxes() {
             document.getElementById('totalDeductions').textContent = formatCurrency(results.totalDeductions);
         }
         if (document.getElementById('incomeTax')) {
-            document.getElementById('incomeTax').textContent = formatCurrency(results.incomeTax);
+            document.getElementById('incomeTax').textContent = formatCurrency(results.breakdown?.incomeTax || 0);
         }
         if (document.getElementById('churchTax')) {
-            document.getElementById('churchTax').textContent = formatCurrency(results.churchTax);
+            document.getElementById('churchTax').textContent = formatCurrency(results.breakdown?.churchTax || 0);
         }
         if (document.getElementById('healthInsurance')) {
-            document.getElementById('healthInsurance').textContent = formatCurrency(results.healthInsurance);
+            document.getElementById('healthInsurance').textContent = formatCurrency(results.breakdown?.healthInsurance || 0);
         }
         if (document.getElementById('careInsurance')) {
-            document.getElementById('careInsurance').textContent = formatCurrency(results.careInsurance);
+            document.getElementById('careInsurance').textContent = formatCurrency(results.breakdown?.careInsurance || 0);
         }
         if (document.getElementById('pensionInsurance')) {
-            document.getElementById('pensionInsurance').textContent = formatCurrency(results.pensionInsurance);
+            document.getElementById('pensionInsurance').textContent = formatCurrency(results.breakdown?.pensionInsurance || 0);
         }
         if (document.getElementById('unemploymentInsurance')) {
-            document.getElementById('unemploymentInsurance').textContent = formatCurrency(results.unemploymentInsurance);
+            document.getElementById('unemploymentInsurance').textContent = formatCurrency(results.breakdown?.unemploymentInsurance || 0);
         }
 
     } catch (error) {
@@ -198,8 +205,20 @@ function calculateWithdrawal() {
         // Calculate using core function
         const results = calculateWithdrawalCore(retirementCapital, duration, annualReturn, inflationRate, includeTax, 0);
         
-        // Update UI
+        // Update UI displays
         updateWithdrawalResults(results);
+        
+        // Update withdrawal chart and table
+        if (results.yearlyData && results.yearlyData.length > 0) {
+            updateWithdrawalChart(results.yearlyData);
+            updateWithdrawalTable(results.yearlyData);
+        }
+        
+        // Update integrated timeline if it's currently visible
+        const integratedTimelineView = document.getElementById('integratedTimelineView');
+        if (integratedTimelineView && integratedTimelineView.style.display !== 'none') {
+            createIntegratedTimeline();
+        }
         
         // Store in state
         state.setWithdrawalData(results);
@@ -265,6 +284,21 @@ window.calculateBudget = calculateBudget;
 window.calculateTaxes = calculateTaxes;
 window.calculateWithdrawal = calculateWithdrawal;
 
+// Initialize window.budgetData if it doesn't exist
+if (!window.budgetData) {
+    window.budgetData = {
+        totalIncome: 0,
+        totalExpenses: 0,
+        remainingBudget: 0,
+        savings: { mode: 'fixed', amount: 500, percentage: 50 },
+        finalSavingsAmount: 500,
+        periods: { income: 'monthly', fixed: 'monthly', variable: 'monthly' }
+    };
+}
+
+// Export the main calculation functions so they can be used elsewhere
+export { calculateBudget, calculateTaxes, calculateWithdrawal };
+
 // ===================================
 // MAIN SETUP FUNCTIONS
 // ===================================
@@ -298,10 +332,27 @@ export function setupScenarioInputListeners(scenarioId) {
         const slider = document.getElementById(fullId);
         if (slider) {
             slider.addEventListener('input', function() {
-                updateScenarioSliderValue(sliderId, scenarioId);
-                debouncedRecalculateAll();
-            // Auto-save individual scenario after slider change
-            setTimeout(() => saveIndividualAnsparphaseScenario(scenarioId), 500);
+                // Use window functions if available for better compatibility
+                if (window.updateScenarioSliderValue) {
+                    window.updateScenarioSliderValue(sliderId, scenarioId);
+                } else {
+                    updateScenarioSliderValue(sliderId, scenarioId);
+                }
+                
+                if (window.debouncedRecalculateAll) {
+                    window.debouncedRecalculateAll();
+                } else {
+                    debouncedRecalculateAll();
+                }
+                
+                // Auto-save individual scenario after slider change
+                setTimeout(() => {
+                    if (window.saveIndividualAnsparphaseScenario) {
+                        window.saveIndividualAnsparphaseScenario(scenarioId);
+                    } else {
+                        saveIndividualAnsparphaseScenario(scenarioId);
+                    }
+                }, 500);
             });
         }
     });
@@ -330,7 +381,11 @@ export function setupScenarioInputListeners(scenarioId) {
                     }
                 }, 1000);
                 
-                debouncedRecalculateAll();
+                if (window.debouncedRecalculateAll) {
+                    window.debouncedRecalculateAll();
+                } else {
+                    debouncedRecalculateAll();
+                }
             });
             
             // Also detect when user finishes editing (blur event)
@@ -341,7 +396,11 @@ export function setupScenarioInputListeners(scenarioId) {
                 }
                 // Trigger sync with notification after user finishes editing
                 setTimeout(() => {
-                    autoSyncWithdrawalCapital(true);
+                    if (window.autoSyncWithdrawalCapital) {
+                        window.autoSyncWithdrawalCapital(true);
+                    } else {
+                        autoSyncWithdrawalCapital(true);
+                    }
                 }, 200);
             });
         }
@@ -352,8 +411,19 @@ export function setupScenarioInputListeners(scenarioId) {
     if (taxToggle) {
         taxToggle.addEventListener('click', function() {
             this.classList.toggle('active');
-            updateTeilfreistellungToggleState(scenarioId);
-            debouncedRecalculateAll();
+            
+            if (window.updateTeilfreistellungToggleState) {
+                window.updateTeilfreistellungToggleState(scenarioId);
+            } else {
+                updateTeilfreistellungToggleState(scenarioId);
+            }
+            
+            if (window.debouncedRecalculateAll) {
+                window.debouncedRecalculateAll();
+            } else {
+                debouncedRecalculateAll();
+            }
+            
             // Auto-save individual scenario after toggle change
             setTimeout(() => {
                 if (window.saveIndividualAnsparphaseScenario) {
@@ -367,7 +437,12 @@ export function setupScenarioInputListeners(scenarioId) {
     const etfTypeRadios = document.querySelectorAll(`input[name="etfType-${scenarioId}"]`);
     etfTypeRadios.forEach(radio => {
         radio.addEventListener('change', function() {
-            debouncedRecalculateAll();
+            if (window.debouncedRecalculateAll) {
+                window.debouncedRecalculateAll();
+            } else {
+                debouncedRecalculateAll();
+            }
+            
             // Auto-save individual scenario after ETF type change
             setTimeout(() => {
                 if (window.saveIndividualAnsparphaseScenario) {
@@ -384,7 +459,13 @@ export function setupScenarioInputListeners(scenarioId) {
             // Only allow toggle if not disabled
             if (!this.classList.contains('disabled')) {
                 this.classList.toggle('active');
-                debouncedRecalculateAll();
+                
+                if (window.debouncedRecalculateAll) {
+                    window.debouncedRecalculateAll();
+                } else {
+                    debouncedRecalculateAll();
+                }
+                
                 // Auto-save individual scenario after toggle change
                 setTimeout(() => {
                     if (window.saveIndividualAnsparphaseScenario) {
@@ -396,7 +477,11 @@ export function setupScenarioInputListeners(scenarioId) {
     }
 
     // Initialize the Teilfreistellung toggle state
-    updateTeilfreistellungToggleState(scenarioId);
+    if (window.updateTeilfreistellungToggleState) {
+        window.updateTeilfreistellungToggleState(scenarioId);
+    } else {
+        updateTeilfreistellungToggleState(scenarioId);
+    }
 }
 
 /**
@@ -609,7 +694,7 @@ export function setupBudgetListeners() {
     document.getElementById('applySavingsRate').addEventListener('click', function() {
         const savingsText = document.getElementById('finalSavingsAmount').textContent.replace('€', '').trim();
         const savingsAmount = parseGermanNumber(savingsText);
-        document.getElementById(`monthlySavings_${activeScenario}`).value = formatGermanNumber(savingsAmount, 0).replace(',00', '');
+        document.getElementById(`monthlySavings_${state.activeScenario}`).value = formatGermanNumber(savingsAmount, 0).replace(',00', '');
         
         // Switch to accumulation phase
         document.getElementById('accumulationPhase').click();
@@ -704,7 +789,7 @@ export function setupTaxCalculatorListeners() {
                 
                 // Update ETF calculator with net monthly salary as monthly savings base for active scenario
                 const suggestedSavingsRate = Math.min(500, netMonthlySalary * 0.2); // Suggest 20% savings rate
-                const baseSalaryElement = document.getElementById(`baseSalary_${activeScenario}`);
+                const baseSalaryElement = document.getElementById(`baseSalary_${state.activeScenario}`);
                 if (baseSalaryElement) {
                     baseSalaryElement.value = formatGermanNumber(grossSalary, 0);
                 }
@@ -733,7 +818,7 @@ export function setupChartToggleListeners() {
             // Switch to scenario comparison view
             scenarioComparisonBtn.classList.add('active');
             contributionsGainsBtn.classList.remove('active');
-            currentChartMode = 'comparison';
+            state.setCurrentChartMode('comparison');
             updateMainChart();
             updateScenarioCheckboxVisibility();
         });
@@ -744,7 +829,7 @@ export function setupChartToggleListeners() {
             // Switch to contributions vs gains view
             contributionsGainsBtn.classList.add('active');
             scenarioComparisonBtn.classList.remove('active');
-            currentChartMode = 'contributions';
+            state.setCurrentChartMode('contributions');
             updateContributionsGainsChart();
             updateScenarioCheckboxVisibility();
         });
@@ -766,6 +851,12 @@ export function setupChartToggleListeners() {
             integratedTimelineBtn.classList.remove('active');
             withdrawalChartView.style.display = 'block';
             integratedTimelineView.style.display = 'none';
+            
+            // Update withdrawal chart when switching to this view
+            const withdrawalData = state.withdrawalData;
+            if (withdrawalData && withdrawalData.yearlyData && withdrawalData.yearlyData.length > 0) {
+                updateWithdrawalChart(withdrawalData.yearlyData);
+            }
         });
     }
 
@@ -777,7 +868,7 @@ export function setupChartToggleListeners() {
             integratedTimelineView.style.display = 'block';
             withdrawalChartView.style.display = 'none';
             // Regenerate integrated timeline when switching to this view
-            generateIntegratedTimeline();
+            createIntegratedTimeline();
         });
     }
 }
@@ -852,7 +943,24 @@ export function setupPhaseToggle() {
             state.setCurrentPhase('withdrawal');
             setActivePhase(withdrawalBtn);
             showSingleSection(withdrawalSection);
+            
+            // Ensure withdrawal calculations and charts are up-to-date
             calculateWithdrawal();
+            
+            // Initialize chart display based on current active button
+            setTimeout(() => {
+                const activeChartBtn = document.querySelector('#withdrawalChartBtn.active, #integratedTimelineBtn.active');
+                if (activeChartBtn && activeChartBtn.id === 'integratedTimelineBtn') {
+                    createIntegratedTimeline();
+                } else {
+                    // Default to withdrawal chart view
+                    const withdrawalData = state.withdrawalData;
+                    if (withdrawalData && withdrawalData.yearlyData && withdrawalData.yearlyData.length > 0) {
+                        updateWithdrawalChart(withdrawalData.yearlyData);
+                    }
+                }
+            }, 100);
+            
             updateScenarioCheckboxVisibility();
             if (window.resetStickyScenarioCards) window.resetStickyScenarioCards();
         });
@@ -1003,6 +1111,22 @@ export function setupStickyScenarioCards() {
     let isSticky = false;
     let originalTop = 0;
     
+    // Function to get current active phase
+    function getCurrentPhase() {
+        // Check which phase button is currently active
+        const activePhaseBtn = document.querySelector('.phase-button.active');
+        if (!activePhaseBtn) return 'accumulation'; // default
+        
+        const btnId = activePhaseBtn.id;
+        if (btnId === 'accumulationPhase') return 'accumulation';
+        if (btnId === 'withdrawalPhase') return 'withdrawal';
+        if (btnId === 'budgetPhase') return 'budget';
+        if (btnId === 'scenarioComparisonPhase') return 'comparison';
+        if (btnId === 'taxCalculatorPhase') return 'tax';
+        
+        return 'accumulation'; // default fallback
+    }
+
     // Function to handle scroll events
     function handleScroll() {
         // Only apply on desktop (768px and up)
@@ -1012,6 +1136,7 @@ export function setupStickyScenarioCards() {
         }
         
         // Only apply when accumulation phase is active
+        const currentPhase = getCurrentPhase();
         if (currentPhase !== 'accumulation') {
             scenarioResults.style.transform = '';
             return;
@@ -1561,24 +1686,44 @@ export function setupAnsparphaseScenarioListeners() {
  */
 export function setupEntnahmephaseScenarioListeners() {
     // Save scenario modal
-    document.getElementById('saveEntnahmephaseScenario').addEventListener('click', openSaveEntnahmephaseScenarioModal);
-    document.getElementById('closeSaveEntnahmephaseScenarioModal').addEventListener('click', closeSaveEntnahmephaseScenarioModal);
-    document.getElementById('cancelSaveEntnahmephaseScenario').addEventListener('click', closeSaveEntnahmephaseScenarioModal);
-    document.getElementById('confirmSaveEntnahmephaseScenario').addEventListener('click', confirmSaveEntnahmephaseScenario);
-    document.getElementById('entnahmephaseScenarioName').addEventListener('input', updateEntnahmephaseScenarioPreview);
-    document.getElementById('entnahmephaseScenarioDescription').addEventListener('input', updateEntnahmephaseScenarioPreview);
+    const saveBtn = document.getElementById('saveEntnahmephaseScenario');
+    if (saveBtn) saveBtn.addEventListener('click', openSaveEntnahmephaseScenarioModal);
+    
+    const closeSaveBtn = document.getElementById('closeSaveEntnahmephaseScenarioModal');
+    if (closeSaveBtn) closeSaveBtn.addEventListener('click', closeSaveEntnahmephaseScenarioModal);
+    
+    const cancelSaveBtn = document.getElementById('cancelSaveEntnahmephaseScenario');
+    if (cancelSaveBtn) cancelSaveBtn.addEventListener('click', closeSaveEntnahmephaseScenarioModal);
+    
+    const confirmSaveBtn = document.getElementById('confirmSaveEntnahmephaseScenario');
+    if (confirmSaveBtn) confirmSaveBtn.addEventListener('click', confirmSaveEntnahmephaseScenario);
+    
+    const scenarioNameInput = document.getElementById('entnahmephaseScenarioName');
+    if (scenarioNameInput) scenarioNameInput.addEventListener('input', updateEntnahmephaseScenarioPreview);
+    
+    const scenarioDescInput = document.getElementById('entnahmephaseScenarioDescription');
+    if (scenarioDescInput) scenarioDescInput.addEventListener('input', updateEntnahmephaseScenarioPreview);
 
     // Load scenario modal
-    document.getElementById('loadEntnahmephaseScenario').addEventListener('click', openLoadEntnahmephaseScenarioModal);
-    document.getElementById('closeLoadEntnahmephaseScenarioModal').addEventListener('click', closeLoadEntnahmephaseScenarioModal);
-    document.getElementById('cancelLoadEntnahmephaseScenario').addEventListener('click', closeLoadEntnahmephaseScenarioModal);
+    const loadBtn = document.getElementById('loadEntnahmephaseScenario');
+    if (loadBtn) loadBtn.addEventListener('click', openLoadEntnahmephaseScenarioModal);
+    
+    const closeLoadBtn = document.getElementById('closeLoadEntnahmephaseScenarioModal');
+    if (closeLoadBtn) closeLoadBtn.addEventListener('click', closeLoadEntnahmephaseScenarioModal);
+    
+    const cancelLoadBtn = document.getElementById('cancelLoadEntnahmephaseScenario');
+    if (cancelLoadBtn) cancelLoadBtn.addEventListener('click', closeLoadEntnahmephaseScenarioModal);
 
     // Manage scenarios modal
-    document.getElementById('manageEntnahmephaseScenarios').addEventListener('click', openManageEntnahmephaseScenarioModal);
-    document.getElementById('closeManageEntnahmephaseScenarioModal').addEventListener('click', closeManageEntnahmephaseScenarioModal);
+    const manageBtn = document.getElementById('manageEntnahmephaseScenarios');
+    if (manageBtn) manageBtn.addEventListener('click', openManageEntnahmephaseScenarioModal);
+    
+    const closeManageBtn = document.getElementById('closeManageEntnahmephaseScenarioModal');
+    if (closeManageBtn) closeManageBtn.addEventListener('click', closeManageEntnahmephaseScenarioModal);
 
     // Reset scenarios
-    document.getElementById('resetEntnahmephaseScenario').addEventListener('click', resetEntnahmephaseScenarios);
+    const resetBtn = document.getElementById('resetEntnahmephaseScenario');
+    if (resetBtn) resetBtn.addEventListener('click', resetEntnahmephaseScenarios);
 
     // Close modals when clicking outside
     window.addEventListener('click', function(event) {
@@ -1597,3 +1742,656 @@ export function setupEntnahmephaseScenarioListeners() {
         }
     });
 }
+
+// ===================================
+// MISSING FUNCTION STUBS 
+// These functions are referenced but don't exist yet - adding stubs for now
+// ===================================
+
+// Additional placeholder functions for setupScenarioManagementListeners
+function togglePresetTemplates() {
+    console.log('togglePresetTemplates - placeholder function');
+}
+
+function saveScenarioConfiguration() {
+    console.log('saveScenarioConfiguration - placeholder function');
+}
+
+function exportComparisonData() {
+    console.log('exportComparisonData - placeholder function');
+}
+
+function loadPresetTemplate(presetType) {
+    console.log(`loadPresetTemplate(${presetType}) - placeholder function`);
+}
+
+function switchToComparisonScenario(scenarioId) {
+    console.log(`switchToComparisonScenario(${scenarioId}) - placeholder function`);
+}
+
+function loadComparisonProfile(profileName, scenarioId) {
+    console.log(`loadComparisonProfile(${profileName}, ${scenarioId}) - placeholder function`);
+}
+
+function updatePeriod(category, period) {
+    console.log(`updatePeriod(${category}, ${period}) - placeholder function`);
+}
+
+function switchSavingsMode(scenarioId, mode) {
+    const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${scenarioId}"]`);
+    const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${scenarioId}"]`);
+    const modeButtons = document.querySelectorAll(`.savings-mode-btn[data-scenario="${scenarioId}"]`);
+    
+    if (mode === 'simple') {
+        if (simpleContainer) simpleContainer.style.display = 'block';
+        if (multiPhaseContainer) multiPhaseContainer.style.display = 'none';
+    } else if (mode === 'multi-phase') {
+        if (simpleContainer) simpleContainer.style.display = 'none';
+        if (multiPhaseContainer) multiPhaseContainer.style.display = 'block';
+    }
+    
+    // Update button states
+    modeButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.mode === mode) {
+            btn.classList.add('active');
+        }
+    });
+    
+    console.log(`✅ Switched savings mode for scenario ${scenarioId} to ${mode}`);
+}
+
+function togglePhase(scenarioId, phase) {
+    const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    const toggleButton = document.querySelector(`.phase-toggle-btn[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    const phaseContent = phaseElement?.querySelector('.phase-content');
+    const statusIndicator = phaseElement?.querySelector('.phase-status-indicator');
+    
+    if (!phaseElement || !toggleButton || !phaseContent) return;
+    
+    const isActive = phaseElement.classList.contains('active');
+    
+    if (isActive) {
+        // Deactivate phase
+        phaseElement.classList.remove('active');
+        phaseContent.style.display = 'none';
+        if (statusIndicator) statusIndicator.classList.remove('active');
+        toggleButton.innerHTML = '<span class="toggle-text">Aktivieren</span>';
+    } else {
+        // Activate phase
+        phaseElement.classList.add('active');
+        phaseContent.style.display = 'block';
+        if (statusIndicator) statusIndicator.classList.add('active');
+        toggleButton.innerHTML = '<span class="toggle-text">Deaktivieren</span>';
+    }
+    
+    // Update multi-phase summary
+    updateMultiPhaseSummary(scenarioId);
+    
+    console.log(`✅ Toggled phase ${phase} for scenario ${scenarioId}: ${!isActive ? 'activated' : 'deactivated'}`);
+}
+
+function updatePhaseSummaries(scenarioId) {
+    // Update individual phase summaries
+    for (let phase = 1; phase <= 3; phase++) {
+        const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+        if (!phaseElement) continue;
+        
+        const startYearInput = phaseElement.querySelector('.phase-start-year');
+        const endYearInput = phaseElement.querySelector('.phase-end-year');
+        const savingsRateInput = phaseElement.querySelector('.phase-savings-rate');
+        const phaseSummary = phaseElement.querySelector('.phase-summary');
+        
+        if (startYearInput && endYearInput && savingsRateInput && phaseSummary) {
+            const startYear = parseInt(startYearInput.value || '0');
+            const endYear = parseInt(endYearInput.value || '0');
+            const savingsRate = parseGermanNumber(savingsRateInput.value || '0');
+            
+            const duration = endYear - startYear + 1;
+            const totalContributions = duration * savingsRate * 12;
+            
+            const durationSpan = phaseSummary.querySelector('.phase-duration');
+            const totalSpan = phaseSummary.querySelector('.phase-total');
+            
+            if (durationSpan) {
+                durationSpan.textContent = `Dauer: ${duration} Jahre`;
+            }
+            if (totalSpan) {
+                totalSpan.textContent = `Gesamt: ${formatCurrency(totalContributions)}`;
+            }
+        }
+    }
+}
+
+function updateMultiPhaseSummary(scenarioId) {
+    const activePhases = document.querySelectorAll(`.savings-phase[data-scenario="${scenarioId}"].active`);
+    const activePhasesCount = document.getElementById(`activePhasesCount_${scenarioId}`);
+    const totalDuration = document.getElementById(`totalDuration_${scenarioId}`);
+    const averageSavingsRate = document.getElementById(`averageSavingsRate_${scenarioId}`);
+    const totalContributions = document.getElementById(`totalContributions_${scenarioId}`);
+    
+    if (activePhasesCount) activePhasesCount.textContent = activePhases.length;
+    
+    // Calculate totals from active phases
+    let maxDuration = 0;
+    let totalAmount = 0;
+    let weightedSavings = 0;
+    
+    activePhases.forEach(phase => {
+        const phaseNum = phase.dataset.phase;
+        const endYear = parseInt(document.querySelector(`.phase-end-year[data-phase="${phaseNum}"][data-scenario="${scenarioId}"]`)?.value || '0');
+        const savingsRate = parseGermanNumber(document.querySelector(`.phase-savings-rate[data-phase="${phaseNum}"][data-scenario="${scenarioId}"]`)?.value || '0');
+        const startYear = parseInt(document.querySelector(`.phase-start-year[data-phase="${phaseNum}"][data-scenario="${scenarioId}"]`)?.value || '0');
+        
+        maxDuration = Math.max(maxDuration, endYear + 1);
+        const phaseDuration = endYear - startYear + 1;
+        const phaseContributions = savingsRate * 12 * phaseDuration;
+        totalAmount += phaseContributions;
+        weightedSavings += savingsRate * phaseDuration;
+    });
+    
+    const avgSavings = maxDuration > 0 ? weightedSavings / maxDuration : 0;
+    
+    if (totalDuration) totalDuration.textContent = `${maxDuration} Jahre`;
+    if (averageSavingsRate) averageSavingsRate.textContent = formatCurrency(avgSavings);
+    if (totalContributions) totalContributions.textContent = formatCurrency(totalAmount);
+}
+
+function generatePhaseTimeline(scenarioId) {
+    const timelineContainer = document.getElementById(`phaseTimeline_${scenarioId}`);
+    if (!timelineContainer) return;
+    
+    // Clear existing timeline
+    timelineContainer.innerHTML = '';
+    
+    // Get active phases
+    const activePhases = [];
+    for (let phase = 1; phase <= 3; phase++) {
+        const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+        if (phaseElement && phaseElement.classList.contains('active')) {
+            const startYear = parseInt(phaseElement.querySelector('.phase-start-year')?.value || '0');
+            const endYear = parseInt(phaseElement.querySelector('.phase-end-year')?.value || '0');
+            const savingsRate = parseGermanNumber(phaseElement.querySelector('.phase-savings-rate')?.value || '0');
+            
+            activePhases.push({
+                phase,
+                startYear,
+                endYear,
+                savingsRate,
+                duration: endYear - startYear + 1
+            });
+        }
+    }
+    
+    if (activePhases.length === 0) {
+        timelineContainer.innerHTML = '<div class="timeline-empty">Keine aktiven Phasen</div>';
+        return;
+    }
+    
+    // Create timeline visualization
+    const totalDuration = Math.max(...activePhases.map(p => p.endYear));
+    const timeline = document.createElement('div');
+    timeline.className = 'phase-timeline-container';
+    
+    activePhases.forEach(phaseData => {
+        const phaseBar = document.createElement('div');
+        phaseBar.className = `phase-timeline-bar phase-${phaseData.phase}`;
+        
+        const widthPercent = (phaseData.duration / totalDuration) * 100;
+        const leftPercent = (phaseData.startYear / totalDuration) * 100;
+        
+        phaseBar.style.width = `${widthPercent}%`;
+        phaseBar.style.left = `${leftPercent}%`;
+        phaseBar.style.position = 'absolute';
+        phaseBar.style.height = '30px';
+        phaseBar.style.borderRadius = '4px';
+        phaseBar.style.display = 'flex';
+        phaseBar.style.alignItems = 'center';
+        phaseBar.style.justifyContent = 'center';
+        phaseBar.style.fontSize = '0.8rem';
+        phaseBar.style.fontWeight = 'bold';
+        phaseBar.style.color = 'white';
+        phaseBar.style.marginBottom = '5px';
+        
+        // Set phase colors
+        const phaseColors = ['#3498db', '#27ae60', '#e74c3c'];
+        phaseBar.style.backgroundColor = phaseColors[phaseData.phase - 1];
+        
+        phaseBar.innerHTML = `
+            <span>Phase ${phaseData.phase}: ${formatCurrency(phaseData.savingsRate)}/Monat</span>
+        `;
+        
+        timeline.appendChild(phaseBar);
+    });
+    
+    timeline.style.position = 'relative';
+    timeline.style.height = `${activePhases.length * 35}px`;
+    timeline.style.marginTop = '10px';
+    
+    timelineContainer.appendChild(timeline);
+}
+
+// ===================================
+// EXISTING PLACEHOLDERS BELOW
+// ===================================
+
+// Placeholder functions to prevent errors
+function openSaveEntnahmephaseScenarioModal() {
+    const modal = document.getElementById('saveEntnahmephaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'block';
+        updateEntnahmephaseScenarioPreview();
+    }
+}
+
+function closeSaveEntnahmephaseScenarioModal() {
+    const modal = document.getElementById('saveEntnahmephaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Clear form
+        const nameInput = document.getElementById('entnahmephaseScenarioName');
+        const descInput = document.getElementById('entnahmephaseScenarioDescription');
+        if (nameInput) nameInput.value = '';
+        if (descInput) descInput.value = '';
+    }
+}
+
+function confirmSaveEntnahmephaseScenario() {
+    const nameInput = document.getElementById('entnahmephaseScenarioName');
+    const descInput = document.getElementById('entnahmephaseScenarioDescription');
+    
+    if (!nameInput?.value.trim()) {
+        alert('Bitte geben Sie einen Namen für das Szenario ein.');
+        return;
+    }
+    
+    const scenarioData = {
+        name: nameInput.value.trim(),
+        description: descInput?.value.trim() || '',
+        retirementCapital: document.getElementById('retirementCapital')?.value || '1000000',
+        withdrawalDuration: document.getElementById('withdrawalDuration')?.value || '25',
+        postRetirementReturn: document.getElementById('postRetirementReturn')?.value || '5',
+        withdrawalInflation: document.getElementById('withdrawalInflation')?.value || '2',
+        includeTax: document.getElementById('withdrawalTaxToggle')?.classList.contains('active') || false,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Save to localStorage
+    const existingScenarios = JSON.parse(localStorage.getItem('entnahmephaseScenarios') || '[]');
+    existingScenarios.push(scenarioData);
+    localStorage.setItem('entnahmephaseScenarios', JSON.stringify(existingScenarios));
+    
+    closeSaveEntnahmephaseScenarioModal();
+    alert(`✅ Entnahmephase-Szenario "${scenarioData.name}" wurde gespeichert.`);
+}
+
+function updateEntnahmephaseScenarioPreview() {
+    const nameInput = document.getElementById('entnahmephaseScenarioName');
+    const confirmBtn = document.getElementById('confirmSaveEntnahmephaseScenario');
+    const preview = document.getElementById('entnahmephaseScenarioPreview');
+    
+    if (confirmBtn) {
+        confirmBtn.disabled = !nameInput?.value.trim();
+    }
+    
+    if (preview) {
+        const retirementCapital = document.getElementById('retirementCapital')?.value || '1000000';
+        const withdrawalDuration = document.getElementById('withdrawalDuration')?.value || '25';
+        const postRetirementReturn = document.getElementById('postRetirementReturn')?.value || '5';
+        
+        preview.innerHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9rem;">
+                <div><strong>Kapital:</strong> €${formatGermanNumber(parseGermanNumber(retirementCapital))}</div>
+                <div><strong>Dauer:</strong> ${withdrawalDuration} Jahre</div>
+                <div><strong>Rendite:</strong> ${postRetirementReturn}%</div>
+                <div><strong>Inflation:</strong> ${document.getElementById('withdrawalInflation')?.value || '2'}%</div>
+            </div>
+        `;
+    }
+}
+
+function openLoadEntnahmephaseScenarioModal() {
+    const modal = document.getElementById('loadEntnahmephaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'block';
+        populateEntnahmephaseScenarioList();
+    }
+}
+
+function closeLoadEntnahmephaseScenarioModal() {
+    const modal = document.getElementById('loadEntnahmephaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function openManageEntnahmephaseScenarioModal() {
+    const modal = document.getElementById('manageEntnahmephaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'block';
+        populateManageEntnahmephaseScenarioList();
+    }
+}
+
+function closeManageEntnahmephaseScenarioModal() {
+    const modal = document.getElementById('manageEntnahmephaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function populateEntnahmephaseScenarioList() {
+    const list = document.getElementById('loadEntnahmephaseScenarioList');
+    if (!list) return;
+    
+    const scenarios = JSON.parse(localStorage.getItem('entnahmephaseScenarios') || '[]');
+    
+    if (scenarios.length === 0) {
+        list.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Keine gespeicherten Entnahmephase-Szenarien gefunden.</p>';
+        return;
+    }
+    
+    list.innerHTML = scenarios.map((scenario, index) => `
+        <div class="profile-item" style="cursor: pointer;" onclick="loadEntnahmephaseScenario(${index})">
+            <h4>${scenario.name}</h4>
+            <p>${scenario.description || 'Keine Beschreibung'}</p>
+            <div class="profile-details">
+                <small>Kapital: €${formatGermanNumber(parseGermanNumber(scenario.retirementCapital))}</small>
+                <small>Dauer: ${scenario.withdrawalDuration} Jahre</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+function populateManageEntnahmephaseScenarioList() {
+    const list = document.getElementById('manageEntnahmephaseScenarioList');
+    if (!list) return;
+    
+    const scenarios = JSON.parse(localStorage.getItem('entnahmephaseScenarios') || '[]');
+    
+    if (scenarios.length === 0) {
+        list.innerHTML = '<p style="text-align: center; color: #7f8c8d;">Keine gespeicherten Entnahmephase-Szenarien gefunden.</p>';
+        return;
+    }
+    
+    list.innerHTML = scenarios.map((scenario, index) => `
+        <div class="profile-item">
+            <h4>${scenario.name}</h4>
+            <p>${scenario.description || 'Keine Beschreibung'}</p>
+            <div class="profile-actions">
+                <button onclick="loadEntnahmephaseScenario(${index})" class="action-btn load-btn">Laden</button>
+                <button onclick="deleteEntnahmephaseScenario(${index})" class="action-btn delete-btn">Löschen</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+window.loadEntnahmephaseScenario = function(index) {
+    const scenarios = JSON.parse(localStorage.getItem('entnahmephaseScenarios') || '[]');
+    const scenario = scenarios[index];
+    if (!scenario) return;
+    
+    // Load scenario data into form
+    if (document.getElementById('retirementCapital')) document.getElementById('retirementCapital').value = scenario.retirementCapital;
+    if (document.getElementById('withdrawalDuration')) document.getElementById('withdrawalDuration').value = scenario.withdrawalDuration;
+    if (document.getElementById('postRetirementReturn')) document.getElementById('postRetirementReturn').value = scenario.postRetirementReturn;
+    if (document.getElementById('withdrawalInflation')) document.getElementById('withdrawalInflation').value = scenario.withdrawalInflation;
+    
+    // Set tax toggle
+    const taxToggle = document.getElementById('withdrawalTaxToggle');
+    if (taxToggle) {
+        if (scenario.includeTax) {
+            taxToggle.classList.add('active');
+        } else {
+            taxToggle.classList.remove('active');
+        }
+    }
+    
+    // Update sliders
+    updateWithdrawalSliderValue('withdrawalDuration');
+    updateWithdrawalSliderValue('postRetirementReturn');
+    updateWithdrawalSliderValue('withdrawalInflation');
+    
+    closeLoadEntnahmephaseScenarioModal();
+    closeManageEntnahmephaseScenarioModal();
+    
+    // Recalculate
+    if (window.calculateWithdrawal) {
+        window.calculateWithdrawal();
+    }
+    
+    alert(`✅ Entnahmephase-Szenario "${scenario.name}" wurde geladen.`);
+};
+
+window.deleteEntnahmephaseScenario = function(index) {
+    const scenarios = JSON.parse(localStorage.getItem('entnahmephaseScenarios') || '[]');
+    const scenario = scenarios[index];
+    if (!scenario) return;
+    
+    if (confirm(`Möchten Sie das Szenario "${scenario.name}" wirklich löschen?`)) {
+        scenarios.splice(index, 1);
+        localStorage.setItem('entnahmephaseScenarios', JSON.stringify(scenarios));
+        populateManageEntnahmephaseScenarioList();
+        alert(`✅ Szenario "${scenario.name}" wurde gelöscht.`);
+    }
+};
+function resetEntnahmephaseScenarios() {
+    if (confirm('🔄 Möchten Sie wirklich alle Entnahmephase-Einstellungen zurücksetzen?')) {
+        // Reset to default values
+        const defaults = {
+            retirementCapital: '1000000',
+            withdrawalDuration: '25',
+            postRetirementReturn: '5',
+            withdrawalInflation: '2'
+        };
+        
+        Object.entries(defaults).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.value = value;
+                // Trigger change event to update displays
+                element.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+        
+        // Reset toggles
+        const taxToggle = document.getElementById('withdrawalTaxToggle');
+        if (taxToggle) {
+            taxToggle.classList.remove('active');
+        }
+        
+        // Clear auto-sync
+        const syncIndicator = document.getElementById('syncIndicator');
+        if (syncIndicator) {
+            syncIndicator.style.display = 'none';
+        }
+        
+        // Recalculate
+        if (window.calculateWithdrawal) {
+            window.calculateWithdrawal();
+        }
+        
+        console.log('✅ Reset Entnahmephase scenarios to defaults');
+    }
+}
+function saveIndividualAnsparphaseScenario(scenarioId) {
+    try {
+        // Get current scenario data
+        const scenarioData = {
+            monthlySavings: parseGermanNumber(document.getElementById(`monthlySavings_${scenarioId}`)?.value || '500'),
+            initialCapital: parseGermanNumber(document.getElementById(`initialCapital_${scenarioId}`)?.value || '3000'),
+            annualReturn: parseFloat(document.getElementById(`annualReturn_${scenarioId}`)?.value || '7'),
+            inflationRate: parseFloat(document.getElementById(`inflationRate_${scenarioId}`)?.value || '2'),
+            salaryGrowth: parseFloat(document.getElementById(`salaryGrowth_${scenarioId}`)?.value || '3'),
+            duration: parseInt(document.getElementById(`duration_${scenarioId}`)?.value || '25'),
+            salaryToSavings: parseFloat(document.getElementById(`salaryToSavings_${scenarioId}`)?.value || '50'),
+            baseSalary: parseGermanNumber(document.getElementById(`baseSalary_${scenarioId}`)?.value || '60000'),
+            includeTax: document.getElementById(`taxToggle_${scenarioId}`)?.classList.contains('active') || false,
+            teilfreistellung: document.getElementById(`teilfreistellungToggle_${scenarioId}`)?.classList.contains('active') || false,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Store in localStorage
+        const storageKey = `ansparphase_scenario_${scenarioId}_autosave`;
+        localStorage.setItem(storageKey, JSON.stringify(scenarioData));
+        
+        console.log(`✅ Auto-saved scenario ${scenarioId}:`, scenarioData);
+    } catch (error) {
+        console.error(`❌ Error auto-saving scenario ${scenarioId}:`, error);
+    }
+}
+
+// Add window assignments for functions that are being referenced
+window.saveIndividualAnsparphaseScenario = saveIndividualAnsparphaseScenario;
+window.setupScenarioInputListeners = setupScenarioInputListeners;
+window.updateScenarioSliderValue = updateScenarioSliderValue;
+window.updateWithdrawalSliderValue = updateWithdrawalSliderValue;
+window.updateTeilfreistellungToggleState = updateTeilfreistellungToggleState;
+/**
+ * Set savings mode (fixed amount or percentage)
+ */
+function setSavingsMode(mode) {
+    if (!window.budgetData) {
+        window.budgetData = { savings: { mode: 'fixed', amount: 500, percentage: 50 } };
+    }
+    
+    window.budgetData.savings.mode = mode;
+    
+    const fixedAmountControl = document.getElementById('fixedAmountControl');
+    const percentageControl = document.getElementById('percentageControl');
+    const fixedBtn = document.getElementById('fixedAmount');
+    const percentageBtn = document.getElementById('percentage');
+    
+    if (mode === 'fixed') {
+        if (fixedAmountControl) fixedAmountControl.style.display = 'block';
+        if (percentageControl) percentageControl.style.display = 'none';
+        if (fixedBtn) fixedBtn.classList.add('active');
+        if (percentageBtn) percentageBtn.classList.remove('active');
+    } else {
+        if (fixedAmountControl) fixedAmountControl.style.display = 'none';
+        if (percentageControl) percentageControl.style.display = 'block';
+        if (fixedBtn) fixedBtn.classList.remove('active');
+        if (percentageBtn) percentageBtn.classList.add('active');
+    }
+    
+    updateSavingsDisplay();
+}
+window.setSavingsMode = setSavingsMode;
+/**
+ * Generate integrated timeline (placeholder implementation)
+ */
+function generateIntegratedTimeline() {
+    try {
+        // Get accumulation data from active scenario
+        const activeScenario = state.activeScenario || 'A';
+        const accumulationDuration = parseInt(document.getElementById(`duration_${activeScenario}`)?.value || '25');
+        
+        // Get withdrawal data
+        const withdrawalDuration = parseInt(document.getElementById('withdrawalDuration')?.value || '25');
+        const retirementCapital = parseGermanNumber(document.getElementById('retirementCapital')?.value || '1000000');
+        
+        // Update timeline displays
+        if (document.getElementById('accumulationYears')) {
+            document.getElementById('accumulationYears').textContent = accumulationDuration;
+        }
+        if (document.getElementById('withdrawalYears')) {
+            document.getElementById('withdrawalYears').textContent = withdrawalDuration;
+        }
+        if (document.getElementById('transitionCapital')) {
+            document.getElementById('transitionCapital').textContent = formatGermanNumber(retirementCapital);
+        }
+        
+        console.log('✅ Generated integrated timeline');
+    } catch (error) {
+        console.error('❌ Error generating integrated timeline:', error);
+    }
+}
+
+// Use the updateScenarioSliderValue function from dom.js (imported at the top)
+function updateScenarioSliderValue(sliderId, scenarioId) {
+    domUpdateScenarioSliderValue(sliderId, scenarioId);
+}
+
+function updateWithdrawalSliderValue(id) {
+    const slider = document.getElementById(id);
+    const valueElement = document.getElementById(id + 'Value');
+    
+    if (!slider || !valueElement) {
+        console.warn(`Missing elements for withdrawal slider ${id}:`, {
+            slider: !!slider,
+            valueElement: !!valueElement
+        });
+        return;
+    }
+    
+    const value = parseFloat(slider.value);
+    let formattedValue;
+    
+    switch(id) {
+        case 'withdrawalDuration':
+            formattedValue = `${value} Jahre`;
+            break;
+        case 'postRetirementReturn':
+        case 'withdrawalInflation':
+        case 'withdrawalTeilfreistellungRate':
+            formattedValue = `${value.toFixed(1)}%`;
+            break;
+        default:
+            formattedValue = value.toString();
+    }
+    
+    valueElement.textContent = formattedValue;
+    console.log(`Updated withdrawal slider ${id}: ${formattedValue}`);
+}
+
+function updateTeilfreistellungToggleState(scenarioId) {
+    const toggleElement = document.getElementById(`teilfreistellungToggle_${scenarioId}`);
+    const helpElement = document.getElementById(`teilfreistellungHelp_${scenarioId}`);
+    
+    if (toggleElement && helpElement) {
+        const isActive = toggleElement.classList.contains('active');
+        if (isActive) {
+            helpElement.style.display = 'block';
+        } else {
+            helpElement.style.display = 'none';
+        }
+    }
+}
+
+function updateComparisonTeilfreistellungState() {
+    // Update teilfreistellung state for all comparison scenarios
+    const scenarios = ['A', 'B', 'C', 'D', 'E']; // Support up to 5 scenarios
+    
+    scenarios.forEach(scenarioId => {
+        const toggleElement = document.querySelector(`[data-param="accumulation.teilfreistellung"][data-scenario="${scenarioId}"]`);
+        if (toggleElement) {
+            const isActive = toggleElement.classList.contains('active');
+            // Find and update related UI elements if they exist
+            const helpElement = document.querySelector(`#teilfreistellungHelp_${scenarioId}`);
+            if (helpElement) {
+                helpElement.style.display = isActive ? 'block' : 'none';
+            }
+        }
+    });
+}
+
+
+
+window.resetStickyScenarioCards = function() {
+    // Reset any sticky scenario card positions and states
+    const scenarioCards = document.querySelectorAll('.scenario-result-card, .scenario-card');
+    scenarioCards.forEach(card => {
+        card.style.position = '';
+        card.style.top = '';
+        card.style.zIndex = '';
+        card.classList.remove('sticky', 'fixed');
+    });
+    
+    // Reset scroll listeners if they exist
+    if (window.stickyScrollHandler) {
+        window.removeEventListener('scroll', window.stickyScrollHandler);
+        window.stickyScrollHandler = null;
+    }
+    
+    console.log('✅ Reset sticky scenario cards');
+};

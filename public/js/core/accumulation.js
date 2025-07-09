@@ -6,7 +6,7 @@
  */
 
 // Import utility functions
-import { parseGermanNumber, formatGermanNumber, formatCurrency } from '../utils.js';
+import { parseGermanNumber, formatGermanNumber, formatCurrency } from '../utils/utils.js';
 
 // Import tax calculation functions
 import { calculateGermanETFTax, calculateGermanNetSalary, resetETFTaxAllowance } from './tax.js';
@@ -21,7 +21,7 @@ let usedSparerpauschbetrag = 0;
  * @param {Object} scenario - The scenario object containing configuration
  * @returns {Object} The scenario object with updated results
  */
-function runScenario(scenario) {
+export function runScenario(scenario) {
     const scenarioId = scenario.id;
     
     // Determine savings mode
@@ -143,7 +143,7 @@ function runScenario(scenario) {
  * @param {string} etfType - ETF type ('thesaurierend' or 'ausschüttend')
  * @returns {Object} Calculation results
  */
-function calculateWealthDevelopment(monthlySavings, initialCapital, annualReturn, inflationRate, salaryGrowth, duration, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
+export function calculateWealthDevelopment(monthlySavings, initialCapital, annualReturn, inflationRate, salaryGrowth, duration, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
     const monthlyReturn = annualReturn / 12;
     
     let capital = initialCapital;
@@ -435,54 +435,8 @@ function updateScenarioSalaryAnalysis(scenarioId, baseSalary, salaryGrowthRate) 
 }
 
 // ============================================================================
-// UTILITY FUNCTIONS
+// SCENARIO HELPER FUNCTIONS
 // ============================================================================
-// NOTE: These functions should ideally be imported from separate utility modules
-// They are included here for completeness but should be moved to utils modules
-
-/**
- * Parse German formatted number string
- * 
- * @param {string|number} value - Value to parse
- * @returns {number} Parsed number
- */
-function parseGermanNumber(value) {
-    if (typeof value === 'number') return value;
-    if (typeof value !== 'string') return 0;
-    
-    // Replace German decimal comma with dot for parsing
-    const normalizedValue = value.replace(/\./g, '').replace(',', '.');
-    const parsed = parseFloat(normalizedValue);
-    return isNaN(parsed) ? 0 : parsed;
-}
-
-/**
- * Format number in German locale
- * 
- * @param {number} value - Value to format
- * @param {number} decimals - Number of decimal places
- * @returns {string} Formatted number
- */
-function formatGermanNumber(value, decimals = 2) {
-    if (typeof value !== 'number' || isNaN(value)) return '0';
-    return value.toLocaleString('de-DE', { 
-        minimumFractionDigits: decimals, 
-        maximumFractionDigits: decimals 
-    });
-}
-
-/**
- * Format currency in German locale
- * 
- * @param {number} amount - Amount to format
- * @returns {string} Formatted currency
- */
-function formatCurrency(amount) {
-    return '€' + amount.toLocaleString('de-DE', { 
-        minimumFractionDigits: 2, 
-        maximumFractionDigits: 2 
-    });
-}
 
 /**
  * Get scenario input value
@@ -576,9 +530,6 @@ if (typeof module !== 'undefined' && module.exports) {
         calculateWealthDevelopment,
         calculateMultiPhaseWealthDevelopment,
         updateScenarioSalaryAnalysis,
-        parseGermanNumber,
-        formatGermanNumber,
-        formatCurrency,
         getScenarioValue,
         getScenarioToggleValue,
         getScenarioETFType,
@@ -594,9 +545,6 @@ if (typeof window !== 'undefined') {
         calculateWealthDevelopment,
         calculateMultiPhaseWealthDevelopment,
         updateScenarioSalaryAnalysis,
-        parseGermanNumber,
-        formatGermanNumber,
-        formatCurrency,
         getScenarioValue,
         getScenarioToggleValue,
         getScenarioETFType,

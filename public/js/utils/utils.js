@@ -12,6 +12,11 @@
  * @returns {string} Formatted currency string (e.g., "€1.234,56")
  */
 export function formatCurrency(amount) {
+    // Handle null, undefined, or invalid values
+    if (amount === null || amount === undefined || typeof amount !== 'number' || isNaN(amount)) {
+        return '€0,00';
+    }
+    
     return '€' + amount.toLocaleString('de-DE', { 
         minimumFractionDigits: 2, 
         maximumFractionDigits: 2 
@@ -48,4 +53,23 @@ export function formatGermanNumber(value, decimals = 2) {
         minimumFractionDigits: decimals, 
         maximumFractionDigits: decimals 
     });
+}
+
+/**
+ * Debounce function to limit the rate at which a function can fire
+ * 
+ * @param {Function} func - The function to debounce
+ * @param {number} wait - The number of milliseconds to delay
+ * @returns {Function} The debounced function
+ */
+export function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func.apply(this, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }

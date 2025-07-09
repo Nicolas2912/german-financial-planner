@@ -5,7 +5,7 @@
 import * as state from './state.js';
 
 // Import utility functions
-import { debounce } from './utils.js';
+import { debounce } from './utils/utils.js';
 
 // Import core calculation functions
 import { runScenario } from './core/accumulation.js';
@@ -25,7 +25,10 @@ import {
     setupScenarioImport,
     setupAutoSaveScenarios,
     setupAnsparphaseScenarioListeners,
-    setupEntnahmephaseScenarioListeners
+    setupEntnahmephaseScenarioListeners,
+    calculateBudget,
+    calculateTaxes,
+    calculateWithdrawal
 } from './ui/setup.js';
 
 import { 
@@ -33,14 +36,18 @@ import {
     updateScenarioCheckboxes,
     updateContributionsScenarioDropdown,
     updateScenarioCheckboxVisibility,
-    showNotification
+    showNotification,
+    updateScenarioSliderValue
 } from './ui/dom.js';
 
 import { updateMainChart } from './ui/mainChart.js';
 import { createIntegratedTimeline } from './ui/withdrawalChart.js';
 
+// Import scenario management functions
+import { addNewScenario, switchToScenario, removeScenario, renameScenario, copyScenario } from './features/scenarioManager.js';
+
 // Import feature functions
-import { setupContributionsScenarioSelector } from './features/scenarioManager.js';
+// Note: setupContributionsScenarioSelector is implemented inline below
 
 // Main recalculation function that orchestrates all calculations
 export function recalculateAll() {
@@ -95,9 +102,7 @@ export function autoSyncWithdrawalCapital(showNotification = true) {
             });
             
             // Update withdrawal calculations
-            if (window.calculateWithdrawal) {
-                window.calculateWithdrawal();
-            }
+            calculateWithdrawal();
             
             // Show notification only if requested and user isn't typing
             if (showNotification && !state.userIsTyping && endCapital !== state.lastSyncValue) {
@@ -135,8 +140,23 @@ function updateScenarioSelector() {
     });
 }
 
+// Setup contributions scenario selector event listeners
+function setupContributionsScenarioSelector() {
+    const dropdown = document.getElementById('contributionsScenarioDropdown');
+    if (!dropdown) return;
+    
+    dropdown.addEventListener('change', function() {
+        state.setSelectedContributionsScenario(this.value);
+        // Update the chart with the new selected scenario
+        // We can access updateContributionsGainsChart via updateMainChart since it's already imported
+        updateMainChart();
+    });
+}
+
 // Initialize the application
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded fired, setting up application...');
+    
     // Set up all event listeners
     setupScenarioListeners();
     setupComparisonScenarioListeners();
@@ -160,14 +180,32 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initial calculations
     recalculateAll();
-    if (window.calculateBudget) window.calculateBudget();
-    if (window.calculateTaxes) window.calculateTaxes();
+    calculateBudget();
+    calculateTaxes();
     
     // Initialize scenario checkboxes and dropdowns
     updateScenarioCheckboxes();
     updateContributionsScenarioDropdown();
     setupContributionsScenarioSelector();
     updateScenarioCheckboxVisibility();
+    
+    // Initialize slider values for existing scenarios
+    setTimeout(() => {
+        state.scenarios.forEach(scenario => {
+            const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings'];
+            sliders.forEach(sliderId => {
+                updateScenarioSliderValue(sliderId, scenario.id);
+            });
+        });
+        
+        // Initialize withdrawal slider values
+        const withdrawalSliders = ['withdrawalDuration', 'postRetirementReturn', 'withdrawalInflation'];
+        withdrawalSliders.forEach(sliderId => {
+            if (window.updateWithdrawalSliderValue) {
+                window.updateWithdrawalSliderValue(sliderId);
+            }
+        });
+    }, 100);
     
     // Show sync indicator on page load
     setTimeout(() => {
@@ -179,6 +217,64 @@ document.addEventListener('DOMContentLoaded', function() {
 window.recalculateAll = recalculateAll;
 window.debouncedRecalculateAll = debouncedRecalculateAll;
 window.autoSyncWithdrawalCapital = autoSyncWithdrawalCapital;
+window.state = state;
+
+// Make state variables available globally for scenario management
+window.scenarios = state.scenarios;
+window.scenarioColors = state.scenarioColors;
+window.selectedScenariosForChart = state.selectedScenariosForChart;
+window.activeScenario = state.activeScenario;
+window.currentChartMode = state.currentChartMode;
+
+// Make UI functions available globally for scenario management
+window.updateScenarioCheckboxes = updateScenarioCheckboxes;
+window.updateContributionsScenarioDropdown = updateContributionsScenarioDropdown;
+window.showNotification = showNotification;
+window.updateScenarioSliderValue = updateScenarioSliderValue;
+
+// Add missing utility functions for scenario management
+window.getScenarioValue = function(inputId, scenarioId) {
+    const element = document.getElementById(`${inputId}_${scenarioId}`);
+    return element ? element.value : null;
+};
+
+window.setupSavingsModeForScenario = function(scenarioId) {
+    // This function sets up the savings mode toggle functionality for a scenario
+    // For now, we'll implement a basic version
+    console.log(`Setting up savings mode for scenario ${scenarioId}`);
+    
+    // Find and set up the savings mode buttons for this scenario
+    const modeButtons = document.querySelectorAll(`.savings-mode-btn[data-scenario="${scenarioId}"]`);
+    modeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const mode = this.dataset.mode;
+            const scenario = this.dataset.scenario;
+            
+            // Update button states
+            modeButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show/hide appropriate containers
+            const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${scenario}"]`);
+            const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${scenario}"]`);
+            
+            if (mode === 'simple') {
+                if (simpleContainer) simpleContainer.style.display = 'block';
+                if (multiPhaseContainer) multiPhaseContainer.style.display = 'none';
+            } else if (mode === 'multi-phase') {
+                if (simpleContainer) simpleContainer.style.display = 'none';
+                if (multiPhaseContainer) multiPhaseContainer.style.display = 'block';
+            }
+        });
+    });
+};
+
+// Make scenario management functions available globally
+window.addNewScenario = addNewScenario;
+window.switchToScenario = switchToScenario;
+window.removeScenario = removeScenario;
+window.renameScenario = renameScenario;
+window.copyScenario = copyScenario;
 
 // Export main functions for external use
-export { autoSyncWithdrawalCapital, updateScenarioSelector };
+export { updateScenarioSelector };

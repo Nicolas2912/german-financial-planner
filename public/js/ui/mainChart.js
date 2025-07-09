@@ -2,7 +2,7 @@
 // Handles the main chart display, comparison charts, and contributions/gains charts
 
 // Import required modules
-import { scenarios, currentChartMode, selectedScenariosForChart, selectedContributionsScenario, currentPhase } from '../state/globalState.js';
+import * as state from '../state.js';
 
 // Chart instance (global for destruction)
 let chart = null;
@@ -80,9 +80,9 @@ function displayChartErrorMessage(canvas, ctx, errorType = 'no-scenarios', custo
  */
 function updateMainChart() {
     // Update chart based on current mode
-    if (currentChartMode === 'comparison') {
+    if (state.currentChartMode === 'comparison') {
         updateComparisonChart();
-    } else if (currentChartMode === 'contributions') {
+    } else if (state.currentChartMode === 'contributions') {
         updateContributionsGainsChart();
     }
 }
@@ -98,7 +98,7 @@ function updateComparisonChart() {
     }
 
     // Get only selected scenarios
-    const selectedScenarios = scenarios.filter(s => selectedScenariosForChart.has(s.id));
+    const selectedScenarios = state.scenarios.filter(s => state.selectedScenariosForChart.has(s.id));
     
     if (selectedScenarios.length === 0) {
         // If no scenarios selected, show a message
@@ -338,7 +338,19 @@ function updateContributionsGainsChart() {
     }
 
     // Use the selected scenario from the dropdown
-    const displayScenario = scenarios.find(s => s.id === selectedContributionsScenario);
+    console.log('Debug: state.selectedContributionsScenario =', state.selectedContributionsScenario);
+    console.log('Debug: state.scenarios =', state.scenarios);
+    console.log('Debug: state object =', state);
+    
+    // Add defensive check for state.scenarios
+    if (!state.scenarios || !Array.isArray(state.scenarios)) {
+        console.error('state.scenarios is not defined or not an array:', state.scenarios);
+        const canvas = document.getElementById('wealthChart');
+        displayChartErrorMessage(canvas, ctx, 'no-data');
+        return;
+    }
+    
+    const displayScenario = state.scenarios.find(s => s.id === state.selectedContributionsScenario);
     
     if (!displayScenario || !displayScenario.yearlyData || displayScenario.yearlyData.length === 0) {
         const canvas = document.getElementById('wealthChart');
@@ -573,7 +585,7 @@ function setupChartToggleListeners() {
             // Switch to scenario comparison view
             scenarioComparisonBtn.classList.add('active');
             contributionsGainsBtn.classList.remove('active');
-            currentChartMode = 'comparison';
+            state.setCurrentChartMode('comparison');
             updateMainChart();
             updateScenarioCheckboxVisibility();
         });
@@ -584,7 +596,7 @@ function setupChartToggleListeners() {
             // Switch to contributions vs gains view
             contributionsGainsBtn.classList.add('active');
             scenarioComparisonBtn.classList.remove('active');
-            currentChartMode = 'contributions';
+            state.setCurrentChartMode('contributions');
             updateContributionsGainsChart();
             updateScenarioCheckboxVisibility();
         });
@@ -600,14 +612,14 @@ function updateScenarioCheckboxVisibility() {
     if (!checkboxContainer || !contributionsSelector) return;
     
     // Show checkboxes only in accumulation phase (not in scenario comparison phase)
-    const isAccumulationPhase = currentPhase === 'accumulation';
+    const isAccumulationPhase = state.currentPhase === 'accumulation';
     
     if (isAccumulationPhase) {
         // Show appropriate selector based on chart mode
-        if (currentChartMode === 'comparison') {
+        if (state.currentChartMode === 'comparison') {
             checkboxContainer.style.display = 'flex';
             contributionsSelector.style.display = 'none';
-        } else if (currentChartMode === 'contributions') {
+        } else if (state.currentChartMode === 'contributions') {
             checkboxContainer.style.display = 'none';
             contributionsSelector.style.display = 'block';
         }

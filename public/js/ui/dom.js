@@ -4,8 +4,9 @@
  */
 
 // Import utility functions
-import { formatCurrency, parseGermanNumber } from '../utils/formatting.js';
-import { scenarios, selectedScenariosForChart, selectedContributionsScenario, currentPhase, currentChartMode } from '../state/globalState.js';
+import { formatCurrency, parseGermanNumber } from '../utils/utils.js';
+import * as state from '../state.js';
+import { updateMainChart } from './mainChart.js';
 
 // ==================== Scenario Results Display ====================
 
@@ -16,12 +17,13 @@ export function updateScenarioResults() {
     const resultsContainer = document.getElementById('scenarioResults');
     resultsContainer.innerHTML = '';
 
-    scenarios.forEach(scenario => {
+    state.scenarios.forEach(scenario => {
         if (!scenario.results || !scenario.results.finalNominal) return;
 
         const resultCard = document.createElement('div');
         resultCard.className = 'scenario-result-card';
         resultCard.dataset.scenario = scenario.id;
+        resultCard.style.setProperty('--scenario-color', scenario.color);
         
         resultCard.innerHTML = `
             <div class="scenario-result-header">
@@ -191,7 +193,20 @@ export function updateScenarioSliderValue(sliderId, scenarioId) {
     const slider = document.getElementById(fullId);
     const valueSpan = document.getElementById(sliderId + 'Value_' + scenarioId);
     
-    if (!slider || !valueSpan) return;
+    console.log(`Updating slider: ${sliderId}, scenario: ${scenarioId}`, {
+        fullId, 
+        sliderFound: !!slider, 
+        valueSpanFound: !!valueSpan,
+        sliderValue: slider ? slider.value : 'N/A'
+    });
+    
+    if (!slider || !valueSpan) {
+        console.warn(`Missing elements for slider ${sliderId}_${scenarioId}:`, {
+            slider: !!slider,
+            valueSpan: !!valueSpan
+        });
+        return;
+    }
     
     const value = parseFloat(slider.value);
 
@@ -207,7 +222,11 @@ export function updateScenarioSliderValue(sliderId, scenarioId) {
         case 'salaryToSavings':
             valueSpan.textContent = value.toFixed(0) + '%';
             break;
+        default:
+            valueSpan.textContent = value.toString();
     }
+    
+    console.log(`Updated ${sliderId}: ${valueSpan.textContent}`);
 }
 
 /**
@@ -244,13 +263,13 @@ export function updateScenarioCheckboxes() {
     
     checkboxContainer.innerHTML = '';
     
-    scenarios.forEach(scenario => {
+    state.scenarios.forEach(scenario => {
         const checkboxItem = document.createElement('div');
         checkboxItem.className = 'scenario-checkbox-item';
         checkboxItem.dataset.scenario = scenario.id;
         checkboxItem.style.setProperty('--scenario-color', scenario.color);
         
-        if (selectedScenariosForChart.has(scenario.id)) {
+        if (state.selectedScenariosForChart.has(scenario.id)) {
             checkboxItem.classList.add('checked');
         }
         
@@ -260,11 +279,11 @@ export function updateScenarioCheckboxes() {
         `;
         
         checkboxItem.addEventListener('click', function() {
-            if (selectedScenariosForChart.has(scenario.id)) {
-                selectedScenariosForChart.delete(scenario.id);
+            if (state.selectedScenariosForChart.has(scenario.id)) {
+                state.selectedScenariosForChart.delete(scenario.id);
                 this.classList.remove('checked');
             } else {
-                selectedScenariosForChart.add(scenario.id);
+                state.selectedScenariosForChart.add(scenario.id);
                 this.classList.add('checked');
             }
             
@@ -285,14 +304,14 @@ export function updateScenarioCheckboxVisibility() {
     if (!checkboxContainer || !contributionsSelector) return;
     
     // Show checkboxes only in accumulation phase (not in scenario comparison phase)
-    const isAccumulationPhase = currentPhase === 'accumulation';
+    const isAccumulationPhase = state.currentPhase === 'accumulation';
     
     if (isAccumulationPhase) {
         // Show appropriate selector based on chart mode
-        if (currentChartMode === 'comparison') {
+        if (state.currentChartMode === 'comparison') {
             checkboxContainer.style.display = 'flex';
             contributionsSelector.style.display = 'none';
-        } else if (currentChartMode === 'contributions') {
+        } else if (state.currentChartMode === 'contributions') {
             checkboxContainer.style.display = 'none';
             contributionsSelector.style.display = 'block';
         }
@@ -312,13 +331,13 @@ export function updateContributionsScenarioDropdown() {
     
     dropdown.innerHTML = '';
     
-    scenarios.forEach(scenario => {
+    state.scenarios.forEach(scenario => {
         const option = document.createElement('option');
         option.value = scenario.id;
         option.textContent = scenario.name;
         option.style.color = scenario.color;
         option.style.fontWeight = 'bold';
-        if (scenario.id === selectedContributionsScenario) {
+        if (scenario.id === state.selectedContributionsScenario) {
             option.selected = true;
         }
         dropdown.appendChild(option);
@@ -334,7 +353,7 @@ export function updateScenarioSelector() {
     
     selector.innerHTML = '<option value="">Szenario wählen...</option>';
     
-    scenarios.forEach(scenario => {
+    state.scenarios.forEach(scenario => {
         const option = document.createElement('option');
         option.value = scenario.id;
         option.textContent = scenario.name;

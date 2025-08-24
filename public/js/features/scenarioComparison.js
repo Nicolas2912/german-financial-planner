@@ -15,8 +15,27 @@ class ScenarioComparisonManager {
         });
 
         // Parameter section toggles
-        document.querySelectorAll('.param-header').forEach(header => {
-            header.addEventListener('click', () => this.toggleParameterSection(header));
+        document.querySelectorAll('.toggle-icon').forEach(toggleIcon => {
+            toggleIcon.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const header = toggleIcon.closest('.param-header');
+                if (header) {
+                    this.toggleParameterSection(header);
+                }
+            });
+        });
+
+        // Make entire param headers clickable
+        document.querySelectorAll('.param-header[data-toggle]').forEach(header => {
+            header.addEventListener('click', (e) => {
+                // Don't trigger if clicking on buttons inside the header
+                if (e.target.closest('.btn-import')) {
+                    return;
+                }
+                e.preventDefault();
+                this.toggleParameterSection(header);
+            });
         });
 
         // Chart view toggles
@@ -79,8 +98,15 @@ class ScenarioComparisonManager {
     toggleParameterSection(header) {
         const toggle = header.getAttribute('data-toggle');
         const grid = document.getElementById(toggle);
+        const toggleIcon = header.querySelector('.toggle-icon');
+        
         if (grid) {
             grid.classList.toggle('active');
+            
+            // Update toggle icon
+            if (toggleIcon) {
+                toggleIcon.textContent = grid.classList.contains('active') ? '▲' : '▼';
+            }
         }
     }
 
@@ -445,10 +471,5 @@ class ScenarioComparisonManager {
         // TODO: Implement new scenario creation
     }
 }
-
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.scenarioComparison = new ScenarioComparisonManager();
-});
 
 export default ScenarioComparisonManager;

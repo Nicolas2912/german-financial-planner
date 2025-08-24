@@ -46,6 +46,9 @@ import { createIntegratedTimeline } from './ui/withdrawalChart.js';
 // Import scenario management functions
 import { addNewScenario, switchToScenario, removeScenario, renameScenario, copyScenario } from './features/scenarioManager.js';
 
+// Import scenario comparison functionality
+import ScenarioComparisonManager from './features/scenarioComparison.js';
+
 // Import profile management functions
 import { 
     openSaveProfileModal,
@@ -190,6 +193,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup scenario saving functionality
     setupAnsparphaseScenarioListeners();
     setupEntnahmephaseScenarioListeners();
+    
+    // Initialize scenario comparison functionality
+    window.scenarioComparison = new ScenarioComparisonManager();
     
     setupPhaseToggle();
     setupGermanNumberInputs();

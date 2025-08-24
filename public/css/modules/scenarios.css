@@ -348,6 +348,11 @@ body.scenario-comparison .container:hover {
     background: #fcfdfe;
     cursor: pointer;
     user-select: none;
+    transition: background-color 0.2s ease;
+}
+
+.param-header:hover {
+    background: #f5f7f9;
 }
 
 .param-header h4 {
@@ -402,6 +407,28 @@ body.scenario-comparison .container:hover {
 
 .param-grid.active {
     display: grid;
+}
+
+/* Toggle Button Styles */
+.toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-btn:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.toggle-btn .toggle-icon {
+    font-size: 14px;
+    transition: transform 0.2s ease;
 }
 
 /* -------------------------

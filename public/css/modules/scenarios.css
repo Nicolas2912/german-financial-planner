@@ -129,32 +129,6 @@ body.scenario-comparison .container:hover {
     transform: translateY(-1px);
 }
 
-.btn-scenario {
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
-    color: var(--text-2);
-}
-
-.btn-scenario:hover {
-    border-color: var(--text-2);
-}
-
-.btn-scenario.active {
-    background-color: var(--primary);
-    color: white;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
-}
-
-.btn-scenario.btn-new {
-    border-style: dashed;
-    border-color: var(--success);
-    color: var(--success);
-}
-
-.btn-scenario.btn-new:hover {
-    background-color: rgba(39, 174, 96, 0.07);
-}
 
 .btn-action {
     background-color: #ffffff;
@@ -249,6 +223,23 @@ body.scenario-comparison .container:hover {
     box-shadow: 0 2px 8px rgba(52, 152, 219, 0.08);
 }
 
+/* Conservative scenario green styling - base state with maximum specificity */
+.scenario-comparison .btn-scenario[data-scenario="conservative"] {
+    border: 2px solid #27ae60 !important;
+    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%) !important;
+    color: #27ae60 !important;
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.15) !important;
+}
+
+/* Additional rule to override any other styles */
+button.btn-scenario[data-scenario="conservative"] {
+    border: 2px solid #27ae60 !important;
+    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%) !important;
+    color: #27ae60 !important;
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.15) !important;
+}
+
+/* Hover effects for pseudo elements */
 .btn-scenario::before {
     content: '';
     position: absolute;
@@ -264,6 +255,7 @@ body.scenario-comparison .container:hover {
     left: 100%;
 }
 
+/* Default hover state (for optimistic) */
 .btn-scenario:hover {
     background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
     border-color: #3498db;
@@ -272,12 +264,34 @@ body.scenario-comparison .container:hover {
     color: #2980b9;
 }
 
+/* Conservative scenario hover state - maximum specificity */
+.scenario-comparison .btn-scenario[data-scenario="conservative"]:hover,
+button.btn-scenario[data-scenario="conservative"]:hover {
+    background: linear-gradient(135deg, #d5f4e6 0%, #c7f5d4 100%) !important;
+    border-color: #229954 !important;
+    color: #1e8449 !important;
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.25) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Optimistisch scenario (default blue) */
 .btn-scenario.active {
     background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     border-color: #2980b9;
     color: white;
     box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
     transform: translateY(-1px);
+}
+
+/* Conservative scenario active state - maximum specificity */
+.scenario-comparison .btn-scenario[data-scenario="conservative"].active,
+button.btn-scenario[data-scenario="conservative"].active,
+.btn-scenario[data-scenario="conservative"].active {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+    border-color: #229954 !important;
+    color: white !important;
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3) !important;
+    transform: translateY(-1px) !important;
 }
 
 .btn-scenario.active::before {
@@ -1304,6 +1318,20 @@ body.scenario-comparison .container:hover {
     grid-template-columns: 1fr 1.8fr;
     gap: 32px;
     margin-bottom: 30px;
+    border: 3px solid transparent;
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.3s ease;
+}
+
+.comparison-layout.scenario-optimistic .comparison-params-panel {
+    border-color: #3498db !important;
+    border-width: 3px;
+}
+
+.comparison-layout.scenario-conservative .comparison-params-panel {
+    border-color: #27ae60 !important;
+    border-width: 3px;
 }
 
 @media (max-width: 1200px) {
@@ -2633,4 +2661,41 @@ body.scenario-comparison .container:hover {
 
 .savings-rate-result {
     margin-top: 0;
+}
+
+/* =========================================================================
+   EMERGENCY OVERRIDE: Conservative Button Styling
+   These rules are placed at the end to ensure maximum priority
+   ========================================================================= */
+
+/* Conservative button base state - FINAL OVERRIDE */
+body .scenario-comparison [data-scenario="conservative"].btn-scenario,
+html body .scenario-comparison button[data-scenario="conservative"].btn-scenario {
+    background: linear-gradient(135deg, #f8fff9 0%, #e8f5e8 100%) !important;
+    border: 2px solid #27ae60 !important;
+    color: #27ae60 !important;
+    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.15) !important;
+}
+
+/* Conservative button hover state - FINAL OVERRIDE */
+body .scenario-comparison [data-scenario="conservative"].btn-scenario:hover,
+html body .scenario-comparison button[data-scenario="conservative"].btn-scenario:hover {
+    background: linear-gradient(135deg, #d5f4e6 0%, #c7f5d4 100%) !important;
+    border-color: #229954 !important;
+    color: #1e8449 !important;
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.25) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* Conservative button active state - FINAL OVERRIDE */
+body .scenario-comparison [data-scenario="conservative"].btn-scenario.active,
+html body .scenario-comparison button[data-scenario="conservative"].btn-scenario.active,
+[data-scenario="conservative"].btn-scenario.active,
+button[data-scenario="conservative"].btn-scenario.active,
+.btn-scenario[data-scenario="conservative"].active {
+    background: linear-gradient(135deg, #27ae60 0%, #229954 100%) !important;
+    border-color: #229954 !important;
+    color: white !important;
+    box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3) !important;
+    transform: translateY(-1px) !important;
 }

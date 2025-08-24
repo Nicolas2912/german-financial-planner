@@ -1,5 +1,11 @@
 Work for now on in the branch "modular" do not modify anything in "main"!
 
+When writing commit message, use modern standards and best practices.
+
+Do not run the server on any port. It is already running on port 3000.
+
+Ignore the oll app_old.js file and style_old.css file.
+
 # Task Master AI - Claude Code Integration Guide
 
 ## Essential Commands

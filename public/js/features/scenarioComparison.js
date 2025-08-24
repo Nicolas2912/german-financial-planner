@@ -6,6 +6,7 @@ class ScenarioComparisonManager {
         this.activeScenarios = new Set(['optimistic', 'conservative']);
         this.initializeEventListeners();
         this.initializeCharts();
+        this.initializeLayout();
     }
 
     initializeEventListeners() {
@@ -169,10 +170,47 @@ class ScenarioComparisonManager {
             // Update active scenario
             document.querySelectorAll('.btn-scenario:not(.btn-new)').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            
+            // Update layout border color based on selected scenario
+            const scenarioType = btn.getAttribute('data-scenario');
+            console.log(`Scenario clicked: ${scenarioType}`);
+            this.updateLayoutBorder(scenarioType);
+        }
+    }
+
+    updateLayoutBorder(scenarioType) {
+        const layout = document.getElementById('comparisonLayout');
+        if (!layout) return;
+        
+        // Remove existing scenario classes
+        layout.classList.remove('scenario-optimistic', 'scenario-conservative');
+        
+        // Add new scenario class based on selection
+        if (scenarioType === 'optimistic') {
+            layout.classList.add('scenario-optimistic');
+        } else if (scenarioType === 'conservative') {
+            layout.classList.add('scenario-conservative');
+        }
+        
+        console.log(`Layout border updated to: ${scenarioType}`);
+    }
+
+    initializeLayout() {
+        // Set initial layout border based on active scenario
+        const activeScenarioBtn = document.querySelector('.btn-scenario.active');
+        if (activeScenarioBtn) {
+            const scenarioType = activeScenarioBtn.getAttribute('data-scenario');
+            console.log(`Initializing layout with scenario: ${scenarioType}`);
+            this.updateLayoutBorder(scenarioType);
+        } else {
+            console.log('No active scenario button found during initialization');
         }
     }
 
     initializeCharts() {
+        // Destroy existing charts first
+        this.destroyAllCharts();
+        
         // Initialize Chart.js charts with sample data
         this.createLifecycleChart();
         this.createAccumulationChart();
@@ -180,11 +218,30 @@ class ScenarioComparisonManager {
         this.createMetricsChart();
     }
 
-    createLifecycleChart() {
-        const ctx = document.getElementById('comparisonLifecycleChart');
-        if (!ctx) return;
+    destroyAllCharts() {
+        // Destroy all existing charts to prevent canvas reuse errors
+        Object.values(this.charts).forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+        this.charts = {};
+    }
 
-        this.charts.lifecycle = new Chart(ctx, {
+    createLifecycleChart() {
+        try {
+            const ctx = document.getElementById('comparisonLifecycleChart');
+            if (!ctx) {
+                console.warn('Canvas element comparisonLifecycleChart not found');
+                return;
+            }
+
+            // Destroy existing chart if it exists
+            if (this.charts.lifecycle) {
+                this.charts.lifecycle.destroy();
+            }
+
+            this.charts.lifecycle = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['2025', '2030', '2035', '2040', '2045', '2050'],
@@ -260,11 +317,19 @@ class ScenarioComparisonManager {
                 }
             }
         });
+        } catch (error) {
+            console.error('Error creating lifecycle chart:', error);
+        }
     }
 
     createAccumulationChart() {
         const ctx = document.getElementById('comparisonAccumulationChart');
         if (!ctx) return;
+
+        // Destroy existing chart if it exists
+        if (this.charts.accumulation) {
+            this.charts.accumulation.destroy();
+        }
 
         this.charts.accumulation = new Chart(ctx, {
             type: 'bar',
@@ -327,6 +392,11 @@ class ScenarioComparisonManager {
         const ctx = document.getElementById('comparisonWithdrawalChart');
         if (!ctx) return;
 
+        // Destroy existing chart if it exists
+        if (this.charts.withdrawal) {
+            this.charts.withdrawal.destroy();
+        }
+
         this.charts.withdrawal = new Chart(ctx, {
             type: 'line',
             data: {
@@ -385,6 +455,11 @@ class ScenarioComparisonManager {
     createMetricsChart() {
         const ctx = document.getElementById('comparisonMetricsChart');
         if (!ctx) return;
+
+        // Destroy existing chart if it exists
+        if (this.charts.metrics) {
+            this.charts.metrics.destroy();
+        }
 
         this.charts.metrics = new Chart(ctx, {
             type: 'radar',
@@ -473,3 +548,17 @@ class ScenarioComparisonManager {
 }
 
 export default ScenarioComparisonManager;
+
+// Initialize the scenario comparison manager when the DOM is loaded (only once)
+let scenarioManagerInstance = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Only initialize if we're on the scenario comparison page
+    if (document.querySelector('.scenario-comparison') && !scenarioManagerInstance) {
+        try {
+            scenarioManagerInstance = new ScenarioComparisonManager();
+        } catch (error) {
+            console.error('Error initializing ScenarioComparisonManager:', error);
+        }
+    }
+});

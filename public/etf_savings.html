@@ -950,8 +950,8 @@
 
                 <div class="comparison-top-controls">
                     <div class="scenario-chooser">
-                        <button class="btn-scenario active">🎯 Optimistisch</button>
-                        <button class="btn-scenario">🛡️ Konservativ</button>
+                        <button class="btn-scenario active" data-scenario="optimistic">🎯 Optimistisch</button>
+                        <button class="btn-scenario" data-scenario="conservative">🛡️ Konservativ</button>
                         <button class="btn-scenario btn-new">+ Neues Szenario</button>
                     </div>
                     <div class="action-buttons">
@@ -962,7 +962,7 @@
                 </div>
 
                 <!-- Layout -->
-                <div class="comparison-layout">
+                <div class="comparison-layout" id="comparisonLayout">
                     <!-- Left: Parameters -->
                     <div class="comparison-params-panel">
                         <div class="phase-pills" id="comparisonPhasePills">

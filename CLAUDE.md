@@ -1,3 +1,5 @@
+Work for now on in the branch "modular" do not modify anything in "main"!
+
 # Task Master AI - Claude Code Integration Guide
 
 ## Essential Commands

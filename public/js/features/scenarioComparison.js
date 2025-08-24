@@ -1,9 +1,45 @@
 // scenarioComparison.js - Basic Scenario Comparison Module
+import { scenarioColors as baseScenarioColors } from '../state.js';
 class ScenarioComparisonManager {
     constructor() {
         this.charts = {};
         this.currentChartView = 'lifecycle';
-        this.activeScenarios = new Set(['optimistic', 'conservative']);
+        // Base scenarios registry powering charts/table/overview
+        const scColors = baseScenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
+        this.scenarioConfigs = [
+            {
+                id: 'optimistic',
+                label: '🎯 Optimistisch',
+                color: scColors['A'] || '#3498db',
+                // Sample values to render table and charts
+                params: {
+                    budget: { income: 4000, expenses: 3000, savingsRate: 25, inflation: 2.2 },
+                    accumulation: { returnRate: 8.5, years: 30, monthlySavings: 1000 },
+                    withdrawal: { rate: 4, years: 25, taxRate: 26.375, partialExemption: 30 },
+                    results: { finalWealth: '1.2 Mio €', maxDrawdown: -28 }
+                },
+                lifecycleData: [100, 220, 470, 820, 1200, 1000],
+                accumulationData: [50, 120, 280, 500, 820],
+                withdrawalData: [1200, 1000, 800, 600, 400, 200],
+                metricsData: [9, 6, 7, 8, 7]
+            },
+            {
+                id: 'conservative',
+                label: '🛡️ Konservativ',
+                color: scColors['B'] || '#27ae60',
+                params: {
+                    budget: { income: 3500, expenses: 2800, savingsRate: 15, inflation: 2.2 },
+                    accumulation: { returnRate: 5.5, years: 25, monthlySavings: 500 },
+                    withdrawal: { rate: 3, years: 30, taxRate: 26.375, partialExemption: 30 },
+                    results: { finalWealth: '800k €', maxDrawdown: -12 }
+                },
+                lifecycleData: [100, 160, 270, 420, 600, 500],
+                accumulationData: [40, 90, 180, 300, 420],
+                withdrawalData: [600, 520, 440, 360, 280, 200],
+                metricsData: [6, 9, 8, 7, 8]
+            }
+        ];
+        this.activeScenarios = new Set(this.scenarioConfigs.map(s => s.id));
         this.initializeEventListeners();
         this.initializeCharts();
         this.initializeLayout();
@@ -49,10 +85,24 @@ class ScenarioComparisonManager {
             btn.addEventListener('click', () => this.filterComparisonTable(btn));
         });
 
-        // Scenario visibility toggles
-        document.querySelectorAll('.scenario-visibility input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', () => this.toggleScenarioVisibility(checkbox));
-        });
+        // Scenario visibility toggles (support dynamic scenarios via delegation)
+        const visibilityContainer = document.querySelector('.scenario-visibility');
+        if (visibilityContainer) {
+            visibilityContainer.addEventListener('change', (e) => {
+                const checkbox = e.target;
+                if (checkbox && checkbox.matches('input[type="checkbox"]')) {
+                    this.toggleScenarioVisibility(checkbox);
+                }
+            });
+            // Attach data attributes to initial checkboxes if missing
+            const labels = visibilityContainer.querySelectorAll('label');
+            labels.forEach(label => {
+                const input = label.querySelector('input[type="checkbox"]');
+                if (!input) return;
+                if (label.textContent.includes('Optimistisch')) input.dataset.scenario = 'optimistic';
+                if (label.textContent.includes('Konservativ')) input.dataset.scenario = 'conservative';
+            });
+        }
 
         // Scenario chooser buttons
         document.querySelectorAll('.btn-scenario').forEach(btn => {
@@ -151,7 +201,8 @@ class ScenarioComparisonManager {
     }
 
     toggleScenarioVisibility(checkbox) {
-        const scenarioName = checkbox.parentElement.textContent.includes('Optimistisch') ? 'optimistic' : 'conservative';
+        const scenarioName = checkbox.dataset.scenario
+            || (checkbox.parentElement.textContent.includes('Optimistisch') ? 'optimistic' : 'conservative');
         
         if (checkbox.checked) {
             this.activeScenarios.add(scenarioName);
@@ -241,32 +292,23 @@ class ScenarioComparisonManager {
                 this.charts.lifecycle.destroy();
             }
 
+            const datasets = this.scenarioConfigs.map(sc => ({
+                label: sc.label,
+                data: sc.lifecycleData,
+                borderColor: sc.color,
+                backgroundColor: this.hexToRgba(sc.color, 0.1),
+                tension: 0.3,
+                pointBackgroundColor: sc.color,
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                _scenarioId: sc.id
+            }));
+
             this.charts.lifecycle = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['2025', '2030', '2035', '2040', '2045', '2050'],
-                datasets: [
-                    {
-                        label: '🎯 Optimistisch',
-                        data: [100, 220, 470, 820, 1200, 1000],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52,152,219,0.1)',
-                        tension: 0.3,
-                        pointBackgroundColor: '#3498db',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
-                    },
-                    {
-                        label: '🛡️ Konservativ',
-                        data: [100, 160, 270, 420, 600, 500],
-                        borderColor: '#27ae60',
-                        backgroundColor: 'rgba(39,174,96,0.1)',
-                        tension: 0.3,
-                        pointBackgroundColor: '#27ae60',
-                        pointBorderColor: '#ffffff',
-                        pointBorderWidth: 2
-                    }
-                ]
+                datasets
             },
             options: {
                 responsive: true,
@@ -331,24 +373,19 @@ class ScenarioComparisonManager {
             this.charts.accumulation.destroy();
         }
 
+        const datasets = this.scenarioConfigs.map(sc => ({
+            label: sc.label,
+            data: sc.accumulationData,
+            backgroundColor: sc.color,
+            borderRadius: 8,
+            _scenarioId: sc.id
+        }));
+
         this.charts.accumulation = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: ['Jahr 5', 'Jahr 10', 'Jahr 15', 'Jahr 20', 'Jahr 25'],
-                datasets: [
-                    {
-                        label: '🎯 Optimistisch',
-                        data: [50, 120, 280, 500, 820],
-                        backgroundColor: '#3498db',
-                        borderRadius: 8
-                    },
-                    {
-                        label: '🛡️ Konservativ',
-                        data: [40, 90, 180, 300, 420],
-                        backgroundColor: '#27ae60',
-                        borderRadius: 8
-                    }
-                ]
+                datasets
             },
             options: {
                 responsive: true,
@@ -397,28 +434,21 @@ class ScenarioComparisonManager {
             this.charts.withdrawal.destroy();
         }
 
+        const datasets = this.scenarioConfigs.map(sc => ({
+            label: sc.label,
+            data: sc.withdrawalData,
+            borderColor: sc.color,
+            backgroundColor: this.hexToRgba(sc.color, 0.1),
+            tension: 0.3,
+            fill: true,
+            _scenarioId: sc.id
+        }));
+
         this.charts.withdrawal = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['Jahr 1', 'Jahr 5', 'Jahr 10', 'Jahr 15', 'Jahr 20', 'Jahr 25'],
-                datasets: [
-                    {
-                        label: '🎯 Optimistisch',
-                        data: [1200, 1000, 800, 600, 400, 200],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52,152,219,0.1)',
-                        tension: 0.3,
-                        fill: true
-                    },
-                    {
-                        label: '🛡️ Konservativ',
-                        data: [600, 520, 440, 360, 280, 200],
-                        borderColor: '#27ae60',
-                        backgroundColor: 'rgba(39,174,96,0.1)',
-                        tension: 0.3,
-                        fill: true
-                    }
-                ]
+                datasets
             },
             options: {
                 responsive: true,
@@ -461,26 +491,20 @@ class ScenarioComparisonManager {
             this.charts.metrics.destroy();
         }
 
+        const datasets = this.scenarioConfigs.map(sc => ({
+            label: sc.label,
+            data: sc.metricsData,
+            borderColor: sc.color,
+            backgroundColor: this.hexToRgba(sc.color, 0.2),
+            pointBackgroundColor: sc.color,
+            _scenarioId: sc.id
+        }));
+
         this.charts.metrics = new Chart(ctx, {
             type: 'radar',
             data: {
                 labels: ['Rendite', 'Risiko', 'Liquidität', 'Flexibilität', 'Steuereffizienz'],
-                datasets: [
-                    {
-                        label: '🎯 Optimistisch',
-                        data: [9, 6, 7, 8, 7],
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52,152,219,0.2)',
-                        pointBackgroundColor: '#3498db'
-                    },
-                    {
-                        label: '🛡️ Konservativ',
-                        data: [6, 9, 8, 7, 8],
-                        borderColor: '#27ae60',
-                        backgroundColor: 'rgba(39,174,96,0.2)',
-                        pointBackgroundColor: '#27ae60'
-                    }
-                ]
+                datasets
             },
             options: {
                 responsive: true,
@@ -511,9 +535,9 @@ class ScenarioComparisonManager {
         if (!chart) return;
 
         // Update chart visibility based on active scenarios
-        chart.data.datasets.forEach((dataset, index) => {
-            const scenarioName = index === 0 ? 'optimistic' : 'conservative';
-            dataset.hidden = !this.activeScenarios.has(scenarioName);
+        chart.data.datasets.forEach((dataset) => {
+            const id = dataset._scenarioId || '';
+            dataset.hidden = !this.activeScenarios.has(id);
         });
 
         chart.update('none');
@@ -523,6 +547,16 @@ class ScenarioComparisonManager {
         Object.keys(this.charts).forEach(chartType => {
             this.updateChart(chartType);
         });
+    }
+
+    // Helpers
+    hexToRgba(hex, alpha) {
+        const m = hex.replace('#', '');
+        const bigint = parseInt(m.length === 3 ? m.split('').map(ch => ch + ch).join('') : m, 16);
+        const r = (bigint >> 16) & 255;
+        const g = (bigint >> 8) & 255;
+        const b = bigint & 255;
+        return `rgba(${r},${g},${b},${alpha})`;
     }
 
     // Placeholder methods for future functionality
@@ -542,8 +576,147 @@ class ScenarioComparisonManager {
     }
 
     createNewScenario() {
-        console.log('Creating new scenario - placeholder');
-        // TODO: Implement new scenario creation
+        // Enforce maximum of 5 scenarios total
+        if (this.scenarioConfigs.length >= 5) {
+            alert('⚠️ Maximal 5 Szenarien im Vergleich erlaubt.');
+            return;
+        }
+
+        // Derive a new scenario from conservative as baseline
+        const base = this.scenarioConfigs.find(s => s.id === 'conservative') || this.scenarioConfigs[0];
+        const existingCustom = this.scenarioConfigs.filter(s => s.id.startsWith('custom-')).length;
+        const newId = `custom-${existingCustom + 1}`;
+        const newIndex = this.scenarioConfigs.length + 1;
+        // Use same palette as Ansparphase (A-D), try C, then D, then E if present, else a fallback
+        const scColors = baseScenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
+        const colorOrder = ['C', 'D', 'E'];
+        const pick = colorOrder[existingCustom] || 'D';
+        const color = scColors[pick] || '#8e44ad';
+
+        const cloned = (arr) => arr.map(v => Math.round(v * (0.95 + Math.random() * 0.1)));
+
+        const newScenario = {
+            id: newId,
+            label: `✨ Szenario ${newIndex}`,
+            color,
+            params: {
+                budget: { ...base.params.budget },
+                accumulation: { ...base.params.accumulation },
+                withdrawal: { ...base.params.withdrawal },
+                results: { ...base.params.results }
+            },
+            lifecycleData: cloned(base.lifecycleData),
+            accumulationData: cloned(base.accumulationData),
+            withdrawalData: cloned(base.withdrawalData),
+            metricsData: base.metricsData.map(v => Math.max(1, Math.min(10, Math.round(v + (Math.random() * 2 - 1)))))
+        };
+
+        this.scenarioConfigs.push(newScenario);
+        this.activeScenarios.add(newScenario.id);
+
+        // UI: add selectable button before "+ Neues Szenario"
+        const chooser = document.querySelector('.scenario-chooser');
+        if (chooser) {
+            const newBtn = document.createElement('button');
+            newBtn.className = 'btn-scenario';
+            newBtn.setAttribute('data-scenario', newScenario.id);
+            newBtn.textContent = newScenario.label;
+            const addBtn = chooser.querySelector('.btn-scenario.btn-new');
+            chooser.insertBefore(newBtn, addBtn);
+            newBtn.addEventListener('click', () => this.selectScenario(newBtn));
+        }
+
+        // UI: add summary card
+        const cards = document.querySelector('.summary-cards');
+        if (cards) {
+            const card = document.createElement('div');
+            card.className = 'summary-card';
+            card.style.borderTop = `4px solid ${newScenario.color}`;
+            card.innerHTML = `
+                <h4>${newScenario.label}</h4>
+                <div class="kv-container">
+                    <div class="kv">
+                        <span class="k">Endvermögen</span><span class="v">${newScenario.params.results.finalWealth}</span>
+                        <span class="k">Ø Rendite</span><span class="v">${newScenario.params.accumulation.returnRate}%</span>
+                        <span class="k">Sparquote</span><span class="v">${newScenario.params.budget.savingsRate}%</span>
+                        <span class="k">Entnahmerate</span><span class="v">${newScenario.params.withdrawal.rate}%</span>
+                    </div>
+                    <div class="kv">
+                        <span class="k">Risikoprofil</span><span class="v">Mittel</span>
+                        <span class="k">Max. Drawdown</span><span class="v">${newScenario.params.results.maxDrawdown}%</span>
+                        <span class="k">Wahrsch. 30y Erfolg</span><span class="v">—</span>
+                    </div>
+                </div>`;
+            cards.appendChild(card);
+        }
+
+        // UI: add visibility checkbox
+        const vis = document.querySelector('.scenario-visibility');
+        if (vis) {
+            const label = document.createElement('label');
+            label.innerHTML = `<input type="checkbox" checked data-scenario="${newScenario.id}" />${newScenario.label}`;
+            vis.appendChild(label);
+        }
+
+        // Charts: rebuild with new datasets and respect activeScenarios
+        this.initializeCharts();
+        this.updateAllCharts();
+
+        // Table: add a new column for the scenario
+        this.addScenarioColumnToTable(newScenario);
+    }
+
+    addScenarioColumnToTable(sc) {
+        const table = document.getElementById('comparisonTable');
+        if (!table) return;
+
+        // Header
+        const headerRow = table.querySelector('thead tr');
+        if (headerRow) {
+            const th = document.createElement('th');
+            th.textContent = sc.label;
+            headerRow.appendChild(th);
+        }
+
+        // Increase group header colspan
+        table.querySelectorAll('tbody tr.group-header th[colspan]').forEach(th => {
+            const span = parseInt(th.getAttribute('colspan') || '3', 10);
+            th.setAttribute('colspan', String(span + 1));
+        });
+
+        // Map parameter names to values
+        const getValue = (row) => {
+            const category = row.getAttribute('data-category') || '';
+            const key = (row.querySelector('td')?.textContent || '').toLowerCase();
+            try {
+                if (category === 'budget') {
+                    if (key.includes('einkommen')) return String(sc.params.budget.income);
+                    if (key.includes('ausgaben')) return String(sc.params.budget.expenses);
+                    if (key.includes('sparquote')) return `${sc.params.budget.savingsRate}%`;
+                    if (key.includes('inflation')) return `${sc.params.budget.inflation}%`;
+                }
+                if (category === 'accumulation') {
+                    if (key.includes('rendite')) return `${sc.params.accumulation.returnRate}%`;
+                    if (key.includes('dauer')) return String(sc.params.accumulation.years);
+                    if (key.includes('monatl')) return new Intl.NumberFormat('de-DE').format(sc.params.accumulation.monthlySavings);
+                }
+                if (category === 'withdrawal') {
+                    if (key.includes('entnahmerate')) return `${sc.params.withdrawal.rate}%`;
+                    if (key.includes('dauer')) return String(sc.params.withdrawal.years);
+                }
+                if (category === 'results') {
+                    if (key.includes('endvermögen')) return sc.params.results.finalWealth;
+                    if (key.includes('drawdown')) return `${sc.params.results.maxDrawdown}%`;
+                }
+            } catch (_) { /* ignore */ }
+            return '—';
+        };
+
+        table.querySelectorAll('tbody tr:not(.group-header)').forEach(row => {
+            const td = document.createElement('td');
+            td.textContent = getValue(row);
+            row.appendChild(td);
+        });
     }
 }
 

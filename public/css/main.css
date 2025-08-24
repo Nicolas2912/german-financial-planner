@@ -1,0 +1,48 @@
+/*!
+ * German Financial Planner - Modular CSS Architecture
+ * 
+ * This is the main CSS entry point that imports all modules in the correct order.
+ * The modular structure provides better maintainability and organization.
+ * 
+ * Module Architecture:
+ * 1. Base - CSS Reset, Variables, Typography, Body styles
+ * 2. Layout - Container, Sections, Grids, Responsive layout
+ * 3. Components - Buttons, Inputs, Toggles, Cards, Interactive elements
+ * 4. Scenarios - Scenario comparison system, tabs, panels, results
+ * 5. Utilities - Animations, Modals, Tables, Helper classes
+ * 
+ * To modify styles:
+ * - Edit individual module files in /css/modules/
+ * - Never edit this file directly
+ * - Maintain the import order for proper CSS cascade
+ */
+
+/* =================================================================
+   BASE STYLES
+   Core foundational styles must be imported first
+   ================================================================= */
+@import url('modules/base.css');
+
+/* =================================================================
+   LAYOUT STYLES
+   Structural elements and positioning
+   ================================================================= */
+@import url('modules/layout.css');
+
+/* =================================================================
+   COMPONENT STYLES
+   Interactive elements and reusable components
+   ================================================================= */
+@import url('modules/components.css');
+
+/* =================================================================
+   SCENARIO SYSTEM
+   Scenario comparison and management features
+   ================================================================= */
+@import url('modules/scenarios.css');
+
+/* =================================================================
+   UTILITIES
+   Animations, modals, tables, and helper classes
+   ================================================================= */
+@import url('modules/utilities.css');

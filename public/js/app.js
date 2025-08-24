@@ -29,7 +29,7 @@ import {
     calculateBudget,
     calculateTaxes,
     calculateWithdrawal
-} from './ui/setup.js';
+} from './ui/setup/index.js';
 
 import { 
     updateScenarioResults,

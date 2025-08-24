@@ -6,7 +6,7 @@
  */
 
 import { formatGermanNumber, parseGermanNumber } from "../utils.js";
-import { setupScenarioInputListeners } from '../ui/setup.js';
+import { setupScenarioInputListeners } from '../ui/setup/setupScenarios.js';
 import * as state from '../state.js';
 
 // ===================================

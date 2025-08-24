@@ -5,7 +5,7 @@
  * that displays the breakdown of fixed expenses, variable expenses, and remaining budget.
  */
 
-import { formatCurrency } from '../utils/utils.js';
+import { formatCurrency } from '../utils.js';
 
 // Chart instance for budget pie chart
 let budgetPieChart = null;

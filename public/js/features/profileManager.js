@@ -5,7 +5,7 @@
  * and managing user budget profiles with localStorage persistence.
  */
 
-import { formatCurrency, parseGermanNumber, formatGermanNumber } from '../utils/utils.js';
+import { formatCurrency, parseGermanNumber, formatGermanNumber } from "../utils.js";
 import { calculateProfileTotalIncome, calculateProfileTotalExpenses } from '../core/budget.js';
 
 // Global variable to track selected profile for loading
@@ -280,20 +280,33 @@ export function closeLoadProfileModal() {
  * Load profiles for the modal display
  */
 export function loadProfilesForModal() {
+    console.log('loadProfilesForModal called');
+    
     const profileList = document.getElementById('loadProfileList');
+    if (!profileList) {
+        console.error('loadProfileList element not found in DOM');
+        return;
+    }
+    
     const profiles = [];
     
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key.startsWith('budgetProfile_')) {
-            const profileData = JSON.parse(localStorage.getItem(key));
-            profiles.push({
-                key: key,
-                name: key.replace('budgetProfile_', ''),
-                data: profileData
-            });
+            try {
+                const profileData = JSON.parse(localStorage.getItem(key));
+                profiles.push({
+                    key: key,
+                    name: key.replace('budgetProfile_', ''),
+                    data: profileData
+                });
+            } catch (error) {
+                console.error('Error parsing profile data for key:', key, error);
+            }
         }
     }
+
+    console.log('Found profiles:', profiles.length);
 
     if (profiles.length === 0) {
         profileList.innerHTML = `
@@ -303,6 +316,7 @@ export function loadProfilesForModal() {
                 <p>Erstellen Sie Ihr erstes Profil mit "Profil speichern".</p>
             </div>
         `;
+        console.log('No profiles found, showing empty state');
         return;
     }
 
@@ -313,7 +327,7 @@ export function loadProfilesForModal() {
         return dateB - dateA;
     });
 
-    profileList.innerHTML = profiles.map(profile => {
+    const htmlContent = profiles.map(profile => {
         const createdDate = profile.data.createdAt ? 
             new Date(profile.data.createdAt).toLocaleDateString('de-DE') : 
             'Unbekannt';
@@ -323,7 +337,7 @@ export function loadProfilesForModal() {
         const savingsAmount = profile.data.savings?.amount || 0;
         
         return `
-            <div class="load-profile-item" onclick="selectProfileForLoad('${escapeHtml(profile.name)}')">
+            <div class="load-profile-item" data-profile-name="${escapeHtml(profile.name)}">
                 <div class="profile-info">
                     <div class="profile-name">${escapeHtml(profile.data.name || profile.name)}</div>
                     <div class="profile-details">
@@ -339,6 +353,58 @@ export function loadProfilesForModal() {
             </div>
         `;
     }).join('');
+    
+    console.log('Generated HTML content length:', htmlContent.length);
+    console.log('Sample profile HTML (first 200 chars):', htmlContent.substring(0, 200));
+    
+    profileList.innerHTML = htmlContent;
+    
+    // Add event delegation for profile selection
+    setupProfileSelectionEvents();
+    
+    console.log('Profile list updated and events set up');
+}
+
+/**
+ * Setup event delegation for profile selection
+ */
+function setupProfileSelectionEvents() {
+    const profileList = document.getElementById('loadProfileList');
+    
+    if (!profileList) {
+        console.warn('loadProfileList element not found');
+        return;
+    }
+    
+    // Remove existing event listeners to prevent duplicates
+    profileList.removeEventListener('click', handleProfileClick);
+    
+    // Add event delegation
+    profileList.addEventListener('click', handleProfileClick);
+    
+    console.log('Profile selection events set up successfully');
+}
+
+/**
+ * Handle click events on profile items
+ * @param {Event} event - Click event
+ */
+function handleProfileClick(event) {
+    console.log('Profile click detected:', event.target);
+    
+    const profileItem = event.target.closest('.load-profile-item');
+    if (profileItem) {
+        const profileName = profileItem.dataset.profileName;
+        console.log('Profile name from dataset:', profileName);
+        
+        if (profileName) {
+            selectProfileForLoad(profileName);
+        } else {
+            console.error('No profile name found in dataset');
+        }
+    } else {
+        console.log('Click was not on a profile item');
+    }
 }
 
 /**
@@ -346,17 +412,37 @@ export function loadProfilesForModal() {
  * @param {string} profileName - Name of the profile to select
  */
 export function selectProfileForLoad(profileName) {
-    // Remove selection from all items
-    document.querySelectorAll('.load-profile-item').forEach(item => {
-        item.classList.remove('selected');
-    });
+    console.log('selectProfileForLoad called with:', profileName);
     
-    // Add selection to clicked item
-    event.target.closest('.load-profile-item').classList.add('selected');
-    selectedProfileForLoad = profileName;
+    if (!profileName) {
+        console.error('selectProfileForLoad: profileName is empty or undefined');
+        return;
+    }
     
-    // Load the profile immediately
-    loadSelectedProfile(profileName);
+    try {
+        // Remove selection from all items
+        document.querySelectorAll('.load-profile-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+        
+        // Add selection to the correct item by profile name
+        const targetItem = document.querySelector(`[data-profile-name="${profileName}"]`);
+        if (targetItem) {
+            targetItem.classList.add('selected');
+            console.log('Profile item selected successfully');
+        } else {
+            console.warn('Target profile item not found for:', profileName);
+        }
+        
+        selectedProfileForLoad = profileName;
+        
+        // Load the profile immediately
+        loadSelectedProfile(profileName);
+        
+    } catch (error) {
+        console.error('Error in selectProfileForLoad:', error);
+        showNotification('❌ Fehler beim Laden', 'Es gab einen Fehler beim Auswählen des Profils.', 'error');
+    }
 }
 
 /**
@@ -655,51 +741,16 @@ export function setupComparisonProfileSelection() {
             const scenarioId = e.target.dataset.scenario;
             const hasProfile = e.target.value !== '';
             
-            // Update buttons for this scenario
-            const scenarioPanel = document.querySelector(`[data-scenario="${scenarioId}"]`);
-            if (scenarioPanel) {
-                const applyCurrentBtn = scenarioPanel.querySelector('.apply-to-current');
-                const applyAllBtn = scenarioPanel.querySelector('.apply-to-all');
-                
-                if (applyCurrentBtn) applyCurrentBtn.disabled = !hasProfile;
-                if (applyAllBtn) applyAllBtn.disabled = !hasProfile;
-                
-                if (hasProfile) {
-                    // Immediately apply profile to current scenario
-                    applyProfileToScenario(e.target.value, scenarioId);
-                    showProfileSelectionStatusForScenario(scenarioId, 'success', `Profil "${e.target.options[e.target.selectedIndex].text}" wurde automatisch angewendet.`);
-                } else {
-                    hideProfileSelectionStatusForScenario(scenarioId);
-                }
+            if (hasProfile) {
+                // Immediately apply profile to current scenario
+                applyProfileToScenario(e.target.value, scenarioId);
+                showProfileSelectionStatusForScenario(scenarioId, 'success', `Profil "${e.target.options[e.target.selectedIndex].text}" wurde automatisch angewendet.`);
+            } else {
+                hideProfileSelectionStatusForScenario(scenarioId);
             }
         }
     });
     
-    // Setup button click listeners using event delegation
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('apply-to-current')) {
-            const scenarioId = e.target.dataset.scenario;
-            const profileSelect = document.querySelector(`[data-scenario="${scenarioId}"] .scenario-profile-select`);
-            if (profileSelect && profileSelect.value) {
-                applyProfileToScenario(profileSelect.value, scenarioId);
-            }
-        }
-        
-        if (e.target.classList.contains('apply-to-all')) {
-            const scenarioId = e.target.dataset.scenario;
-            const profileSelect = document.querySelector(`[data-scenario="${scenarioId}"] .scenario-profile-select`);
-            if (profileSelect && profileSelect.value) {
-                applyProfileToAllScenarios(profileSelect.value);
-            }
-        }
-        
-        if (e.target.classList.contains('refresh-profiles')) {
-            const scenarioId = e.target.dataset.scenario;
-            loadComparisonProfiles();
-            showProfileSelectionStatusForScenario(scenarioId, 'info', 'Profile wurden neu geladen.');
-            setTimeout(() => hideProfileSelectionStatusForScenario(scenarioId), 2000);
-        }
-    });
 }
 
 /**

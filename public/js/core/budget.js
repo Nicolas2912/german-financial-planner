@@ -5,7 +5,7 @@
  * including income, expenses, and savings calculations.
  */
 
-import { formatCurrency, parseGermanNumber } from '../utils/utils.js';
+import { formatCurrency, parseGermanNumber } from '../utils.js';
 
 /**
  * Convert expense amounts to monthly values based on period

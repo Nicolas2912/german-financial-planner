@@ -1,14 +1,35 @@
-// js/utils.js
-// Utility functions for German Financial Planner
+/**
+ * Utility Functions for German Financial Planner
+ * 
+ * This module contains utility functions for number formatting, parsing, and currency display
+ * that are used throughout the application.
+ */
 
-// Number formatting functions
+/**
+ * Format a number as currency with German locale
+ * 
+ * @param {number} amount - The amount to format
+ * @returns {string} Formatted currency string (e.g., "€1.234,56")
+ */
 export function formatCurrency(amount) {
+    // Handle null, undefined, or invalid values
+    if (amount === null || amount === undefined || typeof amount !== 'number' || isNaN(amount)) {
+        return '€0,00';
+    }
+    
     return '€' + amount.toLocaleString('de-DE', { 
         minimumFractionDigits: 2, 
         maximumFractionDigits: 2 
     });
 }
 
+/**
+ * Parse a German-formatted number string into a number
+ * Handles German decimal format with comma as decimal separator
+ * 
+ * @param {string|number} value - The value to parse
+ * @returns {number} Parsed number or 0 if invalid
+ */
 export function parseGermanNumber(value) {
     if (typeof value === 'number') return value;
     if (typeof value !== 'string') return 0;
@@ -19,6 +40,13 @@ export function parseGermanNumber(value) {
     return isNaN(parsed) ? 0 : parsed;
 }
 
+/**
+ * Format a number using German locale
+ * 
+ * @param {number} value - The number to format
+ * @param {number} decimals - Number of decimal places (default: 2)
+ * @returns {string} Formatted number string
+ */
 export function formatGermanNumber(value, decimals = 2) {
     if (typeof value !== 'number' || isNaN(value)) return '0';
     return value.toLocaleString('de-DE', { 
@@ -27,7 +55,12 @@ export function formatGermanNumber(value, decimals = 2) {
     });
 }
 
-// HTML escaping for security
+/**
+ * Escape HTML characters for security
+ * 
+ * @param {string} text - The text to escape
+ * @returns {string} HTML-escaped text
+ */
 export function escapeHtml(text) {
     const map = {
         '&': '&amp;',
@@ -39,7 +72,13 @@ export function escapeHtml(text) {
     return text.replace(/[&<>"']/g, function(m) { return map[m]; });
 }
 
-// Generic debounce function
+/**
+ * Debounce function to limit the rate at which a function can fire
+ * 
+ * @param {Function} func - The function to debounce
+ * @param {number} delay - The number of milliseconds to delay
+ * @returns {Function} The debounced function
+ */
 export function debounce(func, delay) {
     let timeoutId;
     return function (...args) {

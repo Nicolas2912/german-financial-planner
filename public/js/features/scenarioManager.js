@@ -5,7 +5,7 @@
  * switching, renaming, copying, and removing scenarios.
  */
 
-import { formatGermanNumber, parseGermanNumber } from '../utils/utils.js';
+import { formatGermanNumber, parseGermanNumber } from "../utils.js";
 import { setupScenarioInputListeners } from '../ui/setup.js';
 import * as state from '../state.js';
 

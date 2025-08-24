@@ -6,7 +6,7 @@
  */
 
 // Import utility functions
-import { parseGermanNumber, formatGermanNumber, formatCurrency } from '../utils/utils.js';
+import { parseGermanNumber, formatGermanNumber, formatCurrency } from '../utils.js';
 
 // Import tax calculation functions
 import { calculateGermanETFTax, calculateGermanNetSalary, resetETFTaxAllowance } from './tax.js';

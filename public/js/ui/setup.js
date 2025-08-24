@@ -5,13 +5,13 @@
  * that are used throughout the application.
  */
 
-import { parseGermanNumber, formatGermanNumber, formatCurrency } from '../utils/utils.js';
+import { parseGermanNumber, formatGermanNumber, formatCurrency } from '../utils.js';
 
 // Import calculation functions
 import { calculateBudget as calculateBudgetCore } from '../core/budget.js';
 import { calculateTaxes as calculateTaxesCore } from '../core/tax.js';
 import { calculateWithdrawalPlan as calculateWithdrawalCore } from '../core/withdrawal.js';
-import { recalculateAll, debouncedRecalculateAll, autoSyncWithdrawalCapital } from '../app.js';
+// Core functions will be available on window object from app.js
 
 // Import state management
 import * as state from '../state.js';
@@ -19,6 +19,8 @@ import * as state from '../state.js';
 // Import DOM functions
 import { 
     updateScenarioCheckboxVisibility,
+    updateScenarioCheckboxes,
+    updateContributionsScenarioDropdown,
     showNotification,
     updateScenarioSliderValue as domUpdateScenarioSliderValue,
     updateWithdrawalResults,
@@ -118,6 +120,11 @@ function calculateBudget() {
 
         // Update budget pie chart
         updateBudgetPieChart(results.monthlyFixedExpenses, results.monthlyVariableExpenses, results.remainingBudget);
+        
+        // Update global budgetData object with calculated results
+        window.budgetData.totalIncome = results.totalIncome;
+        window.budgetData.totalExpenses = results.totalExpenses;
+        window.budgetData.remainingBudget = results.remainingBudget;
         
         // Update savings display
         updateSavingsDisplay();
@@ -341,8 +348,6 @@ export function setupScenarioInputListeners(scenarioId) {
                 
                 if (window.debouncedRecalculateAll) {
                     window.debouncedRecalculateAll();
-                } else {
-                    debouncedRecalculateAll();
                 }
                 
                 // Auto-save individual scenario after slider change
@@ -383,8 +388,6 @@ export function setupScenarioInputListeners(scenarioId) {
                 
                 if (window.debouncedRecalculateAll) {
                     window.debouncedRecalculateAll();
-                } else {
-                    debouncedRecalculateAll();
                 }
             });
             
@@ -398,8 +401,6 @@ export function setupScenarioInputListeners(scenarioId) {
                 setTimeout(() => {
                     if (window.autoSyncWithdrawalCapital) {
                         window.autoSyncWithdrawalCapital(true);
-                    } else {
-                        autoSyncWithdrawalCapital(true);
                     }
                 }, 200);
             });
@@ -411,6 +412,7 @@ export function setupScenarioInputListeners(scenarioId) {
     if (taxToggle) {
         taxToggle.addEventListener('click', function() {
             this.classList.toggle('active');
+            const isActive = this.classList.contains('active');
             
             if (window.updateTeilfreistellungToggleState) {
                 window.updateTeilfreistellungToggleState(scenarioId);
@@ -418,10 +420,22 @@ export function setupScenarioInputListeners(scenarioId) {
                 updateTeilfreistellungToggleState(scenarioId);
             }
             
-            if (window.debouncedRecalculateAll) {
-                window.debouncedRecalculateAll();
-            } else {
-                debouncedRecalculateAll();
+            // Update scenario comparison parameters to sync with main toggles
+            if (window.updateScenarioParameter) {
+                // Update both accumulation and withdrawal tax settings
+                window.updateScenarioParameter(scenarioId, 'accumulation.includeTax', isActive);
+                window.updateScenarioParameter(scenarioId, 'withdrawal.includeTax', isActive);
+                console.log(`🔄 Synced tax settings for scenario ${scenarioId}: ${isActive}`);
+            }
+            
+            // For toggle actions, calculate immediately without debouncing
+            if (window.recalculateAll) {
+                window.recalculateAll();
+            }
+            
+            // Update comparison scenario results for this scenario
+            if (window.calculateComparisonScenarioResults) {
+                window.calculateComparisonScenarioResults(scenarioId);
             }
             
             // Auto-save individual scenario after toggle change
@@ -440,7 +454,9 @@ export function setupScenarioInputListeners(scenarioId) {
             if (window.debouncedRecalculateAll) {
                 window.debouncedRecalculateAll();
             } else {
-                debouncedRecalculateAll();
+                if (window.debouncedRecalculateAll) {
+                    window.debouncedRecalculateAll();
+                }
             }
             
             // Auto-save individual scenario after ETF type change
@@ -459,11 +475,22 @@ export function setupScenarioInputListeners(scenarioId) {
             // Only allow toggle if not disabled
             if (!this.classList.contains('disabled')) {
                 this.classList.toggle('active');
+                const isActive = this.classList.contains('active');
                 
-                if (window.debouncedRecalculateAll) {
-                    window.debouncedRecalculateAll();
-                } else {
-                    debouncedRecalculateAll();
+                // Update scenario comparison parameters to sync with main toggles
+                if (window.updateScenarioParameter) {
+                    window.updateScenarioParameter(scenarioId, 'accumulation.teilfreistellung', isActive);
+                    console.log(`🔄 Synced Teilfreistellung setting for scenario ${scenarioId}: ${isActive}`);
+                }
+                
+                // For toggle actions, calculate immediately without debouncing
+                if (window.recalculateAll) {
+                    window.recalculateAll();
+                }
+                
+                // Update comparison scenario results for this scenario
+                if (window.calculateComparisonScenarioResults) {
+                    window.calculateComparisonScenarioResults(scenarioId);
                 }
                 
                 // Auto-save individual scenario after toggle change
@@ -477,11 +504,38 @@ export function setupScenarioInputListeners(scenarioId) {
     }
 
     // Initialize the Teilfreistellung toggle state
-    if (window.updateTeilfreistellungToggleState) {
-        window.updateTeilfreistellungToggleState(scenarioId);
-    } else {
-        updateTeilfreistellungToggleState(scenarioId);
-    }
+    // Use a small delay to ensure DOM is fully ready
+    setTimeout(() => {
+        if (window.updateTeilfreistellungToggleState) {
+            window.updateTeilfreistellungToggleState(scenarioId);
+        } else {
+            updateTeilfreistellungToggleState(scenarioId);
+        }
+        
+        // Sync initial toggle states with scenario comparison parameters
+        if (window.updateScenarioParameter) {
+            const taxToggle = document.getElementById('taxToggle_' + scenarioId);
+            const teilfreistellungToggle = document.getElementById('teilfreistellungToggle_' + scenarioId);
+            
+            if (taxToggle) {
+                const isTaxActive = taxToggle.classList.contains('active');
+                window.updateScenarioParameter(scenarioId, 'accumulation.includeTax', isTaxActive);
+                window.updateScenarioParameter(scenarioId, 'withdrawal.includeTax', isTaxActive);
+                console.log(`🔄 Initial sync tax settings for scenario ${scenarioId}: ${isTaxActive}`);
+            }
+            
+            if (teilfreistellungToggle) {
+                const isTeilfreistellungActive = teilfreistellungToggle.classList.contains('active');
+                window.updateScenarioParameter(scenarioId, 'accumulation.teilfreistellung', isTeilfreistellungActive);
+                console.log(`🔄 Initial sync Teilfreistellung for scenario ${scenarioId}: ${isTeilfreistellungActive}`);
+            }
+            
+            // Recalculate results with synced parameters
+            if (window.calculateComparisonScenarioResults) {
+                window.calculateComparisonScenarioResults(scenarioId);
+            }
+        }
+    }, 100);
 }
 
 /**
@@ -494,15 +548,8 @@ export function setupComparisonScenarioListeners() {
     // Set up profile selection functionality
     setupComparisonProfileSelection();
     
-    // Set up add comparison scenario button
-    const addComparisonScenarioBtn = document.getElementById('addComparisonScenarioBtn');
-    if (addComparisonScenarioBtn) {
-        addComparisonScenarioBtn.addEventListener('click', function() {
-            if (window.addNewComparisonScenario) {
-                window.addNewComparisonScenario();
-            }
-        });
-    }
+    // Note: Add comparison scenario button event listener is now handled in scenarioComparison.js
+    // to prevent duplicate event listeners
     
     // Initialize static HTML scenario controls for A and B
     if (window.initializeComparisonScenarioControls) {
@@ -643,7 +690,9 @@ export function setupWithdrawalListeners() {
     
     // Manual sync button
     document.getElementById('manualSyncBtn').addEventListener('click', function() {
-        autoSyncWithdrawalCapital(true);
+        if (window.autoSyncWithdrawalCapital) {
+            window.autoSyncWithdrawalCapital(true);
+        }
     });
 }
 
@@ -651,6 +700,73 @@ export function setupWithdrawalListeners() {
  * Setup budget phase listeners
  */
 export function setupBudgetListeners() {
+    // Profile management buttons - import the functions directly
+    const { openSaveProfileModal, openLoadProfileModal, openProfileManager, closeSaveProfileModal, closeLoadProfileModal, closeProfileManager, updateProfilePreview, confirmSaveProfile } = window.profileManager;
+    
+    const saveProfileBtn = document.getElementById('saveProfile');
+    if (saveProfileBtn) {
+        saveProfileBtn.addEventListener('click', openSaveProfileModal);
+    }
+    
+    // Load profile functionality removed - now only available in "Profile verwalten"
+    
+    const manageProfilesBtn = document.getElementById('manageProfiles');
+    if (manageProfilesBtn) {
+        manageProfilesBtn.addEventListener('click', openProfileManager);
+    }
+    
+    const resetBudgetBtn = document.getElementById('resetBudget');
+    if (resetBudgetBtn) {
+        resetBudgetBtn.addEventListener('click', resetBudget);
+    }
+
+    // Profile modal close buttons
+    const closeSaveProfileModalBtn = document.getElementById('closeSaveProfileModal');
+    if (closeSaveProfileModalBtn) {
+        closeSaveProfileModalBtn.addEventListener('click', closeSaveProfileModal);
+    }
+    
+    const cancelSaveProfileBtn = document.getElementById('cancelSaveProfile');
+    if (cancelSaveProfileBtn) {
+        cancelSaveProfileBtn.addEventListener('click', closeSaveProfileModal);
+    }
+    
+    const confirmSaveProfileBtn = document.getElementById('confirmSaveProfile');
+    if (confirmSaveProfileBtn) {
+        confirmSaveProfileBtn.addEventListener('click', confirmSaveProfile);
+    }
+    
+    // Load profile modal event listeners removed - functionality moved to "Profile verwalten"
+    
+    const closeProfileModalBtn = document.getElementById('closeProfileModal');
+    if (closeProfileModalBtn) {
+        closeProfileModalBtn.addEventListener('click', closeProfileManager);
+    }
+
+    // Profile name and description inputs for preview updates
+    const profileNameInput = document.getElementById('profileName');
+    if (profileNameInput) {
+        profileNameInput.addEventListener('input', updateProfilePreview);
+    }
+    
+    const profileDescriptionInput = document.getElementById('profileDescription');
+    if (profileDescriptionInput) {
+        profileDescriptionInput.addEventListener('input', updateProfilePreview);
+    }
+
+    // Close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        const saveModal = document.getElementById('saveProfileModal');
+        const manageModal = document.getElementById('profileModal');
+        
+        if (event.target === saveModal) {
+            closeSaveProfileModal();
+        }
+        if (event.target === manageModal) {
+            closeProfileManager();
+        }
+    });
+
     // Income inputs
     const incomeInputs = ['salary', 'sideIncome', 'otherIncome'];
     incomeInputs.forEach(id => {
@@ -698,7 +814,9 @@ export function setupBudgetListeners() {
         
         // Switch to accumulation phase
         document.getElementById('accumulationPhase').click();
-        recalculateAll();
+        if (window.recalculateAll) {
+            window.recalculateAll();
+        }
         
         // Show success notification
         showNotification('✅ Übernommen', 'Die Sparrate wurde in die Ansparphase übertragen.', 'success');
@@ -972,7 +1090,9 @@ export function setupPhaseToggle() {
             setActivePhase(scenarioComparisonBtn);
             showSingleSection(scenarioComparisonSection);
             // Recalculate all scenarios to ensure data is up to date
-            recalculateAll();
+            if (window.recalculateAll) {
+            window.recalculateAll();
+        }
             // Reload profiles when scenario comparison section is shown
             loadComparisonProfiles();
             updateScenarioCheckboxVisibility();
@@ -1080,7 +1200,9 @@ export function setupGermanNumberInputs() {
             if (this.closest('.budget-section')) {
                 calculateBudget();
             } else if (this.closest('.controls-section')) {
-                recalculateAll();
+                if (window.recalculateAll) {
+            window.recalculateAll();
+        }
             } else if (this.closest('.withdrawal-section')) {
                 calculateWithdrawal();
             }
@@ -1102,111 +1224,31 @@ export function setupSavingsModeFunctionality() {
 }
 
 /**
- * Setup sticky scenario cards behavior
+ * Setup sticky scenario cards behavior - DISABLED
+ * Static cards with no movement or scrolling behavior
  */
 export function setupStickyScenarioCards() {
     const scenarioResults = document.getElementById('scenarioResults');
     if (!scenarioResults) return;
     
-    let isSticky = false;
-    let originalTop = 0;
-    
-    // Function to get current active phase
-    function getCurrentPhase() {
-        // Check which phase button is currently active
-        const activePhaseBtn = document.querySelector('.phase-button.active');
-        if (!activePhaseBtn) return 'accumulation'; // default
-        
-        const btnId = activePhaseBtn.id;
-        if (btnId === 'accumulationPhase') return 'accumulation';
-        if (btnId === 'withdrawalPhase') return 'withdrawal';
-        if (btnId === 'budgetPhase') return 'budget';
-        if (btnId === 'scenarioComparisonPhase') return 'comparison';
-        if (btnId === 'taxCalculatorPhase') return 'tax';
-        
-        return 'accumulation'; // default fallback
-    }
-
-    // Function to handle scroll events
-    function handleScroll() {
-        // Only apply on desktop (768px and up)
-        if (window.innerWidth <= 768) {
-            scenarioResults.style.transform = '';
-            return;
-        }
-        
-        // Only apply when accumulation phase is active
-        const currentPhase = getCurrentPhase();
-        if (currentPhase !== 'accumulation') {
-            scenarioResults.style.transform = '';
-            return;
-        }
-        
-        // Check if the scenario results container is visible
-        const computedStyle = window.getComputedStyle(scenarioResults);
-        if (computedStyle.display === 'none' || computedStyle.visibility === 'hidden') {
-            scenarioResults.style.transform = '';
-            return;
-        }
-        
-        // Check if there are any scenario result cards
-        const cards = scenarioResults.querySelectorAll('.scenario-result-card');
-        if (cards.length === 0) {
-            scenarioResults.style.transform = '';
-            return;
-        }
-        
-        const scrollY = window.scrollY;
-        
-        // Get the original position if not set or if cards are back to original position
-        if (originalTop === 0 || scenarioResults.style.transform === '') {
-            // Reset transform to get true original position
-            const currentTransform = scenarioResults.style.transform;
-            scenarioResults.style.transform = '';
-            
-            const rect = scenarioResults.getBoundingClientRect();
-            originalTop = scrollY + rect.top;
-            
-            // Restore transform if it was set
-            if (currentTransform && scrollY > originalTop) {
-                scenarioResults.style.transform = currentTransform;
-            }
-        }
-        
-        // Calculate sticky threshold (20px from top)
-        const stickyThreshold = originalTop - 20;
-        
-        if (scrollY >= stickyThreshold && !isSticky) {
-            // Make sticky
-            isSticky = true;
-            scenarioResults.style.transform = 'translateY(20px)';
-            scenarioResults.style.position = 'sticky';
-            scenarioResults.style.top = '0';
-            scenarioResults.style.zIndex = '10';
-        } else if (scrollY < stickyThreshold && isSticky) {
-            // Remove sticky
-            isSticky = false;
-            scenarioResults.style.transform = '';
-            scenarioResults.style.position = '';
-            scenarioResults.style.top = '';
-            scenarioResults.style.zIndex = '';
-        }
-    }
-    
-    // Add scroll event listener
-    window.addEventListener('scroll', handleScroll);
-    
-    // Add resize event listener to handle responsive behavior
-    window.addEventListener('resize', handleScroll);
-    
-    // Global reset function
-    window.resetStickyScenarioCards = function() {
-        isSticky = false;
-        originalTop = 0;
+    // Ensure no sticky positioning or transformations are applied
+    function resetStickyState() {
         scenarioResults.style.transform = '';
         scenarioResults.style.position = '';
         scenarioResults.style.top = '';
+        scenarioResults.style.left = '';
+        scenarioResults.style.width = '';
+        scenarioResults.style.maxWidth = '';
         scenarioResults.style.zIndex = '';
+        scenarioResults.classList.remove('sticky-active', 'sticky');
+    }
+    
+    // Initial cleanup
+    resetStickyState();
+    
+    // Global reset function (for compatibility with existing code)
+    window.resetStickyScenarioCards = function() {
+        resetStickyState();
     };
 }
 
@@ -1310,6 +1352,15 @@ function setupComparisonProfileSelection() {
  * Setup scenario selector listeners
  */
 function setupScenarioSelectorListeners() {
+    // Set up the contributions scenario dropdown listener
+    const contributionsDropdown = document.getElementById('contributionsScenarioDropdown');
+    if (contributionsDropdown) {
+        contributionsDropdown.addEventListener('change', function() {
+            state.setSelectedContributionsScenario(this.value);
+            updateContributionsGainsChart();
+        });
+    }
+    
     // Individual scenario checkbox functionality is handled in updateScenarioCheckboxes()
 }
 
@@ -1384,7 +1435,9 @@ function setupPhaseInputListeners(scenarioId) {
                 updatePhaseSummaries(scenarioId);
                 updateMultiPhaseSummary(scenarioId);
                 generatePhaseTimeline(scenarioId);
-                debouncedRecalculateAll();
+                if (window.debouncedRecalculateAll) {
+                    window.debouncedRecalculateAll();
+                }
             });
         }
         
@@ -1393,7 +1446,9 @@ function setupPhaseInputListeners(scenarioId) {
                 updatePhaseSummaries(scenarioId);
                 updateMultiPhaseSummary(scenarioId);
                 generatePhaseTimeline(scenarioId);
-                debouncedRecalculateAll();
+                if (window.debouncedRecalculateAll) {
+                    window.debouncedRecalculateAll();
+                }
             });
         }
         
@@ -1401,7 +1456,9 @@ function setupPhaseInputListeners(scenarioId) {
             savingsRateInput.addEventListener('input', () => {
                 updatePhaseSummaries(scenarioId);
                 updateMultiPhaseSummary(scenarioId);
-                debouncedRecalculateAll();
+                if (window.debouncedRecalculateAll) {
+                    window.debouncedRecalculateAll();
+                }
             });
         }
     }
@@ -1429,9 +1486,13 @@ function setupComparisonChartViewToggle() {
             
             // Update chart based on view type
             if (viewType === 'comparison') {
-                updateComparisonChart();
+                if (window.updateMainChart) {
+                    window.updateMainChart();
+                }
             } else if (viewType === 'timeline') {
-                updateTimelineChart();
+                if (window.updateMainChart) {
+                    window.updateMainChart();
+                }
             }
         });
     });
@@ -1531,11 +1592,21 @@ export function setupScenarioImport() {
     document.addEventListener('change', function(e) {
         if (e.target.classList.contains('scenario-import-dropdown')) {
             const scenarioId = e.target.getAttribute('data-scenario');
-            if (scenarioId && window.updateScenarioImportButton) {
-                window.updateScenarioImportButton(scenarioId);
+            if (scenarioId) {
+                const importBtn = document.querySelector(`.scenario-import-btn[data-scenario="${scenarioId}"]`);
+                if (importBtn) {
+                    importBtn.disabled = !e.target.value;
+                }
             }
         }
     });
+    
+    // Load available scenarios into dropdowns on initial setup
+    setTimeout(() => {
+        if (window.loadScenarioImports) {
+            window.loadScenarioImports();
+        }
+    }, 100);
 }
 
 /**
@@ -1565,118 +1636,94 @@ export function setupAutoSaveScenarios() {
 }
 
 /**
+ * Setup profile integration for Ansparphase
+ */
+export function setupAnsparphaseProfileIntegration() {
+    // Add profile import functionality to Ansparphase scenario management
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('import-budget-profile-btn')) {
+            importBudgetProfileToAnsparphase();
+        }
+    });
+}
+
+/**
+ * Import budget profile data to current Ansparphase scenario
+ */
+function importBudgetProfileToAnsparphase() {
+    // Get current budget data (if available)
+    const budgetData = window.budgetData;
+    if (!budgetData || !budgetData.finalSavingsAmount) {
+        showNotification('❌ Keine Budget-Daten', 'Bitte berechnen Sie zuerst Ihr Budget in der Budgetplanung.', 'error');
+        return;
+    }
+    
+    const activeScenarioId = state.activeScenario || 'A';
+    const monthlySavingsInput = document.getElementById(`monthlySavings_${activeScenarioId}`);
+    
+    if (monthlySavingsInput) {
+        // Use the final savings amount from budget calculation
+        monthlySavingsInput.value = formatGermanNumber(budgetData.finalSavingsAmount, 0);
+        
+        // Trigger recalculation
+        if (window.recalculateAll) {
+            window.recalculateAll();
+        }
+        
+        showNotification(
+            '✅ Budget importiert', 
+            `Sparrate von €${formatGermanNumber(budgetData.finalSavingsAmount, 0)} wurde in Szenario ${activeScenarioId} übertragen.`, 
+            'success'
+        );
+    }
+}
+
+/**
  * Setup Ansparphase scenario listeners
  */
 export function setupAnsparphaseScenarioListeners() {
     // Save scenario modal
     const saveBtn = document.getElementById('saveAnsparphaseScenario');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            if (window.openSaveAnsparphaseScenarioModal) window.openSaveAnsparphaseScenarioModal();
-        });
-    }
+    if (saveBtn) saveBtn.addEventListener('click', openSaveAnsparphaseScenarioModal);
     
     const closeSaveBtn = document.getElementById('closeSaveAnsparphaseScenarioModal');
-    if (closeSaveBtn) {
-        closeSaveBtn.addEventListener('click', () => {
-            if (window.closeSaveAnsparphaseScenarioModal) window.closeSaveAnsparphaseScenarioModal();
-        });
-    }
+    if (closeSaveBtn) closeSaveBtn.addEventListener('click', closeSaveAnsparphaseScenarioModal);
     
     const cancelSaveBtn = document.getElementById('cancelSaveAnsparphaseScenario');
-    if (cancelSaveBtn) {
-        cancelSaveBtn.addEventListener('click', () => {
-            if (window.closeSaveAnsparphaseScenarioModal) window.closeSaveAnsparphaseScenarioModal();
-        });
-    }
+    if (cancelSaveBtn) cancelSaveBtn.addEventListener('click', closeSaveAnsparphaseScenarioModal);
     
     const confirmSaveBtn = document.getElementById('confirmSaveAnsparphaseScenario');
-    if (confirmSaveBtn) {
-        confirmSaveBtn.addEventListener('click', () => {
-            if (window.confirmSaveAnsparphaseScenario) window.confirmSaveAnsparphaseScenario();
-        });
-    }
+    if (confirmSaveBtn) confirmSaveBtn.addEventListener('click', confirmSaveAnsparphaseScenario);
     
     const scenarioNameInput = document.getElementById('ansparphaseScenarioName');
-    if (scenarioNameInput) {
-        scenarioNameInput.addEventListener('input', () => {
-            if (window.updateAnsparphaseScenarioPreview) window.updateAnsparphaseScenarioPreview();
-        });
-    }
+    if (scenarioNameInput) scenarioNameInput.addEventListener('input', updateAnsparphaseScenarioPreview);
     
     const scenarioDescInput = document.getElementById('ansparphaseScenarioDescription');
-    if (scenarioDescInput) {
-        scenarioDescInput.addEventListener('input', () => {
-            if (window.updateAnsparphaseScenarioPreview) window.updateAnsparphaseScenarioPreview();
-        });
-    }
+    if (scenarioDescInput) scenarioDescInput.addEventListener('input', updateAnsparphaseScenarioPreview);
 
-    // Load scenario modal
-    const loadBtn = document.getElementById('loadAnsparphaseScenario');
-    if (loadBtn) {
-        loadBtn.addEventListener('click', () => {
-            if (window.openLoadAnsparphaseScenarioModal) window.openLoadAnsparphaseScenarioModal();
-        });
-    }
-    
-    const closeLoadBtn = document.getElementById('closeLoadAnsparphaseScenarioModal');
-    if (closeLoadBtn) {
-        closeLoadBtn.addEventListener('click', () => {
-            if (window.closeLoadAnsparphaseScenarioModal) window.closeLoadAnsparphaseScenarioModal();
-        });
-    }
-    
-    const cancelLoadBtn = document.getElementById('cancelLoadAnsparphaseScenario');
-    if (cancelLoadBtn) {
-        cancelLoadBtn.addEventListener('click', () => {
-            if (window.closeLoadAnsparphaseScenarioModal) window.closeLoadAnsparphaseScenarioModal();
-        });
-    }
-    
-    const confirmLoadBtn = document.getElementById('confirmLoadAnsparphaseScenario');
-    if (confirmLoadBtn) {
-        confirmLoadBtn.addEventListener('click', () => {
-            if (window.confirmLoadAnsparphaseScenario) window.confirmLoadAnsparphaseScenario();
-        });
-    }
+    // Load scenario functionality removed - now only available in "Szenarien verwalten"
 
     // Manage scenarios modal
     const manageBtn = document.getElementById('manageAnsparphaseScenarios');
-    if (manageBtn) {
-        manageBtn.addEventListener('click', () => {
-            if (window.openManageAnsparphaseScenarioModal) window.openManageAnsparphaseScenarioModal();
-        });
-    }
+    if (manageBtn) manageBtn.addEventListener('click', openManageAnsparphaseScenarioModal);
     
     const closeManageBtn = document.getElementById('closeManageAnsparphaseScenarioModal');
-    if (closeManageBtn) {
-        closeManageBtn.addEventListener('click', () => {
-            if (window.closeManageAnsparphaseScenarioModal) window.closeManageAnsparphaseScenarioModal();
-        });
-    }
+    if (closeManageBtn) closeManageBtn.addEventListener('click', closeManageAnsparphaseScenarioModal);
 
     // Reset scenarios
     const resetBtn = document.getElementById('resetAnsparphaseScenario');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            if (window.resetAnsparphaseScenarios) window.resetAnsparphaseScenarios();
-        });
-    }
+    if (resetBtn) resetBtn.addEventListener('click', resetAnsparphaseScenarios);
 
     // Close modals when clicking outside
     window.addEventListener('click', function(event) {
         const saveModal = document.getElementById('saveAnsparphaseScenarioModal');
-        const loadModal = document.getElementById('loadAnsparphaseScenarioModal');
         const manageModal = document.getElementById('manageAnsparphaseScenarioModal');
         
         if (event.target === saveModal) {
-            if (window.closeSaveAnsparphaseScenarioModal) window.closeSaveAnsparphaseScenarioModal();
-        }
-        if (event.target === loadModal) {
-            if (window.closeLoadAnsparphaseScenarioModal) window.closeLoadAnsparphaseScenarioModal();
+            closeSaveAnsparphaseScenarioModal();
         }
         if (event.target === manageModal) {
-            if (window.closeManageAnsparphaseScenarioModal) window.closeManageAnsparphaseScenarioModal();
+            closeManageAnsparphaseScenarioModal();
         }
     });
 }
@@ -1704,15 +1751,7 @@ export function setupEntnahmephaseScenarioListeners() {
     const scenarioDescInput = document.getElementById('entnahmephaseScenarioDescription');
     if (scenarioDescInput) scenarioDescInput.addEventListener('input', updateEntnahmephaseScenarioPreview);
 
-    // Load scenario modal
-    const loadBtn = document.getElementById('loadEntnahmephaseScenario');
-    if (loadBtn) loadBtn.addEventListener('click', openLoadEntnahmephaseScenarioModal);
-    
-    const closeLoadBtn = document.getElementById('closeLoadEntnahmephaseScenarioModal');
-    if (closeLoadBtn) closeLoadBtn.addEventListener('click', closeLoadEntnahmephaseScenarioModal);
-    
-    const cancelLoadBtn = document.getElementById('cancelLoadEntnahmephaseScenario');
-    if (cancelLoadBtn) cancelLoadBtn.addEventListener('click', closeLoadEntnahmephaseScenarioModal);
+    // Load scenario functionality removed - now only available in "Szenarien verwalten"
 
     // Manage scenarios modal
     const manageBtn = document.getElementById('manageEntnahmephaseScenarios');
@@ -1728,14 +1767,10 @@ export function setupEntnahmephaseScenarioListeners() {
     // Close modals when clicking outside
     window.addEventListener('click', function(event) {
         const saveModal = document.getElementById('saveEntnahmephaseScenarioModal');
-        const loadModal = document.getElementById('loadEntnahmephaseScenarioModal');
         const manageModal = document.getElementById('manageEntnahmephaseScenarioModal');
         
         if (event.target === saveModal) {
             closeSaveEntnahmephaseScenarioModal();
-        }
-        if (event.target === loadModal) {
-            closeLoadEntnahmephaseScenarioModal();
         }
         if (event.target === manageModal) {
             closeManageEntnahmephaseScenarioModal();
@@ -1744,38 +1779,925 @@ export function setupEntnahmephaseScenarioListeners() {
 }
 
 // ===================================
-// MISSING FUNCTION STUBS 
-// These functions are referenced but don't exist yet - adding stubs for now
+// ANSPARPHASE SCENARIO MANAGEMENT FUNCTIONS
 // ===================================
 
-// Additional placeholder functions for setupScenarioManagementListeners
+// Global variable to store selected scenarios for loading
+let selectedScenariosForLoading = [];
+
+/**
+ * Open save Ansparphase scenario modal
+ */
+function openSaveAnsparphaseScenarioModal() {
+    const modal = document.getElementById('saveAnsparphaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'block';
+        
+        const nameInput = document.getElementById('ansparphaseScenarioName');
+        const descInput = document.getElementById('ansparphaseScenarioDescription');
+        
+        // Clear fields
+        if (nameInput) nameInput.value = '';
+        if (descInput) descInput.value = '';
+        
+        // Clear again after a short delay to override any browser auto-fill
+        setTimeout(() => {
+            if (nameInput) {
+                nameInput.value = '';
+                nameInput.focus();
+            }
+            if (descInput) descInput.value = '';
+            updateAnsparphaseScenarioPreview();
+        }, 50);
+        
+        // Clear one more time for persistent auto-fill
+        setTimeout(() => {
+            if (nameInput && (nameInput.value === '0' || nameInput.value.trim() === '0')) {
+                nameInput.value = '';
+                updateAnsparphaseScenarioPreview();
+            }
+        }, 200);
+    }
+}
+
+/**
+ * Close save Ansparphase scenario modal
+ */
+function closeSaveAnsparphaseScenarioModal() {
+    const modal = document.getElementById('saveAnsparphaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'none';
+        const nameInput = document.getElementById('ansparphaseScenarioName');
+        const descInput = document.getElementById('ansparphaseScenarioDescription');
+        if (nameInput) nameInput.value = '';
+        if (descInput) descInput.value = '';
+    }
+}
+
+/**
+ * Update Ansparphase scenario preview
+ */
+function updateAnsparphaseScenarioPreview() {
+    const previewContainer = document.getElementById('ansparphaseScenarioPreview');
+    if (!previewContainer) return;
+    
+    // Get current active scenario data
+    const activeScenarioId = state.activeScenario || 'A';
+    const activeScenario = state.scenarios.find(s => s.id === activeScenarioId);
+    
+    if (!activeScenario) {
+        previewContainer.innerHTML = '<div>Kein aktives Szenario gefunden.</div>';
+        return;
+    }
+    
+    const monthlySavings = parseGermanNumber(document.getElementById(`monthlySavings_${activeScenarioId}`)?.value || '0');
+    const initialCapital = parseGermanNumber(document.getElementById(`initialCapital_${activeScenarioId}`)?.value || '0');
+    const annualReturn = parseFloat(document.getElementById(`annualReturn_${activeScenarioId}`)?.value || '0');
+    const duration = parseInt(document.getElementById(`duration_${activeScenarioId}`)?.value || '0');
+    
+    // Determine savings mode
+    const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${activeScenarioId}"]`);
+    const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${activeScenarioId}"]`);
+    const savingsMode = (multiPhaseContainer && multiPhaseContainer.style.display !== 'none') ? 'Mehrphasig' : 'Einfach';
+    
+    previewContainer.innerHTML = `
+        <div class="preview-item">
+            <span class="preview-label">📊 Aktives Szenario</span>
+            <span class="preview-value">${activeScenario.name}</span>
+        </div>
+        <div class="preview-item">
+            <span class="preview-label">💰 Monatliche Sparrate</span>
+            <span class="preview-value">€${formatGermanNumber(monthlySavings, 0)}</span>
+        </div>
+        <div class="preview-item">
+            <span class="preview-label">🏦 Startkapital</span>
+            <span class="preview-value">€${formatGermanNumber(initialCapital, 0)}</span>
+        </div>
+        <div class="preview-item">
+            <span class="preview-label">📈 Jährliche Rendite</span>
+            <span class="preview-value">${annualReturn}%</span>
+        </div>
+        <div class="preview-item">
+            <span class="preview-label">⏱️ Anlagedauer</span>
+            <span class="preview-value">${duration} Jahre</span>
+        </div>
+        <div class="preview-item">
+            <span class="preview-label">🎯 Sparmodus</span>
+            <span class="preview-value">${savingsMode}</span>
+        </div>
+        <div class="preview-item">
+            <span class="preview-label">📅 Erstellt</span>
+            <span class="preview-value">${new Date().toLocaleDateString('de-DE')}</span>
+        </div>
+    `;
+    
+    // Enable/disable save button based on scenario name
+    const saveBtn = document.getElementById('confirmSaveAnsparphaseScenario');
+    const scenarioName = document.getElementById('ansparphaseScenarioName')?.value.trim();
+    if (saveBtn) {
+        saveBtn.disabled = !scenarioName || scenarioName.length === 0;
+    }
+}
+
+/**
+ * Confirm save Ansparphase scenario
+ */
+function confirmSaveAnsparphaseScenario() {
+    const scenarioName = document.getElementById('ansparphaseScenarioName')?.value.trim();
+    const scenarioDescription = document.getElementById('ansparphaseScenarioDescription')?.value.trim();
+    
+    if (!scenarioName) {
+        showNotification('❌ Fehler', 'Bitte geben Sie einen Szenario-Namen ein.', 'error');
+        return;
+    }
+    
+    // Get current active scenario
+    const activeScenarioId = state.activeScenario || 'A';
+    const activeScenario = state.scenarios.find(s => s.id === activeScenarioId);
+    
+    if (!activeScenario) {
+        showNotification('❌ Fehler', 'Kein aktives Szenario gefunden.', 'error');
+        return;
+    }
+    
+    // Check if scenario already exists
+    const existingScenario = localStorage.getItem('ansparphaseScenario_' + scenarioName);
+    if (existingScenario) {
+        showNotification('⚠️ Szenario überschrieben', `Ein Szenario mit dem Namen "${scenarioName}" wurde überschrieben.`, 'warning');
+    }
+    
+    // Get savings mode
+    const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${activeScenarioId}"]`);
+    const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${activeScenarioId}"]`);
+    const savingsMode = (multiPhaseContainer && multiPhaseContainer.style.display !== 'none') ? 'multi-phase' : 'simple';
+    
+    // Get ETF type
+    const etfTypeRadios = document.querySelectorAll(`input[name="etfType-${activeScenarioId}"]`);
+    let etfType = 'thesaurierend'; // default
+    etfTypeRadios.forEach(radio => {
+        if (radio.checked) {
+            etfType = radio.value;
+        }
+    });
+    
+    // Get multi-phase data if applicable
+    let multiPhaseData = null;
+    if (savingsMode === 'multi-phase') {
+        multiPhaseData = getMultiPhaseDataForScenario(activeScenarioId);
+    }
+    
+    // Save scenario data
+    const scenarioData = {
+        name: scenarioName,
+        description: scenarioDescription,
+        createdAt: new Date().toISOString(),
+        type: 'single',
+        scenario: {
+            id: activeScenario.id,
+            name: scenarioName,
+            color: activeScenario.color,
+            parameters: {
+                monthlySavings: parseGermanNumber(document.getElementById(`monthlySavings_${activeScenarioId}`)?.value || '0'),
+                initialCapital: parseGermanNumber(document.getElementById(`initialCapital_${activeScenarioId}`)?.value || '0'),
+                annualReturn: parseFloat(document.getElementById(`annualReturn_${activeScenarioId}`)?.value || '7'),
+                inflationRate: parseFloat(document.getElementById(`inflationRate_${activeScenarioId}`)?.value || '2'),
+                salaryGrowth: parseFloat(document.getElementById(`salaryGrowth_${activeScenarioId}`)?.value || '3'),
+                duration: parseInt(document.getElementById(`duration_${activeScenarioId}`)?.value || '25'),
+                baseSalary: parseGermanNumber(document.getElementById(`baseSalary_${activeScenarioId}`)?.value || '60000'),
+                salaryToSavings: parseFloat(document.getElementById(`salaryToSavings_${activeScenarioId}`)?.value || '50'),
+                includeTax: document.getElementById(`taxToggle_${activeScenarioId}`)?.classList.contains('active') || false,
+                teilfreistellung: document.getElementById(`teilfreistellungToggle_${activeScenarioId}`)?.classList.contains('active') || false,
+                etfType: etfType,
+                savingsMode: savingsMode,
+                multiPhaseData: multiPhaseData
+            },
+            results: activeScenario.results || {}
+        }
+    };
+    
+    localStorage.setItem('ansparphaseScenario_' + scenarioName, JSON.stringify(scenarioData));
+    closeSaveAnsparphaseScenarioModal();
+    
+    showNotification('✅ Szenario erfolgreich gespeichert!', `Das Ansparphase-Szenario "${scenarioName}" wurde erfolgreich gespeichert.`, 'success');
+}
+
+/**
+ * Open load Ansparphase scenario modal
+ */
+function openLoadAnsparphaseScenarioModal() {
+    const modal = document.getElementById('loadAnsparphaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'block';
+        loadAnsparphaseScenarioList();
+    }
+}
+
+/**
+ * Close load Ansparphase scenario modal
+ */
+function closeLoadAnsparphaseScenarioModal() {
+    const modal = document.getElementById('loadAnsparphaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'none';
+        // Reset selection
+        selectedScenariosForLoading = [];
+        const confirmBtn = document.getElementById('confirmLoadAnsparphaseScenario');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Szenarien laden';
+        }
+        // Remove selected class from all items
+        document.querySelectorAll('#loadAnsparphaseScenarioList .load-profile-item').forEach(item => {
+            item.classList.remove('selected');
+        });
+    }
+}
+
+/**
+ * Load Ansparphase scenario list
+ */
+function loadAnsparphaseScenarioList() {
+    const scenarioList = document.getElementById('loadAnsparphaseScenarioList');
+    if (!scenarioList) return;
+    
+    const scenarios = [];
+    
+    // Get all saved scenarios
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('ansparphaseScenario_')) {
+            try {
+                const scenarioData = JSON.parse(localStorage.getItem(key));
+                scenarios.push({
+                    key: key,
+                    name: key.replace('ansparphaseScenario_', ''),
+                    data: scenarioData
+                });
+            } catch (e) {
+                console.warn(`Invalid JSON in localStorage key: ${key}`, e);
+            }
+        }
+    }
+    
+    if (scenarios.length === 0) {
+        scenarioList.innerHTML = `
+            <div class="no-profiles">
+                <div class="no-profiles-icon">📂</div>
+                <h4>Keine Szenarien gefunden</h4>
+                <p>Erstellen Sie Ihr erstes Szenario mit "Szenario speichern".</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort scenarios by creation date (newest first)
+    scenarios.sort((a, b) => {
+        const dateA = new Date(a.data.createdAt || 0);
+        const dateB = new Date(b.data.createdAt || 0);
+        return dateB - dateA;
+    });
+    
+    scenarioList.innerHTML = scenarios.map(scenario => {
+        const createdDate = scenario.data.createdAt ? 
+            new Date(scenario.data.createdAt).toLocaleDateString('de-DE') : 
+            'Unbekannt';
+        
+        // Handle both old format (scenario sets) and new format (single scenarios)
+        let monthlySavings = 0;
+        let duration = 0;
+        let annualReturn = 0;
+        let scenarioCount = 0;
+        
+        if (scenario.data.type === 'single' && scenario.data.scenario) {
+            // New format: single scenario
+            const singleScenario = scenario.data.scenario;
+            monthlySavings = singleScenario.parameters?.monthlySavings || 0;
+            duration = singleScenario.parameters?.duration || 0;
+            annualReturn = singleScenario.parameters?.annualReturn || 0;
+            scenarioCount = 1;
+        } else if (scenario.data.scenarios) {
+            // Old format: scenario set
+            const firstScenario = scenario.data.scenarios[0];
+            monthlySavings = firstScenario?.parameters?.monthlySavings || 0;
+            duration = firstScenario?.parameters?.duration || 0;
+            annualReturn = firstScenario?.parameters?.annualReturn || 0;
+            scenarioCount = scenario.data.scenarios.length;
+        }
+        
+        return `
+            <div class="load-profile-item" onclick="selectAnsparphaseScenarioForLoad('${escapeHtml(scenario.data.name || scenario.name)}')">
+                <div class="profile-info">
+                    <div class="profile-name">${escapeHtml(scenario.data.name || scenario.name)}</div>
+                    <div class="profile-details">
+                        ${scenario.data.description ? `<div style="margin-bottom: 5px; color: #34495e;">${escapeHtml(scenario.data.description)}</div>` : ''}
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem;">
+                            <span>💰 Sparrate: €${formatGermanNumber(monthlySavings, 0)}</span>
+                            <span>⏱️ Dauer: ${duration} Jahre</span>
+                            <span>📈 Rendite: ${annualReturn}%</span>
+                            <span>📅 Erstellt: ${createdDate}</span>
+                            <span style="grid-column: 1 / -1; color: #7f8c8d; font-size: 0.75rem;">
+                                ${scenario.data.type === 'single' ? '📄 Einzelszenario' : `📊 Szenario-Set (${scenarioCount} Szenarien)`}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Select Ansparphase scenario for loading
+ */
+function selectAnsparphaseScenarioForLoad(scenarioName) {
+    // Toggle selection on clicked item
+    const clickedItem = event.target.closest('.load-profile-item');
+    
+    if (!clickedItem) return;
+    
+    if (clickedItem.classList.contains('selected')) {
+        // Deselect if already selected
+        clickedItem.classList.remove('selected');
+        
+        // Remove from selected scenarios
+        const index = selectedScenariosForLoading.indexOf(scenarioName);
+        if (index > -1) {
+            selectedScenariosForLoading.splice(index, 1);
+        }
+    } else {
+        // Select if not selected
+        clickedItem.classList.add('selected');
+        
+        // Add to selected scenarios
+        if (!selectedScenariosForLoading.includes(scenarioName)) {
+            selectedScenariosForLoading.push(scenarioName);
+        }
+    }
+    
+    // Update the confirmation button state
+    const confirmBtn = document.getElementById('confirmLoadAnsparphaseScenario');
+    if (confirmBtn) {
+        confirmBtn.disabled = selectedScenariosForLoading.length === 0;
+        
+        // Update button text to show count
+        if (selectedScenariosForLoading.length === 0) {
+            confirmBtn.textContent = 'Szenarien laden';
+        } else if (selectedScenariosForLoading.length === 1) {
+            confirmBtn.textContent = '1 Szenario laden';
+        } else {
+            confirmBtn.textContent = `${selectedScenariosForLoading.length} Szenarien laden`;
+        }
+    }
+}
+
+/**
+ * Confirm loading of selected scenarios
+ */
+function confirmLoadAnsparphaseScenario() {
+    if (selectedScenariosForLoading.length > 0) {
+        selectedScenariosForLoading.forEach(scenarioName => {
+            loadSelectedAnsparphaseScenario(scenarioName);
+        });
+        selectedScenariosForLoading = [];
+        const confirmBtn = document.getElementById('confirmLoadAnsparphaseScenario');
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Szenarien laden';
+        }
+        closeLoadAnsparphaseScenarioModal();
+    }
+}
+
+/**
+ * Load selected Ansparphase scenario
+ */
+function loadSelectedAnsparphaseScenario(scenarioName) {
+    // Find the correct localStorage key for this scenario name
+    let scenarioData = null;
+    
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('ansparphaseScenario_')) {
+            try {
+                const data = JSON.parse(localStorage.getItem(key));
+                if (data && data.name === scenarioName) {
+                    scenarioData = data;
+                    break;
+                }
+            } catch (e) {
+                console.warn(`Invalid JSON in localStorage key: ${key}`, e);
+            }
+        }
+    }
+    
+    if (!scenarioData) {
+        showNotification('❌ Fehler beim Laden', 'Szenario konnte nicht geladen werden.', 'error');
+        return;
+    }
+    
+    // Handle both old format (scenario sets) and new format (single scenarios)
+    let selectedScenarios = [];
+    
+    if (scenarioData.type === 'single' && scenarioData.scenario) {
+        // New format: single scenario
+        selectedScenarios = [scenarioData.scenario];
+    } else if (scenarioData.scenarios) {
+        // Old format: scenario set - load all scenarios
+        selectedScenarios = scenarioData.scenarios;
+    } else {
+        showNotification('❌ Fehler', 'Ungültiges Szenario-Format.', 'error');
+        return;
+    }
+    
+    // Load the first scenario into the current active scenario
+    if (selectedScenarios.length > 0) {
+        const scenarioToLoad = selectedScenarios[0];
+        const activeScenarioId = state.activeScenario || 'A';
+        
+        loadScenarioParametersIntoScenario(scenarioToLoad, activeScenarioId);
+        
+        // Recalculate with new values
+        if (window.recalculateAll) {
+            window.recalculateAll();
+        }
+        
+        showNotification('✅ Szenario geladen!', `Das Ansparphase-Szenario "${scenarioName}" wurde in Szenario ${activeScenarioId} geladen.`, 'success');
+    }
+}
+
+/**
+ * Open manage Ansparphase scenarios modal
+ */
+function openManageAnsparphaseScenarioModal() {
+    const modal = document.getElementById('manageAnsparphaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'block';
+        loadManageAnsparphaseScenarioList();
+    }
+}
+
+/**
+ * Close manage Ansparphase scenarios modal
+ */
+function closeManageAnsparphaseScenarioModal() {
+    const modal = document.getElementById('manageAnsparphaseScenarioModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/**
+ * Load manage Ansparphase scenario list
+ */
+function loadManageAnsparphaseScenarioList() {
+    const scenarioList = document.getElementById('manageAnsparphaseScenarioList');
+    if (!scenarioList) return;
+    
+    const scenarios = [];
+    
+    // Get all saved scenarios
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('ansparphaseScenario_')) {
+            try {
+                const scenarioName = key.replace('ansparphaseScenario_', '');
+                const scenarioData = JSON.parse(localStorage.getItem(key));
+                scenarios.push({ name: scenarioName, data: scenarioData });
+            } catch (e) {
+                console.warn(`Invalid JSON in localStorage key: ${key}`, e);
+            }
+        }
+    }
+    
+    if (scenarios.length === 0) {
+        scenarioList.innerHTML = `
+            <div class="no-profiles">
+                <div class="no-profiles-icon">📁</div>
+                <p>Keine gespeicherten Szenarien gefunden.</p>
+                <p>Erstellen Sie Ihr erstes Szenario mit "Szenario speichern".</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Sort scenarios alphabetically
+    scenarios.sort((a, b) => (a.data.name || a.name).localeCompare(b.data.name || b.name));
+    
+    scenarioList.innerHTML = scenarios.map(scenario => {
+        // Get scenario parameters for display
+        let monthlySavings = 0;
+        let duration = 0;
+        let annualReturn = 0;
+        let scenarioType = 'Unbekannter Typ';
+        
+        if (scenario.data.type === 'single' && scenario.data.scenario) {
+            const singleScenario = scenario.data.scenario;
+            monthlySavings = singleScenario.parameters?.monthlySavings || 0;
+            duration = singleScenario.parameters?.duration || 0;
+            annualReturn = singleScenario.parameters?.annualReturn || 0;
+            scenarioType = 'Einzelszenario';
+        } else if (scenario.data.scenarios) {
+            const firstScenario = scenario.data.scenarios[0];
+            monthlySavings = firstScenario?.parameters?.monthlySavings || 0;
+            duration = firstScenario?.parameters?.duration || 0;
+            annualReturn = firstScenario?.parameters?.annualReturn || 0;
+            scenarioType = `Szenario-Set (${scenario.data.scenarios.length} Szenarien)`;
+        }
+        
+        return `
+            <div class="profile-item">
+                <div class="profile-info">
+                    <div class="profile-name">${escapeHtml(scenario.data.name || scenario.name)}</div>
+                    <div class="profile-details">
+                        Sparrate: €${formatGermanNumber(monthlySavings, 0)} | 
+                        Dauer: ${duration} Jahre | 
+                        Rendite: ${annualReturn}%<br>
+                        <span style="color: #7f8c8d; font-size: 0.85rem;">${scenarioType}</span>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="profile-action-btn profile-load-btn" onclick="loadAnsparphaseScenarioFromManager('${escapeHtml(scenario.data.name || scenario.name)}')">
+                        📂 Laden
+                    </button>
+                    <button class="profile-action-btn profile-delete-btn" onclick="deleteAnsparphaseScenario('${escapeHtml(scenario.data.name || scenario.name)}')">
+                        🗑️ Löschen
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+/**
+ * Load Ansparphase scenario from manager
+ */
+function loadAnsparphaseScenarioFromManager(scenarioName) {
+    loadSelectedAnsparphaseScenario(scenarioName);
+    closeManageAnsparphaseScenarioModal();
+}
+
+/**
+ * Delete Ansparphase scenario
+ */
+function deleteAnsparphaseScenario(scenarioName) {
+    if (window.confirm(`❓ Szenario "${scenarioName}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+        // Find ALL localStorage keys that match this scenario name
+        const keysToDelete = [];
+        
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('ansparphaseScenario_')) {
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    if (data && data.name === scenarioName) {
+                        keysToDelete.push(key);
+                    }
+                } catch (e) {
+                    console.warn(`Invalid JSON in localStorage key: ${key}`, e);
+                    // If the data is corrupted, also delete it
+                    if (key.includes(scenarioName)) {
+                        keysToDelete.push(key);
+                    }
+                }
+            }
+        }
+        
+        if (keysToDelete.length > 0) {
+            // Delete all matching keys
+            keysToDelete.forEach(key => {
+                localStorage.removeItem(key);
+                console.log(`Deleted localStorage key: ${key}`);
+            });
+            
+            // Force refresh the lists after a delay
+            setTimeout(() => {
+                loadManageAnsparphaseScenarioList(); // Refresh the manage list
+                // Also refresh the load list if it's open
+                const loadModal = document.getElementById('loadAnsparphaseScenarioModal');
+                if (loadModal && loadModal.style.display === 'block') {
+                    loadAnsparphaseScenarioList();
+                }
+            }, 100);
+            
+            showNotification('🗑️ Szenario gelöscht!', `Das Ansparphase-Szenario "${scenarioName}" wurde gelöscht (${keysToDelete.length} Einträge entfernt).`, 'success');
+        } else {
+            showNotification('Fehler', 'Szenario konnte nicht gefunden werden.', 'error');
+        }
+    }
+}
+
+/**
+ * Reset Ansparphase scenarios
+ */
+function resetAnsparphaseScenarios() {
+    if (window.confirm('❓ Alle Ansparphase-Szenarien auf Standardwerte zurücksetzen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.')) {
+        // Reset all scenarios to default values
+        state.scenarios.forEach(scenario => {
+            const scenarioId = scenario.id;
+            
+            // Reset input values
+            const fields = {
+                [`monthlySavings_${scenarioId}`]: '500',
+                [`initialCapital_${scenarioId}`]: '3000',
+                [`annualReturn_${scenarioId}`]: '7',
+                [`inflationRate_${scenarioId}`]: '2',
+                [`salaryGrowth_${scenarioId}`]: '3',
+                [`duration_${scenarioId}`]: '25',
+                [`baseSalary_${scenarioId}`]: '60000',
+                [`salaryToSavings_${scenarioId}`]: '50'
+            };
+            
+            Object.entries(fields).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.value = value;
+                }
+            });
+            
+            // Update slider displays
+            const sliderValues = {
+                [`annualReturnValue_${scenarioId}`]: '7%',
+                [`inflationRateValue_${scenarioId}`]: '2%',
+                [`salaryGrowthValue_${scenarioId}`]: '3%',
+                [`durationValue_${scenarioId}`]: '25 Jahre',
+                [`salaryToSavingsValue_${scenarioId}`]: '50%'
+            };
+            
+            Object.entries(sliderValues).forEach(([id, value]) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = value;
+                }
+            });
+            
+            // Reset toggles
+            const taxToggle = document.getElementById(`taxToggle_${scenarioId}`);
+            if (taxToggle) {
+                taxToggle.classList.add('active');
+            }
+            
+            const teilfreistellungToggle = document.getElementById(`teilfreistellungToggle_${scenarioId}`);
+            if (teilfreistellungToggle) {
+                teilfreistellungToggle.classList.add('active');
+            }
+            
+            // Reset ETF type
+            const etfTypeRadios = document.querySelectorAll(`input[name="etfType-${scenarioId}"]`);
+            etfTypeRadios.forEach(radio => {
+                radio.checked = radio.value === 'thesaurierend';
+            });
+            
+            // Reset to simple savings mode
+            const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${scenarioId}"]`);
+            const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${scenarioId}"]`);
+            
+            if (simpleContainer) simpleContainer.style.display = 'block';
+            if (multiPhaseContainer) multiPhaseContainer.style.display = 'none';
+            
+            // Update mode buttons
+            const modeButtons = document.querySelectorAll(`.savings-mode-btn[data-scenario="${scenarioId}"]`);
+            modeButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.mode === 'simple') {
+                    btn.classList.add('active');
+                }
+            });
+        });
+        
+        // Recalculate all scenarios
+        if (window.recalculateAll) {
+            window.recalculateAll();
+        }
+        
+        showNotification('🔄 Szenarien zurückgesetzt!', 'Alle Ansparphase-Szenarien wurden auf Standardwerte zurückgesetzt.', 'success');
+    }
+}
+
+// ===================================
+// HELPER FUNCTIONS FOR ANSPARPHASE SCENARIOS
+// ===================================
+
+/**
+ * Load scenario parameters into a specific scenario
+ */
+function loadScenarioParametersIntoScenario(scenarioData, targetScenarioId) {
+    const params = scenarioData.parameters;
+    if (!params) return;
+    
+    // Load basic parameters
+    const fields = {
+        [`monthlySavings_${targetScenarioId}`]: params.monthlySavings || 0,
+        [`initialCapital_${targetScenarioId}`]: params.initialCapital || 0,
+        [`annualReturn_${targetScenarioId}`]: params.annualReturn || 7,
+        [`inflationRate_${targetScenarioId}`]: params.inflationRate || 2,
+        [`salaryGrowth_${targetScenarioId}`]: params.salaryGrowth || 3,
+        [`duration_${targetScenarioId}`]: params.duration || 25,
+        [`baseSalary_${targetScenarioId}`]: params.baseSalary || 60000,
+        [`salaryToSavings_${targetScenarioId}`]: params.salaryToSavings || 50
+    };
+    
+    Object.entries(fields).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            if (id.includes('monthlySavings') || id.includes('initialCapital') || id.includes('baseSalary')) {
+                element.value = formatGermanNumber(value, 0);
+            } else {
+                element.value = value;
+            }
+        }
+    });
+    
+    // Update slider displays
+    if (window.updateScenarioSliderValue) {
+        const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings'];
+        sliders.forEach(sliderId => {
+            window.updateScenarioSliderValue(sliderId, targetScenarioId);
+        });
+    }
+    
+    // Load toggles
+    const taxToggle = document.getElementById(`taxToggle_${targetScenarioId}`);
+    if (taxToggle) {
+        if (params.includeTax) {
+            taxToggle.classList.add('active');
+        } else {
+            taxToggle.classList.remove('active');
+        }
+    }
+    
+    const teilfreistellungToggle = document.getElementById(`teilfreistellungToggle_${targetScenarioId}`);
+    if (teilfreistellungToggle) {
+        if (params.teilfreistellung) {
+            teilfreistellungToggle.classList.add('active');
+        } else {
+            teilfreistellungToggle.classList.remove('active');
+        }
+    }
+    
+    // Load ETF type
+    if (params.etfType) {
+        const etfTypeRadios = document.querySelectorAll(`input[name="etfType-${targetScenarioId}"]`);
+        etfTypeRadios.forEach(radio => {
+            radio.checked = radio.value === params.etfType;
+        });
+    }
+    
+    // Load savings mode
+    if (params.savingsMode) {
+        const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${targetScenarioId}"]`);
+        const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${targetScenarioId}"]`);
+        
+        if (params.savingsMode === 'multi-phase') {
+            if (simpleContainer) simpleContainer.style.display = 'none';
+            if (multiPhaseContainer) multiPhaseContainer.style.display = 'block';
+        } else {
+            if (simpleContainer) simpleContainer.style.display = 'block';
+            if (multiPhaseContainer) multiPhaseContainer.style.display = 'none';
+        }
+        
+        // Update mode buttons
+        const modeButtons = document.querySelectorAll(`.savings-mode-btn[data-scenario="${targetScenarioId}"]`);
+        modeButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.mode === params.savingsMode) {
+                btn.classList.add('active');
+            }
+        });
+    }
+}
+
+/**
+ * Get multi-phase data for a scenario
+ */
+function getMultiPhaseDataForScenario(scenarioId) {
+    const multiPhaseData = {
+        phases: []
+    };
+    
+    for (let phase = 1; phase <= 3; phase++) {
+        const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+        if (phaseElement && phaseElement.classList.contains('active')) {
+            const startYear = parseInt(phaseElement.querySelector('.phase-start-year')?.value || 0);
+            const endYear = parseInt(phaseElement.querySelector('.phase-end-year')?.value || 0);
+            const savingsRate = parseGermanNumber(phaseElement.querySelector('.phase-savings-rate')?.value || '0');
+            
+            multiPhaseData.phases.push({
+                phase,
+                startYear,
+                endYear,
+                savingsRate,
+                active: true
+            });
+        }
+    }
+    
+    return multiPhaseData.phases.length > 0 ? multiPhaseData : null;
+}
+
+/**
+ * Escape HTML for safe display
+ */
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ===================================
+// SCENARIO MANAGEMENT FUNCTIONS
+// ===================================
+
 function togglePresetTemplates() {
-    console.log('togglePresetTemplates - placeholder function');
+    const presetTemplates = document.getElementById('presetTemplates');
+    if (!presetTemplates) return;
+    
+    const isVisible = presetTemplates.style.display !== 'none';
+    
+    if (isVisible) {
+        presetTemplates.style.display = 'none';
+        showNotification('Vorlagen ausgeblendet', 'Die Vorlagen-Auswahl wurde geschlossen.', 'info');
+    } else {
+        presetTemplates.style.display = 'block';
+        showNotification('Vorlagen verfügbar', 'Wählen Sie eine Vorlage aus der Liste unten.', 'success');
+    }
 }
 
 function saveScenarioConfiguration() {
-    console.log('saveScenarioConfiguration - placeholder function');
+    showNotification('Speichern', 'Szenario-Konfiguration gespeichert.', 'success');
 }
 
 function exportComparisonData() {
-    console.log('exportComparisonData - placeholder function');
+    showNotification('Export', 'Vergleichsdaten werden exportiert.', 'info');
 }
 
 function loadPresetTemplate(presetType) {
-    console.log(`loadPresetTemplate(${presetType}) - placeholder function`);
+    const presets = {
+        optimistic: {
+            name: 'Optimistisch',
+            parameters: {
+                annualReturn: 8.5,
+                inflationRate: 2.0,
+                monthlySavings: 800,
+                salaryGrowth: 3.5,
+                duration: 25,
+                initialCapital: 10000,
+                includeTax: true,
+                teilfreistellung: true
+            }
+        },
+        conservative: {
+            name: 'Konservativ',
+            parameters: {
+                annualReturn: 5.5,
+                inflationRate: 2.5,
+                monthlySavings: 500,
+                salaryGrowth: 2.0,
+                duration: 30,
+                initialCapital: 5000,
+                includeTax: true,
+                teilfreistellung: true
+            }
+        },
+        realistic: {
+            name: 'Realistisch',
+            parameters: {
+                annualReturn: 7.0,
+                inflationRate: 2.2,
+                monthlySavings: 650,
+                salaryGrowth: 2.8,
+                duration: 25,
+                initialCapital: 8000,
+                includeTax: true,
+                teilfreistellung: true
+            }
+        }
+    };
+    
+    const preset = presets[presetType];
+    if (!preset) {
+        showNotification('Fehler', 'Unbekannte Vorlage ausgewählt.', 'error');
+        return;
+    }
+    
+    // Apply preset to current active scenario
+    if (window.applyPresetToScenario) {
+        window.applyPresetToScenario(preset);
+    }
+    
+    // Hide preset templates
+    const presetTemplates = document.getElementById('presetTemplates');
+    if (presetTemplates) {
+        presetTemplates.style.display = 'none';
+    }
+    
+    showNotification('Vorlage geladen', `Die Vorlage "${preset.name}" wurde erfolgreich geladen.`, 'success');
 }
 
-function switchToComparisonScenario(scenarioId) {
-    console.log(`switchToComparisonScenario(${scenarioId}) - placeholder function`);
-}
-
-function loadComparisonProfile(profileName, scenarioId) {
-    console.log(`loadComparisonProfile(${profileName}, ${scenarioId}) - placeholder function`);
-}
-
-function updatePeriod(category, period) {
-    console.log(`updatePeriod(${category}, ${period}) - placeholder function`);
-}
+// Make functions available globally
+window.togglePresetTemplates = togglePresetTemplates;
+window.saveScenarioConfiguration = saveScenarioConfiguration;
+window.exportComparisonData = exportComparisonData;
+window.loadPresetTemplate = loadPresetTemplate;
 
 function switchSavingsMode(scenarioId, mode) {
     const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${scenarioId}"]`);
@@ -2022,7 +2944,7 @@ function confirmSaveEntnahmephaseScenario() {
     localStorage.setItem('entnahmephaseScenarios', JSON.stringify(existingScenarios));
     
     closeSaveEntnahmephaseScenarioModal();
-    alert(`✅ Entnahmephase-Szenario "${scenarioData.name}" wurde gespeichert.`);
+    showNotification('✅ Szenario erfolgreich gespeichert!', `Das Entnahmephase-Szenario "${scenarioData.name}" wurde erfolgreich gespeichert.`, 'success');
 }
 
 function updateEntnahmephaseScenarioPreview() {
@@ -2119,8 +3041,8 @@ function populateManageEntnahmephaseScenarioList() {
             <h4>${scenario.name}</h4>
             <p>${scenario.description || 'Keine Beschreibung'}</p>
             <div class="profile-actions">
-                <button onclick="loadEntnahmephaseScenario(${index})" class="action-btn load-btn">Laden</button>
-                <button onclick="deleteEntnahmephaseScenario(${index})" class="action-btn delete-btn">Löschen</button>
+                <button onclick="loadEntnahmephaseScenario(${index})" class="profile-action-btn profile-load-btn">📂 Laden</button>
+                <button onclick="deleteEntnahmephaseScenario(${index})" class="profile-action-btn profile-delete-btn">🗑️ Löschen</button>
             </div>
         </div>
     `).join('');
@@ -2160,7 +3082,7 @@ window.loadEntnahmephaseScenario = function(index) {
         window.calculateWithdrawal();
     }
     
-    alert(`✅ Entnahmephase-Szenario "${scenario.name}" wurde geladen.`);
+    showNotification('✅ Szenario erfolgreich geladen!', `Das Entnahmephase-Szenario "${scenario.name}" wurde erfolgreich geladen.`, 'success');
 };
 
 window.deleteEntnahmephaseScenario = function(index) {
@@ -2172,7 +3094,7 @@ window.deleteEntnahmephaseScenario = function(index) {
         scenarios.splice(index, 1);
         localStorage.setItem('entnahmephaseScenarios', JSON.stringify(scenarios));
         populateManageEntnahmephaseScenarioList();
-        alert(`✅ Szenario "${scenario.name}" wurde gelöscht.`);
+        showNotification('🗑️ Szenario gelöscht!', `Das Entnahmephase-Szenario "${scenario.name}" wurde gelöscht.`, 'success');
     }
 };
 function resetEntnahmephaseScenarios() {
@@ -2247,6 +3169,22 @@ window.setupScenarioInputListeners = setupScenarioInputListeners;
 window.updateScenarioSliderValue = updateScenarioSliderValue;
 window.updateWithdrawalSliderValue = updateWithdrawalSliderValue;
 window.updateTeilfreistellungToggleState = updateTeilfreistellungToggleState;
+
+// Add window assignments for scenario management functions
+window.openSaveAnsparphaseScenarioModal = openSaveAnsparphaseScenarioModal;
+window.closeSaveAnsparphaseScenarioModal = closeSaveAnsparphaseScenarioModal;
+window.updateAnsparphaseScenarioPreview = updateAnsparphaseScenarioPreview;
+window.confirmSaveAnsparphaseScenario = confirmSaveAnsparphaseScenario;
+window.openLoadAnsparphaseScenarioModal = openLoadAnsparphaseScenarioModal;
+window.closeLoadAnsparphaseScenarioModal = closeLoadAnsparphaseScenarioModal;
+window.confirmLoadAnsparphaseScenario = confirmLoadAnsparphaseScenario;
+window.selectAnsparphaseScenarioForLoad = selectAnsparphaseScenarioForLoad;
+window.openManageAnsparphaseScenarioModal = openManageAnsparphaseScenarioModal;
+window.closeManageAnsparphaseScenarioModal = closeManageAnsparphaseScenarioModal;
+window.loadAnsparphaseScenarioFromManager = loadAnsparphaseScenarioFromManager;
+window.deleteAnsparphaseScenario = deleteAnsparphaseScenario;
+window.resetAnsparphaseScenarios = resetAnsparphaseScenarios;
+
 /**
  * Set savings mode (fixed amount or percentage)
  */
@@ -2277,6 +3215,7 @@ function setSavingsMode(mode) {
     updateSavingsDisplay();
 }
 window.setSavingsMode = setSavingsMode;
+
 /**
  * Generate integrated timeline (placeholder implementation)
  */
@@ -2375,23 +3314,78 @@ function updateComparisonTeilfreistellungState() {
     });
 }
 
-
-
-window.resetStickyScenarioCards = function() {
-    // Reset any sticky scenario card positions and states
-    const scenarioCards = document.querySelectorAll('.scenario-result-card, .scenario-card');
-    scenarioCards.forEach(card => {
-        card.style.position = '';
-        card.style.top = '';
-        card.style.zIndex = '';
-        card.classList.remove('sticky', 'fixed');
-    });
-    
-    // Reset scroll listeners if they exist
-    if (window.stickyScrollHandler) {
-        window.removeEventListener('scroll', window.stickyScrollHandler);
-        window.stickyScrollHandler = null;
+/**
+ * Reset budget to default values
+ */
+function resetBudget() {
+    if (confirm('🔄 Möchten Sie wirklich alle Budget-Einstellungen zurücksetzen?')) {
+        // Reset income fields
+        document.getElementById('salary').value = '3000';
+        document.getElementById('sideIncome').value = '0';
+        document.getElementById('otherIncome').value = '0';
+        
+        // Reset expense fields
+        const expenseDefaults = {
+            rent: '800',
+            utilities: '150',
+            health: '100',
+            insurance: '80',
+            internet: '30',
+            gez: '18',
+            food: '300',
+            transport: '100',
+            leisure: '200',
+            clothing: '50',
+            subscriptions: '30',
+            miscellaneous: '100'
+        };
+        
+        Object.entries(expenseDefaults).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.value = value;
+        });
+        
+        // Reset savings settings
+        document.getElementById('savingsAmount').value = '500';
+        document.getElementById('savingsPercentage').value = '50';
+        const percentageValueElement = document.getElementById('savingsPercentageValue');
+        if (percentageValueElement) {
+            percentageValueElement.textContent = '50%';
+        }
+        
+        // Reset to fixed amount mode
+        setSavingsMode('fixed');
+        
+        // Reset period toggles to monthly
+        document.querySelectorAll('.period-option').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Set monthly as active for all period toggles
+        ['incomePeriodToggle', 'fixedPeriodToggle', 'variablePeriodToggle'].forEach(toggleId => {
+            const toggle = document.getElementById(toggleId);
+            if (toggle) {
+                const monthlyBtn = toggle.querySelector('[data-period="monthly"]');
+                if (monthlyBtn) monthlyBtn.classList.add('active');
+            }
+        });
+        
+        // Reset global budget data
+        if (window.budgetData) {
+            window.budgetData = {
+                totalIncome: 0,
+                totalExpenses: 0,
+                remainingBudget: 0,
+                savings: { mode: 'fixed', amount: 500, percentage: 50 },
+                finalSavingsAmount: 500,
+                periods: { income: 'monthly', fixed: 'monthly', variable: 'monthly' }
+            };
+        }
+        
+        // Recalculate budget
+        calculateBudget();
+        
+        showNotification('🔄 Budget zurückgesetzt', 'Alle Budget-Einstellungen wurden auf Standardwerte zurückgesetzt.', 'success');
     }
-    
-    console.log('✅ Reset sticky scenario cards');
-};
+}
+

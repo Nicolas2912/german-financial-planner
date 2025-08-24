@@ -414,4 +414,6 @@ These commands make AI calls and may take up to a minute:
 
 ---
 
+Ignore app_old.js and do not apply any changes to it.
+
 _This guide ensures Claude Code has immediate access to Task Master's essential functionality for agentic development workflows._

@@ -4,7 +4,7 @@
  */
 
 // Import utility functions
-import { formatCurrency, parseGermanNumber } from '../utils/utils.js';
+import { formatCurrency, parseGermanNumber } from '../utils.js';
 import * as state from '../state.js';
 import { updateMainChart } from './mainChart.js';
 
@@ -25,6 +25,15 @@ export function updateScenarioResults() {
         resultCard.dataset.scenario = scenario.id;
         resultCard.style.setProperty('--scenario-color', scenario.color);
         
+        // Helper function to determine data-length attribute based on text length
+        const getDataLength = (value) => {
+            const formattedText = formatCurrency(value);
+            const length = formattedText.length;
+            if (length > 18) return 'very-long';
+            if (length > 13) return 'long';
+            return '';
+        };
+        
         resultCard.innerHTML = `
             <div class="scenario-result-header">
                 <h3 class="scenario-result-title">📊 ${scenario.name}</h3>
@@ -32,27 +41,27 @@ export function updateScenarioResults() {
             <div class="scenario-result-grid">
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Endbetrag (Nominal)</div>
-                    <div class="scenario-result-value">${formatCurrency(scenario.results.finalNominal)}</div>
+                    <div class="scenario-result-value" data-length="${getDataLength(scenario.results.finalNominal)}">${formatCurrency(scenario.results.finalNominal)}</div>
                 </div>
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Endbetrag (Real)</div>
-                    <div class="scenario-result-value">${formatCurrency(scenario.results.finalReal)}</div>
+                    <div class="scenario-result-value" data-length="${getDataLength(scenario.results.finalReal)}">${formatCurrency(scenario.results.finalReal)}</div>
                 </div>
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Gesamt Eingezahlt</div>
-                    <div class="scenario-result-value">${formatCurrency(scenario.results.totalInvested)}</div>
+                    <div class="scenario-result-value" data-length="${getDataLength(scenario.results.totalInvested)}">${formatCurrency(scenario.results.totalInvested)}</div>
                 </div>
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Gesamtrendite</div>
-                    <div class="scenario-result-value">${formatCurrency(scenario.results.totalReturn)}</div>
+                    <div class="scenario-result-value" data-length="${getDataLength(scenario.results.totalReturn)}">${formatCurrency(scenario.results.totalReturn)}</div>
                 </div>
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Gezahlte Steuern</div>
-                    <div class="scenario-result-value" style="color: #e74c3c;">${formatCurrency(scenario.results.totalTaxesPaid || 0)}</div>
+                    <div class="scenario-result-value" style="color: #e74c3c;" data-length="${getDataLength(scenario.results.totalTaxesPaid || 0)}">${formatCurrency(scenario.results.totalTaxesPaid || 0)}</div>
                 </div>
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Netto-Rendite</div>
-                    <div class="scenario-result-value" style="color: #27ae60;">${formatCurrency((scenario.results.totalReturn || 0) - (scenario.results.totalTaxesPaid || 0))}</div>
+                    <div class="scenario-result-value" style="color: #27ae60;" data-length="${getDataLength((scenario.results.totalReturn || 0) - (scenario.results.totalTaxesPaid || 0))}">${formatCurrency((scenario.results.totalReturn || 0) - (scenario.results.totalTaxesPaid || 0))}</div>
                 </div>
             </div>
         `;
@@ -67,7 +76,7 @@ export function updateScenarioResults() {
  * Updates the withdrawal results display with calculated values
  */
 export function updateWithdrawalResults(results) {
-    // Update UI with proper average values and labels
+    // Update UI with proper average values and labels (normal font sizes for withdrawal page)
     document.getElementById('monthlyWithdrawal').textContent = formatCurrency(results.monthlyGrossWithdrawal);
     document.getElementById('monthlyNetWithdrawal').textContent = formatCurrency(results.monthlyNetWithdrawal);
     document.getElementById('totalTaxesPaid').textContent = formatCurrency(results.totalTaxesPaid);
@@ -129,13 +138,19 @@ export function updateTeilfreistellungToggleState(scenarioId) {
     const teilfreistellungContainer = teilfreistellungToggle ? teilfreistellungToggle.closest('.toggle-container') : null;
     const teilfreistellungHelp = document.getElementById('teilfreistellungHelp_' + scenarioId);
     
+    console.log(`🔄 Updating Teilfreistellung state for scenario ${scenarioId}`);
+    
     if (taxToggle && teilfreistellungToggle && teilfreistellungContainer) {
         const isTaxEnabled = taxToggle.classList.contains('active');
+        
+        console.log(`   Tax enabled: ${isTaxEnabled}`);
         
         if (isTaxEnabled) {
             // Enable Teilfreistellung toggle
             teilfreistellungToggle.classList.remove('disabled');
             teilfreistellungContainer.classList.remove('disabled');
+            console.log(`   ✅ Enabled Teilfreistellung toggle for scenario ${scenarioId}`);
+            
             if (teilfreistellungHelp) {
                 teilfreistellungHelp.innerHTML = `
                     <small style="color: #7f8c8d; font-size: 0.85rem; display: block; line-height: 1.4;">
@@ -149,6 +164,8 @@ export function updateTeilfreistellungToggleState(scenarioId) {
             teilfreistellungContainer.classList.add('disabled');
             // Deactivate it when tax is disabled
             teilfreistellungToggle.classList.remove('active');
+            console.log(`   🚫 Disabled Teilfreistellung toggle for scenario ${scenarioId}`);
+            
             if (teilfreistellungHelp) {
                 teilfreistellungHelp.innerHTML = `
                     <small style="color: #999; font-size: 0.85rem; display: block; line-height: 1.4;">
@@ -157,6 +174,9 @@ export function updateTeilfreistellungToggleState(scenarioId) {
                 `;
             }
         }
+    } else {
+        console.log(`   ❌ Could not find required elements for scenario ${scenarioId}`);
+        console.log(`      taxToggle: ${!!taxToggle}, teilfreistellungToggle: ${!!teilfreistellungToggle}, container: ${!!teilfreistellungContainer}`);
     }
 }
 
@@ -177,8 +197,15 @@ export function updateComparisonTeilfreistellungState(scenarioId) {
             // Disable Teilfreistellung toggle
             teilfreistellungToggle.classList.add('disabled');
             teilfreistellungContainer.classList.add('disabled');
-            // Deactivate it when tax is disabled
+            // Deactivate it when tax is disabled and update parameter
+            const wasActive = teilfreistellungToggle.classList.contains('active');
             teilfreistellungToggle.classList.remove('active');
+            
+            // Update parameter if it was changed
+            if (wasActive && window.updateScenarioParameter) {
+                console.log(`🔄 Auto-deactivating Teilfreistellung for scenario ${scenarioId} because includeTax was disabled`);
+                window.updateScenarioParameter(scenarioId, 'accumulation.teilfreistellung', false);
+            }
         }
     }
 }

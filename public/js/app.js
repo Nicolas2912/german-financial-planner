@@ -5,7 +5,7 @@
 import * as state from './state.js';
 
 // Import utility functions
-import { debounce } from './utils/utils.js';
+import { debounce } from './utils.js';
 
 // Import core calculation functions
 import { runScenario } from './core/accumulation.js';
@@ -45,6 +45,24 @@ import { createIntegratedTimeline } from './ui/withdrawalChart.js';
 
 // Import scenario management functions
 import { addNewScenario, switchToScenario, removeScenario, renameScenario, copyScenario } from './features/scenarioManager.js';
+
+// Import profile management functions
+import { 
+    openSaveProfileModal,
+    closeSaveProfileModal,
+    updateProfilePreview,
+    confirmSaveProfile,
+    openLoadProfileModal,
+    closeLoadProfileModal,
+    loadProfilesForModal,
+    selectProfileForLoad,
+    loadSelectedProfile,
+    openProfileManager,
+    closeProfileManager,
+    loadProfileList,
+    loadProfileFromManager,
+    deleteProfile
+} from './features/profileManager.js';
 
 // Import feature functions
 // Note: setupContributionsScenarioSelector is implemented inline below
@@ -269,12 +287,37 @@ window.setupSavingsModeForScenario = function(scenarioId) {
     });
 };
 
+// Make core functions available globally
+window.recalculateAll = recalculateAll;
+window.debouncedRecalculateAll = debounce(recalculateAll, 100);
+window.updateMainChart = updateMainChart;
+window.autoSyncWithdrawalCapital = function(showNotification) {
+    console.log('autoSyncWithdrawalCapital called with:', showNotification);
+    // This function needs to be implemented in the withdrawal module
+};
+
 // Make scenario management functions available globally
 window.addNewScenario = addNewScenario;
 window.switchToScenario = switchToScenario;
 window.removeScenario = removeScenario;
 window.renameScenario = renameScenario;
 window.copyScenario = copyScenario;
+
+// Make profile management functions available globally
+window.openSaveProfileModal = openSaveProfileModal;
+window.closeSaveProfileModal = closeSaveProfileModal;
+window.updateProfilePreview = updateProfilePreview;
+window.confirmSaveProfile = confirmSaveProfile;
+window.openLoadProfileModal = openLoadProfileModal;
+window.closeLoadProfileModal = closeLoadProfileModal;
+window.loadProfilesForModal = loadProfilesForModal;
+window.selectProfileForLoad = selectProfileForLoad;
+window.loadSelectedProfile = loadSelectedProfile;
+window.openProfileManager = openProfileManager;
+window.closeProfileManager = closeProfileManager;
+window.loadProfileList = loadProfileList;
+window.loadProfileFromManager = loadProfileFromManager;
+window.deleteProfile = deleteProfile;
 
 // Export main functions for external use
 export { updateScenarioSelector };

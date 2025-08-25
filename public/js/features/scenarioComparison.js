@@ -16,7 +16,7 @@ class ScenarioComparisonManager {
                     budget: { income: 4000, expenses: 3000, savingsRate: 25, inflation: 2.2 },
                     accumulation: { returnRate: 8.5, years: 30, monthlySavings: 1000 },
                     withdrawal: { rate: 4, years: 25, taxRate: 26.375, partialExemption: 30 },
-                    results: { finalWealth: '1.2 Mio €', maxDrawdown: -28 }
+                    results: { finalWealth: '1.2 Mio €' }
                 },
                 lifecycleData: [100, 220, 470, 820, 1200, 1000],
                 accumulationData: [50, 120, 280, 500, 820],
@@ -31,7 +31,7 @@ class ScenarioComparisonManager {
                     budget: { income: 3500, expenses: 2800, savingsRate: 15, inflation: 2.2 },
                     accumulation: { returnRate: 5.5, years: 25, monthlySavings: 500 },
                     withdrawal: { rate: 3, years: 30, taxRate: 26.375, partialExemption: 30 },
-                    results: { finalWealth: '800k €', maxDrawdown: -12 }
+                    results: { finalWealth: '800k €' }
                 },
                 lifecycleData: [100, 160, 270, 420, 600, 500],
                 accumulationData: [40, 90, 180, 300, 420],
@@ -43,6 +43,8 @@ class ScenarioComparisonManager {
         this.initializeEventListeners();
         this.initializeCharts();
         this.initializeLayout();
+        // Apply accent colors to scenario buttons (borders + active fill)
+        this.applyScenarioButtonAccents();
     }
 
     initializeEventListeners() {
@@ -243,6 +245,12 @@ class ScenarioComparisonManager {
             layout.classList.add('scenario-conservative');
         }
         
+        // Set accent variables on layout (border + light fill) based on scenario color
+        const sc = this.scenarioConfigs.find(s => s.id === scenarioType);
+        const color = sc?.color || '#3498db';
+        layout.style.setProperty('--accent-color', color);
+        layout.style.setProperty('--accent-light', this.hexToRgba(color, 0.15));
+
         console.log(`Layout border updated to: ${scenarioType}`);
     }
 
@@ -256,6 +264,24 @@ class ScenarioComparisonManager {
         } else {
             console.log('No active scenario button found during initialization');
         }
+    }
+
+    applyScenarioButtonAccents() {
+        // Map scenario IDs to their colors
+        const colorById = new Map(this.scenarioConfigs.map(sc => [sc.id, sc.color]));
+
+        document.querySelectorAll('.btn-scenario').forEach(btn => {
+            const id = btn.getAttribute('data-scenario');
+            if (!id || id === 'new') return;
+            const color = colorById.get(id)
+                || (id === 'optimistic' ? (this.scenarioConfigs[0]?.color || '#3498db')
+                    : id === 'conservative' ? (this.scenarioConfigs[1]?.color || '#27ae60')
+                    : null);
+            if (color) {
+                btn.style.setProperty('--scenario-accent', color);
+                btn.style.setProperty('--scenario-accent-light', this.hexToRgba(color, 0.15));
+            }
+        });
     }
 
     initializeCharts() {
@@ -621,6 +647,9 @@ class ScenarioComparisonManager {
             newBtn.className = 'btn-scenario';
             newBtn.setAttribute('data-scenario', newScenario.id);
             newBtn.textContent = newScenario.label;
+            // Accent variables for CSS (border + light fill on active)
+            newBtn.style.setProperty('--scenario-accent', newScenario.color);
+            newBtn.style.setProperty('--scenario-accent-light', this.hexToRgba(newScenario.color, 0.15));
             const addBtn = chooser.querySelector('.btn-scenario.btn-new');
             chooser.insertBefore(newBtn, addBtn);
             newBtn.addEventListener('click', () => this.selectScenario(newBtn));
@@ -631,20 +660,20 @@ class ScenarioComparisonManager {
         if (cards) {
             const card = document.createElement('div');
             card.className = 'summary-card';
-            card.style.borderTop = `4px solid ${newScenario.color}`;
+            card.style.setProperty('--accent-color', newScenario.color);
             card.innerHTML = `
                 <h4>${newScenario.label}</h4>
-                <div class="kv-container">
-                    <div class="kv">
-                        <span class="k">Endvermögen</span><span class="v">${newScenario.params.results.finalWealth}</span>
-                        <span class="k">Ø Rendite</span><span class="v">${newScenario.params.accumulation.returnRate}%</span>
-                        <span class="k">Sparquote</span><span class="v">${newScenario.params.budget.savingsRate}%</span>
-                        <span class="k">Entnahmerate</span><span class="v">${newScenario.params.withdrawal.rate}%</span>
+                <div class=\"kv-container\">
+                    <div class=\"kv\"> 
+                        <span class=\"k\">Endvermögen</span><span class=\"v\">${newScenario.params.results.finalWealth}</span>
+                        <span class=\"k\">Ø Rendite</span><span class=\"v\">${newScenario.params.accumulation.returnRate}%</span>
+                        <span class=\"k\">Sparrate (€)</span><span class=\"v\">${new Intl.NumberFormat('de-DE').format(newScenario.params.accumulation.monthlySavings)} €</span>
+                        <span class=\"k\">Entnahmerate</span><span class=\"v\">${newScenario.params.withdrawal.rate}%</span>
                     </div>
-                    <div class="kv">
-                        <span class="k">Risikoprofil</span><span class="v">Mittel</span>
-                        <span class="k">Max. Drawdown</span><span class="v">${newScenario.params.results.maxDrawdown}%</span>
-                        <span class="k">Wahrsch. 30y Erfolg</span><span class="v">—</span>
+                    <div class=\"kv\"> 
+                        <span class=\"k\">Ansparphase (in Jahre)</span><span class=\"v\">${newScenario.params.accumulation.years}</span>
+                        <span class=\"k\">Entnahmedauer (in Jahre)</span><span class=\"v\">${newScenario.params.withdrawal.years}</span>
+                        <span class=\"k\">Risikoprofil</span><span class=\"v\">Mittel</span>
                     </div>
                 </div>`;
             cards.appendChild(card);
@@ -692,7 +721,7 @@ class ScenarioComparisonManager {
                 if (category === 'budget') {
                     if (key.includes('einkommen')) return String(sc.params.budget.income);
                     if (key.includes('ausgaben')) return String(sc.params.budget.expenses);
-                    if (key.includes('sparquote')) return `${sc.params.budget.savingsRate}%`;
+                    if (key.includes('sparrate') || key.includes('sparquote')) return new Intl.NumberFormat('de-DE').format(sc.params.accumulation.monthlySavings);
                     if (key.includes('inflation')) return `${sc.params.budget.inflation}%`;
                 }
                 if (category === 'accumulation') {
@@ -706,7 +735,6 @@ class ScenarioComparisonManager {
                 }
                 if (category === 'results') {
                     if (key.includes('endvermögen')) return sc.params.results.finalWealth;
-                    if (key.includes('drawdown')) return `${sc.params.results.maxDrawdown}%`;
                 }
             } catch (_) { /* ignore */ }
             return '—';

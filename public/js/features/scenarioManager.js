@@ -262,8 +262,8 @@ export function createScenarioPanel(scenario) {
                     <div class="savings-phase active" data-phase="1" data-scenario="${scenario.id}">
                         <div class="phase-header">
                             <div class="phase-title">
-                                <span class="phase-icon">🌱</span>
-                                <h5>Phase 1: Anfangsphase</h5>
+                                <div class="phase-number">1</div>
+                                <h5>Phase 1</h5>
                                 <div class="phase-status-indicator active"></div>
                             </div>
                         </div>
@@ -295,8 +295,8 @@ export function createScenarioPanel(scenario) {
                     <div class="savings-phase" data-phase="2" data-scenario="${scenario.id}">
                         <div class="phase-header">
                             <div class="phase-title">
-                                <span class="phase-icon">📈</span>
-                                <h5>Phase 2: Wachstumsphase</h5>
+                                <div class="phase-number">2</div>
+                                <h5>Phase 2</h5>
                                 <div class="phase-status-indicator"></div>
                             </div>
                             <button type="button" class="phase-toggle-btn" data-phase="2" data-scenario="${scenario.id}">
@@ -331,8 +331,8 @@ export function createScenarioPanel(scenario) {
                     <div class="savings-phase" data-phase="3" data-scenario="${scenario.id}">
                         <div class="phase-header">
                             <div class="phase-title">
-                                <span class="phase-icon">🚀</span>
-                                <h5>Phase 3: Spitzenphase</h5>
+                                <div class="phase-number">3</div>
+                                <h5>Phase 3</h5>
                                 <div class="phase-status-indicator"></div>
                             </div>
                             <button type="button" class="phase-toggle-btn" data-phase="3" data-scenario="${scenario.id}">
@@ -367,7 +367,7 @@ export function createScenarioPanel(scenario) {
                 <!-- Multi-Phase Summary -->
                 <div class="multi-phase-summary">
                     <div class="summary-header">
-                        <h4>📊 Sparplan-Übersicht</h4>
+                        <h4>Sparplan-Übersicht</h4>
                     </div>
                     <div class="summary-content">
                         <div class="summary-item">

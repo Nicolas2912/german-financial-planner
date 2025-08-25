@@ -454,14 +454,22 @@ function togglePhase(scenarioId, phase) {
   const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
   if (!phaseElement) return;
 
+  const phaseContent = phaseElement.querySelector('.phase-content');
+  const toggleBtn = phaseElement.querySelector('.phase-toggle-btn');
+  const toggleText = toggleBtn?.querySelector('.toggle-text');
+
   if (phaseElement.classList.contains('active')) {
     // Disable phase (phase 1 cannot be disabled)
     if (phase > 1) {
       phaseElement.classList.remove('active');
+      if (phaseContent) phaseContent.style.display = 'none';
+      if (toggleText) toggleText.textContent = 'Aktivieren';
     }
   } else {
     // Enable phase
     phaseElement.classList.add('active');
+    if (phaseContent) phaseContent.style.display = 'block';
+    if (toggleText) toggleText.textContent = 'Deaktivieren';
   }
 
   updateMultiPhaseSummary(scenarioId);

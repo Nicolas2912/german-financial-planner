@@ -406,18 +406,87 @@ function setupSavingsModeForScenario(scenarioId) {
   savingsModeButtons.forEach(button => {
     button.addEventListener('click', function() {
       const mode = this.dataset.mode;
-      if (window.switchSavingsMode) window.switchSavingsMode(scenarioId, mode);
+      switchSavingsMode(scenarioId, mode);
     });
   });
   const phaseToggleButtons = document.querySelectorAll(`.phase-toggle-btn[data-scenario="${scenarioId}"]`);
   phaseToggleButtons.forEach(button => {
     button.addEventListener('click', function() {
       const phase = parseInt(this.dataset.phase);
-      if (window.togglePhase) window.togglePhase(scenarioId, phase);
+      togglePhase(scenarioId, phase);
     });
   });
-  if (window.updatePhaseSummaries) window.updatePhaseSummaries(scenarioId);
-  if (window.updateMultiPhaseSummary) window.updateMultiPhaseSummary(scenarioId);
+  updatePhaseSummaries(scenarioId);
+  updateMultiPhaseSummary(scenarioId);
+}
+
+// Implement the switchSavingsMode function
+function switchSavingsMode(scenarioId, mode) {
+  // Update button states
+  const savingsModeButtons = document.querySelectorAll(`.savings-mode-btn[data-scenario="${scenarioId}"]`);
+  savingsModeButtons.forEach(button => {
+    button.classList.remove('active');
+    if (button.dataset.mode === mode) {
+      button.classList.add('active');
+    }
+  });
+
+  // Show/hide appropriate containers
+  const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${scenarioId}"]`);
+  const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${scenarioId}"]`);
+
+  if (mode === 'simple') {
+    if (simpleContainer) simpleContainer.style.display = 'block';
+    if (multiPhaseContainer) multiPhaseContainer.style.display = 'none';
+  } else if (mode === 'multi-phase') {
+    if (simpleContainer) simpleContainer.style.display = 'none';
+    if (multiPhaseContainer) multiPhaseContainer.style.display = 'block';
+  }
+
+  // Recalculate after mode change
+  if (window.recalculateAll) {
+    window.recalculateAll();
+  }
+}
+
+// Implement the togglePhase function
+function togglePhase(scenarioId, phase) {
+  const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+  if (!phaseElement) return;
+
+  if (phaseElement.classList.contains('active')) {
+    // Disable phase (phase 1 cannot be disabled)
+    if (phase > 1) {
+      phaseElement.classList.remove('active');
+    }
+  } else {
+    // Enable phase
+    phaseElement.classList.add('active');
+  }
+
+  updateMultiPhaseSummary(scenarioId);
+  if (window.recalculateAll) {
+    window.recalculateAll();
+  }
+}
+
+// Implement placeholder functions for phase summaries
+function updatePhaseSummaries(scenarioId) {
+  // This function would update individual phase summaries if needed
+  console.log(`Updating phase summaries for scenario ${scenarioId}`);
+}
+
+function updateMultiPhaseSummary(scenarioId) {
+  // This function would update the multi-phase summary if needed
+  console.log(`Updating multi-phase summary for scenario ${scenarioId}`);
+}
+
+// Export functions to window object for backward compatibility
+if (typeof window !== 'undefined') {
+  window.switchSavingsMode = switchSavingsMode;
+  window.togglePhase = togglePhase;
+  window.updatePhaseSummaries = updatePhaseSummaries;
+  window.updateMultiPhaseSummary = updateMultiPhaseSummary;
 }
 
 function setupComparisonChartViewToggle() {

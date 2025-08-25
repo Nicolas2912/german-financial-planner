@@ -728,6 +728,171 @@ button, input, select, .toggle, .slider {
 }
 
 /* -------------------------
+   Savings Mode Buttons
+   ------------------------- */
+.savings-configuration {
+    margin-bottom: 25px;
+}
+
+.savings-mode-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.savings-mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: 2px solid #e3f2fd;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #34495e;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+    white-space: nowrap;
+    position: relative;
+    overflow: hidden;
+    min-height: 44px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.savings-mode-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.savings-mode-btn:hover::before {
+    left: 100%;
+}
+
+.savings-mode-btn:hover {
+    background: #ffffff;
+    border-color: #3498db;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+}
+
+.savings-mode-btn.active {
+    background: #e7f3fe;
+    border-color: #3498db;
+    color: #1f2d3a;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.savings-mode-btn.active::before {
+    display: none;
+}
+
+.mode-icon {
+    font-size: 1.1rem;
+}
+
+.mode-text {
+    font-weight: 600;
+}
+
+/* Multi-Phase Savings Styles */
+.multi-phase-savings-container {
+    margin-top: 20px;
+}
+
+.multi-phase-header h4 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.multi-phase-header p {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.phases-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.savings-phase {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.savings-phase.active {
+    border-color: #3498db;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
+}
+
+.phase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.phase-number {
+    background: #3498db;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+.phase-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.phase-toggle-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.phase-toggle-btn:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.savings-phase:not(.active) .phase-toggle-btn {
+    background: #28a745;
+}
+
+.savings-phase:not(.active) .phase-toggle-btn:hover {
+    background: #218838;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* -------------------------
    Responsive Components
    ------------------------- */
 @media (max-width: 768px) {
@@ -752,5 +917,24 @@ button, input, select, .toggle, .slider {
     .toggle-container label {
         margin-right: 0;
         margin-bottom: 10px;
+    }
+
+    .savings-mode-buttons {
+        flex-direction: column;
+    }
+    
+    .savings-mode-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .phase-header {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .phase-inputs {
+        grid-template-columns: 1fr;
     }
 }

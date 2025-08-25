@@ -829,8 +829,9 @@ button, input, select, .toggle, .slider {
     background: #f8f9fa;
     border: 2px solid #e9ecef;
     border-radius: 8px;
-    padding: 20px;
+    padding: 16px;
     transition: all 0.3s ease;
+    margin-bottom: 12px;
 }
 
 .savings-phase.active {
@@ -904,8 +905,8 @@ button, input, select, .toggle, .slider {
 
 .time-range-inputs {
     display: grid;
-    grid-template-columns: 1fr 1fr 2fr;
-    gap: 15px;
+    grid-template-columns: 1fr 1fr 1.5fr 1.5fr;
+    gap: 12px;
     align-items: end;
 }
 
@@ -914,18 +915,20 @@ button, input, select, .toggle, .slider {
 }
 
 .time-input input, 
-.savings-input input {
+.savings-input input,
+.rendite-input input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 8px 10px;
     border: 2px solid #e3f2fd;
-    border-radius: 8px;
-    font-size: 1rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
     transition: all 0.3s ease;
     background: #ffffff;
 }
 
 .time-input input:focus,
-.savings-input input:focus {
+.savings-input input:focus,
+.rendite-input input:focus {
     outline: none;
     border-color: #3498db;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);

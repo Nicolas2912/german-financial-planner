@@ -282,6 +282,10 @@ export function createScenarioPanel(scenario) {
                                         <label>Monatliche Sparrate (€)</label>
                                         <input type="text" class="phase-savings-rate" value="300" data-phase="1" data-scenario="${scenario.id}">
                                     </div>
+                                    <div class="input-group rendite-input">
+                                        <label>Rendite (% p.a.)</label>
+                                        <input type="number" class="phase-return-rate" value="7.0" min="0" max="20" step="0.1" data-phase="1" data-scenario="${scenario.id}">
+                                    </div>
                                 </div>
                                 <div class="phase-summary">
                                     <span class="phase-duration">Dauer: 11 Jahre</span>
@@ -318,6 +322,10 @@ export function createScenarioPanel(scenario) {
                                         <label>Monatliche Sparrate (€)</label>
                                         <input type="text" class="phase-savings-rate" value="800" data-phase="2" data-scenario="${scenario.id}">
                                     </div>
+                                    <div class="input-group rendite-input">
+                                        <label>Rendite (% p.a.)</label>
+                                        <input type="number" class="phase-return-rate" value="8.5" min="0" max="20" step="0.1" data-phase="2" data-scenario="${scenario.id}">
+                                    </div>
                                 </div>
                                 <div class="phase-summary">
                                     <span class="phase-duration">Dauer: 15 Jahre</span>
@@ -353,6 +361,10 @@ export function createScenarioPanel(scenario) {
                                     <div class="input-group savings-input">
                                         <label>Monatliche Sparrate (€)</label>
                                         <input type="text" class="phase-savings-rate" value="1200" data-phase="3" data-scenario="${scenario.id}">
+                                    </div>
+                                    <div class="input-group rendite-input">
+                                        <label>Rendite (% p.a.)</label>
+                                        <input type="number" class="phase-return-rate" value="6.5" min="0" max="20" step="0.1" data-phase="3" data-scenario="${scenario.id}">
                                     </div>
                                 </div>
                                 <div class="phase-summary">

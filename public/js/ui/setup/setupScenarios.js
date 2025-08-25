@@ -416,6 +416,33 @@ function setupSavingsModeForScenario(scenarioId) {
       togglePhase(scenarioId, phase);
     });
   });
+
+  // Add event listeners for input changes to update summaries
+  const phaseInputs = document.querySelectorAll(`
+    .phase-start-year[data-scenario="${scenarioId}"],
+    .phase-end-year[data-scenario="${scenarioId}"],
+    .phase-savings-rate[data-scenario="${scenarioId}"],
+    .phase-return-rate[data-scenario="${scenarioId}"]
+  `);
+  
+  phaseInputs.forEach(input => {
+    ['input', 'change', 'blur'].forEach(eventType => {
+      input.addEventListener(eventType, function() {
+        updatePhaseSummaries(scenarioId);
+        updateMultiPhaseSummary(scenarioId);
+        
+        // Trigger recalculation if needed
+        if (window.recalculateAll) {
+          clearTimeout(window.phaseUpdateTimeout);
+          window.phaseUpdateTimeout = setTimeout(() => {
+            window.recalculateAll();
+          }, 300);
+        }
+      });
+    });
+  });
+
+  // Initial update
   updatePhaseSummaries(scenarioId);
   updateMultiPhaseSummary(scenarioId);
 }
@@ -457,6 +484,7 @@ function togglePhase(scenarioId, phase) {
   const phaseContent = phaseElement.querySelector('.phase-content');
   const toggleBtn = phaseElement.querySelector('.phase-toggle-btn');
   const toggleText = toggleBtn?.querySelector('.toggle-text');
+  const statusIndicator = phaseElement.querySelector('.phase-status-indicator');
 
   if (phaseElement.classList.contains('active')) {
     // Disable phase (phase 1 cannot be disabled)
@@ -464,12 +492,14 @@ function togglePhase(scenarioId, phase) {
       phaseElement.classList.remove('active');
       if (phaseContent) phaseContent.style.display = 'none';
       if (toggleText) toggleText.textContent = 'Aktivieren';
+      if (statusIndicator) statusIndicator.classList.remove('active');
     }
   } else {
     // Enable phase
     phaseElement.classList.add('active');
     if (phaseContent) phaseContent.style.display = 'block';
     if (toggleText) toggleText.textContent = 'Deaktivieren';
+    if (statusIndicator) statusIndicator.classList.add('active');
   }
 
   updateMultiPhaseSummary(scenarioId);
@@ -478,15 +508,71 @@ function togglePhase(scenarioId, phase) {
   }
 }
 
-// Implement placeholder functions for phase summaries
+// Implement functions for phase summaries
 function updatePhaseSummaries(scenarioId) {
-  // This function would update individual phase summaries if needed
-  console.log(`Updating phase summaries for scenario ${scenarioId}`);
+  // Update individual phase summaries
+  for (let phase = 1; phase <= 3; phase++) {
+    const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    if (!phaseElement || !phaseElement.classList.contains('active')) continue;
+
+    const startYear = parseInt(document.querySelector(`.phase-start-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value) || 0;
+    const endYear = parseInt(document.querySelector(`.phase-end-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value) || 0;
+    const savingsRate = parseFloat(document.querySelector(`.phase-savings-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value?.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+    
+    const duration = endYear - startYear + 1;
+    const totalContributions = duration * 12 * savingsRate;
+
+    // Update phase summary display
+    const phaseSummary = phaseElement.querySelector('.phase-summary');
+    if (phaseSummary) {
+      const durationSpan = phaseSummary.querySelector('.phase-duration');
+      const totalSpan = phaseSummary.querySelector('.phase-total');
+      
+      if (durationSpan) durationSpan.textContent = `Dauer: ${duration} Jahre`;
+      if (totalSpan) totalSpan.textContent = `Gesamt: €${totalContributions.toLocaleString('de-DE')}`;
+    }
+  }
 }
 
 function updateMultiPhaseSummary(scenarioId) {
-  // This function would update the multi-phase summary if needed
-  console.log(`Updating multi-phase summary for scenario ${scenarioId}`);
+  // Count active phases and calculate totals
+  let activePhases = 0;
+  let totalDuration = 0;
+  let totalContributions = 0;
+  let weightedSavingsSum = 0;
+  let totalMonths = 0;
+
+  for (let phase = 1; phase <= 3; phase++) {
+    const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    if (!phaseElement || !phaseElement.classList.contains('active')) continue;
+
+    activePhases++;
+    
+    const startYear = parseInt(document.querySelector(`.phase-start-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value) || 0;
+    const endYear = parseInt(document.querySelector(`.phase-end-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value) || 0;
+    const savingsRate = parseFloat(document.querySelector(`.phase-savings-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value?.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+    
+    const phaseDuration = endYear - startYear + 1;
+    const phaseMonths = phaseDuration * 12;
+    
+    totalDuration = Math.max(totalDuration, endYear);
+    totalContributions += phaseMonths * savingsRate;
+    weightedSavingsSum += phaseMonths * savingsRate;
+    totalMonths += phaseMonths;
+  }
+
+  const averageSavingsRate = totalMonths > 0 ? weightedSavingsSum / totalMonths : 0;
+
+  // Update summary display
+  const activePhasesElement = document.getElementById(`activePhasesCount_${scenarioId}`);
+  const totalDurationElement = document.getElementById(`totalDuration_${scenarioId}`);
+  const averageSavingsElement = document.getElementById(`averageSavingsRate_${scenarioId}`);
+  const totalContributionsElement = document.getElementById(`totalContributions_${scenarioId}`);
+
+  if (activePhasesElement) activePhasesElement.textContent = activePhases.toString();
+  if (totalDurationElement) totalDurationElement.textContent = `${totalDuration} Jahre`;
+  if (averageSavingsElement) averageSavingsElement.textContent = `€${Math.round(averageSavingsRate).toLocaleString('de-DE')}`;
+  if (totalContributionsElement) totalContributionsElement.textContent = `€${Math.round(totalContributions).toLocaleString('de-DE')}`;
 }
 
 // Export functions to window object for backward compatibility

@@ -254,8 +254,6 @@ export function calculateWealthDevelopment(monthlySavings, initialCapital, annua
 function calculateMultiPhaseWealthDevelopment(phases, initialCapital, annualReturn, inflationRate, salaryGrowth, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
     console.log('Starting multi-phase wealth calculation with phases:', phases);
     
-    const monthlyReturn = annualReturn / 12;
-    
     let capital = initialCapital;
     let currentSalary = baseSalary;
     let totalInvested = initialCapital;
@@ -287,12 +285,16 @@ function calculateMultiPhaseWealthDevelopment(phases, initialCapital, annualRetu
         // Find which phase applies for this year
         const currentPhase = phases.find(phase => year >= phase.startYear && year <= phase.endYear);
         let currentMonthlySavings = currentPhase ? currentPhase.monthlySavingsRate : 0;
+        // Determine effective annual return: per-phase value if provided, otherwise global slider value
+        const effectiveAnnualReturn = (currentPhase && typeof currentPhase.annualReturn === 'number' && !isNaN(currentPhase.annualReturn))
+            ? currentPhase.annualReturn
+            : annualReturn;
         
         console.log(`Year ${year}: Phase: ${currentPhase ? `${currentPhase.startYear}-${currentPhase.endYear}` : 'none'}, Monthly savings: €${currentMonthlySavings}`);
         
         for (let month = 1; month <= 12; month++) {
-            // Apply monthly return
-            const monthlyGain = capital * monthlyReturn;
+            // Apply monthly return using the effective annual return for this year
+            const monthlyGain = capital * (effectiveAnnualReturn / 12);
             capital += monthlyGain;
             
             // Add monthly savings if in an active phase
@@ -304,7 +306,7 @@ function calculateMultiPhaseWealthDevelopment(phases, initialCapital, annualRetu
         
         // Apply German ETF taxes annually
         if (includeTax && capital > startOfYearCapital) {
-            const annualTax = calculateGermanETFTax(startOfYearCapital, capital, annualReturn, year, teilfreistellung, etfType);
+            const annualTax = calculateGermanETFTax(startOfYearCapital, capital, effectiveAnnualReturn, year, teilfreistellung, etfType);
             capital -= annualTax;
             yearlyTaxesPaid = annualTax;
             cumulativeTaxesPaid += annualTax;
@@ -505,11 +507,16 @@ function getMultiPhaseData(scenarioId) {
             const startYear = parseInt(document.querySelector(`.phase-start-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`).value) || 0;
             const endYear = parseInt(document.querySelector(`.phase-end-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`).value) || 0;
             const savingsRate = parseGermanNumber(document.querySelector(`.phase-savings-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`).value) || 0;
+            // Parse per-phase annual return from the text input; allow comma decimal
+            const returnRaw = (document.querySelector(`.phase-return-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value || '').toString().trim();
+            const parsedReturnPct = returnRaw ? parseFloat(returnRaw.replace(/\s+/g, '').replace(',', '.')) : NaN;
+            const annualReturnPhase = isNaN(parsedReturnPct) ? null : (parsedReturnPct / 100);
             
             phases.push({
                 startYear: startYear,
                 endYear: endYear,
-                monthlySavingsRate: savingsRate
+                monthlySavingsRate: savingsRate,
+                annualReturn: annualReturnPhase
             });
         }
     }

@@ -284,7 +284,7 @@ export function createScenarioPanel(scenario) {
                                     </div>
                                     <div class="input-group rendite-input">
                                         <label>Rendite (% p.a.)</label>
-                                        <input type="number" class="phase-return-rate" value="7.0" min="0" max="20" step="0.1" data-phase="1" data-scenario="${scenario.id}">
+                                        <input type="text" class="phase-return-rate" value="7,0" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="1" data-scenario="${scenario.id}">
                                     </div>
                                 </div>
                                 <div class="phase-summary">
@@ -324,7 +324,7 @@ export function createScenarioPanel(scenario) {
                                     </div>
                                     <div class="input-group rendite-input">
                                         <label>Rendite (% p.a.)</label>
-                                        <input type="number" class="phase-return-rate" value="8.5" min="0" max="20" step="0.1" data-phase="2" data-scenario="${scenario.id}">
+                                        <input type="text" class="phase-return-rate" value="8,5" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="2" data-scenario="${scenario.id}">
                                     </div>
                                 </div>
                                 <div class="phase-summary">
@@ -364,7 +364,7 @@ export function createScenarioPanel(scenario) {
                                     </div>
                                     <div class="input-group rendite-input">
                                         <label>Rendite (% p.a.)</label>
-                                        <input type="number" class="phase-return-rate" value="6.5" min="0" max="20" step="0.1" data-phase="3" data-scenario="${scenario.id}">
+                                        <input type="text" class="phase-return-rate" value="6,5" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="3" data-scenario="${scenario.id}">
                                     </div>
                                 </div>
                                 <div class="phase-summary">

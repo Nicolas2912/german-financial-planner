@@ -907,7 +907,14 @@ button, input, select, .toggle, .slider {
     display: grid;
     grid-template-columns: 1fr 1fr 1.5fr 1.5fr;
     gap: 12px;
-    align-items: end;
+    /* Align groups to the top; we'll equalize label heights to line up inputs */
+    align-items: start;
+}
+
+/* Ensure all four labels reserve the same space so inputs align horizontally */
+.time-range-inputs .input-group label {
+    min-height: 36px;
+    display: block;
 }
 
 .time-input {

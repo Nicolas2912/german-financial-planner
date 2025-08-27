@@ -427,7 +427,26 @@ function setupSavingsModeForScenario(scenarioId) {
   
   phaseInputs.forEach(input => {
     ['input', 'change', 'blur'].forEach(eventType => {
-      input.addEventListener(eventType, function() {
+      input.addEventListener(eventType, function(e) {
+        // Normalize Rendite input on blur so it never clears due to invalid number formats
+        if (eventType === 'blur' && this.classList.contains('phase-return-rate')) {
+          const raw = (this.value || '').toString().trim();
+          if (raw !== '') {
+            // Accept both comma and dot, display with comma for de-DE
+            const normalized = raw.replace(/\s+/g, '').replace(',', '.');
+            const num = parseFloat(normalized);
+            if (!isNaN(num)) {
+              this.value = num.toString().replace('.', ',');
+            }
+          }
+        }
+
+        // If user changed an end year, keep next phase's start in sync
+        if (this.classList.contains('phase-end-year')) {
+          const phase = parseInt(this.getAttribute('data-phase'));
+          syncNextPhaseStart(scenarioId, phase);
+        }
+
         updatePhaseSummaries(scenarioId);
         updateMultiPhaseSummary(scenarioId);
         
@@ -441,10 +460,40 @@ function setupSavingsModeForScenario(scenarioId) {
       });
     });
   });
-
+  
   // Initial update
   updatePhaseSummaries(scenarioId);
   updateMultiPhaseSummary(scenarioId);
+}
+
+// Keep next phase's start year exactly one year after current phase's end year
+function syncNextPhaseStart(scenarioId, currentPhase) {
+  const nextPhase = currentPhase + 1;
+  if (nextPhase > 3) return;
+  const currentEndEl = document.querySelector(`.phase-end-year[data-phase="${currentPhase}"][data-scenario="${scenarioId}"]`);
+  const nextStartEl = document.querySelector(`.phase-start-year[data-phase="${nextPhase}"][data-scenario="${scenarioId}"]`);
+  const nextPhaseElement = document.querySelector(`.savings-phase[data-phase="${nextPhase}"][data-scenario="${scenarioId}"]`);
+  if (!currentEndEl || !nextStartEl || !nextPhaseElement) return;
+  if (!nextPhaseElement.classList.contains('active')) return; // only adjust if next phase is active
+
+  const currentEnd = parseInt(currentEndEl.value) || 0;
+  const desiredStart = currentEnd + 1;
+
+  // Only update if different to avoid unnecessary event noise
+  if ((parseInt(nextStartEl.value) || 0) !== desiredStart) {
+    nextStartEl.value = desiredStart;
+    // Also adjust the min of next end-year to be at least start
+    const nextEndEl = document.querySelector(`.phase-end-year[data-phase="${nextPhase}"][data-scenario="${scenarioId}"]`);
+    if (nextEndEl) {
+      const start = desiredStart;
+      const minEnd = Math.max(start, parseInt(nextEndEl.getAttribute('min') || '0'));
+      nextEndEl.setAttribute('min', String(minEnd));
+      // If current nextEnd is before new start, snap it to start
+      if ((parseInt(nextEndEl.value) || 0) < start) {
+        nextEndEl.value = start;
+      }
+    }
+  }
 }
 
 // Implement the switchSavingsMode function
@@ -500,9 +549,31 @@ function togglePhase(scenarioId, phase) {
     if (phaseContent) phaseContent.style.display = 'block';
     if (toggleText) toggleText.textContent = 'Deaktivieren';
     if (statusIndicator) statusIndicator.classList.add('active');
+
+    // When enabling phase 2 or 3, align its start with previous phase end + 1
+    if (phase > 1) {
+      const prevEndEl = document.querySelector(`.phase-end-year[data-phase="${phase-1}"][data-scenario="${scenarioId}"]`);
+      const thisStartEl = document.querySelector(`.phase-start-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+      if (prevEndEl && thisStartEl) {
+        const desiredStart = (parseInt(prevEndEl.value) || 0) + 1;
+        const currentStart = parseInt(thisStartEl.value) || 0;
+        if (currentStart !== desiredStart) {
+          thisStartEl.value = desiredStart;
+        }
+        // Ensure end-year min respects new start
+        const thisEndEl = document.querySelector(`.phase-end-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+        if (thisEndEl) {
+          thisEndEl.setAttribute('min', String(desiredStart));
+          if ((parseInt(thisEndEl.value) || 0) < desiredStart) {
+            thisEndEl.value = desiredStart;
+          }
+        }
+      }
+    }
   }
 
   updateMultiPhaseSummary(scenarioId);
+  updatePhaseSummaries(scenarioId);
   if (window.recalculateAll) {
     window.recalculateAll();
   }
@@ -518,9 +589,13 @@ function updatePhaseSummaries(scenarioId) {
     const startYear = parseInt(document.querySelector(`.phase-start-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value) || 0;
     const endYear = parseInt(document.querySelector(`.phase-end-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value) || 0;
     const savingsRate = parseFloat(document.querySelector(`.phase-savings-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value?.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
+    const returnPct = parseFloat((document.querySelector(`.phase-return-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value || '').toString().replace(',', '.')) || 0;
     
     const duration = endYear - startYear + 1;
-    const totalContributions = duration * 12 * savingsRate;
+    const months = Math.max(0, duration * 12);
+    const r = (returnPct / 100) / 12;
+    // Future value of monthly contributions at monthly rate r over n months
+    const totalWithReturns = r > 0 ? (savingsRate * ((Math.pow(1 + r, months) - 1) / r)) : (savingsRate * months);
 
     // Update phase summary display
     const phaseSummary = phaseElement.querySelector('.phase-summary');
@@ -529,7 +604,7 @@ function updatePhaseSummaries(scenarioId) {
       const totalSpan = phaseSummary.querySelector('.phase-total');
       
       if (durationSpan) durationSpan.textContent = `Dauer: ${duration} Jahre`;
-      if (totalSpan) totalSpan.textContent = `Gesamt: €${totalContributions.toLocaleString('de-DE')}`;
+      if (totalSpan) totalSpan.textContent = `Gesamt: €${Math.round(totalWithReturns).toLocaleString('de-DE')}`;
     }
   }
 }

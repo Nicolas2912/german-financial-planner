@@ -12,6 +12,8 @@ export {
   setupPhaseToggle,
   setupGermanNumberInputs,
   setupSavingsModeFunctionality,
+  // expose per-scenario setup so new scenarios can wire multi‑phase inputs
+  setupSavingsModeForScenario,
   setupStickyScenarioCards,
   setupScenarioImport,
   setupAutoSaveScenarios,

@@ -22,6 +22,9 @@ export function setupScenarioListeners() {
   setupScenarioInputListeners('A');
   initializeScenarioSliderValues('A');
   setupScenarioManagementListeners();
+  // Ensure global delegation exists so dynamically added scenarios
+  // have working phase toggle buttons without rebinding
+  ensurePhaseToggleDelegation();
 }
 
 function setupScenarioTabs() {
@@ -382,6 +385,25 @@ export function setupSavingsModeFunctionality() {
   state.scenarios.forEach(scenario => {
     setupSavingsModeForScenario(scenario.id);
   });
+  ensurePhaseToggleDelegation();
+}
+
+// Use a single delegated click handler for phase toggle buttons to
+// guarantee functionality across dynamically added scenarios.
+let phaseToggleDelegationBound = false;
+function ensurePhaseToggleDelegation() {
+  if (phaseToggleDelegationBound) return;
+  phaseToggleDelegationBound = true;
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.phase-toggle-btn');
+    if (!btn) return;
+    const scenarioId = btn.getAttribute('data-scenario');
+    const phase = parseInt(btn.getAttribute('data-phase'));
+    if (!scenarioId || !phase) return;
+    try {
+      togglePhase(scenarioId, phase);
+    } catch (_) {}
+  }, true);
 }
 
 export function setupStickyScenarioCards() {
@@ -401,7 +423,7 @@ export function setupStickyScenarioCards() {
   window.resetStickyScenarioCards = function() { resetStickyState(); };
 }
 
-function setupSavingsModeForScenario(scenarioId) {
+export function setupSavingsModeForScenario(scenarioId) {
   const savingsModeButtons = document.querySelectorAll(`.savings-mode-btn[data-scenario="${scenarioId}"]`);
   savingsModeButtons.forEach(button => {
     button.addEventListener('click', function() {
@@ -652,6 +674,9 @@ function updateMultiPhaseSummary(scenarioId) {
 
 // Export functions to window object for backward compatibility
 if (typeof window !== 'undefined') {
+  // make the full-featured per-scenario setup available globally so
+  // scenarioManager can call it when creating new scenarios
+  window.setupSavingsModeForScenario = setupSavingsModeForScenario;
   window.switchSavingsMode = switchSavingsMode;
   window.togglePhase = togglePhase;
   window.updatePhaseSummaries = updatePhaseSummaries;

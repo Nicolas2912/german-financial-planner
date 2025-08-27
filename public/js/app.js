@@ -21,6 +21,7 @@ import {
     setupPhaseToggle,
     setupGermanNumberInputs,
     setupSavingsModeFunctionality,
+    setupSavingsModeForScenario as setupSavingsModeForScenarioImpl,
     setupStickyScenarioCards,
     setupScenarioImport,
     setupAutoSaveScenarios,
@@ -262,35 +263,13 @@ window.getScenarioValue = function(inputId, scenarioId) {
     return element ? element.value : null;
 };
 
+// Bridge for older code paths: delegate to the full-featured setup
 window.setupSavingsModeForScenario = function(scenarioId) {
-    // This function sets up the savings mode toggle functionality for a scenario
-    // For now, we'll implement a basic version
-    console.log(`Setting up savings mode for scenario ${scenarioId}`);
-    
-    // Find and set up the savings mode buttons for this scenario
-    const modeButtons = document.querySelectorAll(`.savings-mode-btn[data-scenario="${scenarioId}"]`);
-    modeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const mode = this.dataset.mode;
-            const scenario = this.dataset.scenario;
-            
-            // Update button states
-            modeButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show/hide appropriate containers
-            const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${scenario}"]`);
-            const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${scenario}"]`);
-            
-            if (mode === 'simple') {
-                if (simpleContainer) simpleContainer.style.display = 'block';
-                if (multiPhaseContainer) multiPhaseContainer.style.display = 'none';
-            } else if (mode === 'multi-phase') {
-                if (simpleContainer) simpleContainer.style.display = 'none';
-                if (multiPhaseContainer) multiPhaseContainer.style.display = 'block';
-            }
-        });
-    });
+    if (typeof setupSavingsModeForScenarioImpl === 'function') {
+        setupSavingsModeForScenarioImpl(scenarioId);
+    } else {
+        console.warn('setupSavingsModeForScenario implementation missing');
+    }
 };
 
 // Make core functions available globally

@@ -909,23 +909,34 @@ body.scenario-comparison .container:hover {
 .scenario-results {
     margin-top: 30px;
     transition: all 0.3s ease;
+    /* Keep the scenario cards visible while scrolling the
+       parameters on the left, but never leave their section. */
+    position: sticky;
+    top: 16px; /* breathing room below the header */
+    align-self: start; /* ensure sticky works inside CSS grid */
+    max-height: calc(100vh - 140px); /* prevent overlap; scroll internally if needed */
+    overflow: auto;
+    -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
 }
 
+/* Legacy .sticky variant kept for backward compatibility.
+   We intentionally neutralize the fixed overlay behavior to
+   avoid jank and ensure the cards stay within their section. */
 .scenario-results.sticky {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 12px;
-    padding: 15px;
+    position: sticky;
+    top: 16px;
+    left: auto;
+    transform: none;
+    z-index: auto;
+    box-shadow: none;
+    background: transparent;
+    backdrop-filter: none;
+    border-radius: 0;
+    padding: 0;
     margin: 0;
-    border: 1px solid rgba(52, 152, 219, 0.1);
-    width: calc(100% - 40px);
-    max-width: 800px;
+    border: none;
+    width: auto;
+    max-width: none;
 }
 
 .scenario-results.sticky .scenario-result-card {
@@ -1161,13 +1172,15 @@ body.scenario-comparison .container:hover {
     }
     
     .scenario-results {
-        position: relative;
+        position: static; /* natural flow on mobile */
         top: auto;
         z-index: auto;
+        max-height: none;
+        overflow: visible;
     }
     
     .scenario-results.sticky {
-        position: relative;
+        position: static;
         top: auto;
         left: auto;
         transform: none;

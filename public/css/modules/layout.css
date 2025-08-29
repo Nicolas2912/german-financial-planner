@@ -17,7 +17,10 @@
         0 25px 50px -12px rgba(0, 0, 0, 0.15),
         0 0 0 1px rgba(255, 255, 255, 0.1),
         inset 0 1px 0 rgba(255, 255, 255, 0.2);
-    overflow: hidden;
+    /* Allow sticky children deeper in the tree (e.g., scenario cards)
+       to work correctly. Sticky is disabled inside overflow-hidden
+       ancestors, so we keep this visible. */
+    overflow: visible;
     position: relative;
     transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
@@ -133,7 +136,9 @@
     grid-template-columns: minmax(400px, 1fr) minmax(400px, 1fr);
     gap: 40px;
     max-width: 100%;
-    overflow: hidden;
+    /* Allow sticky children (e.g., scenario cards) to work.
+       Sticky is disabled inside overflow-hidden ancestors. */
+    overflow: visible;
 }
 
 .controls-section {

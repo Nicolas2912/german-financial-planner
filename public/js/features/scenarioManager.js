@@ -142,8 +142,11 @@ export function createScenarioTab(scenario) {
 export function switchToScenario(scenarioId) {
     const { autoSyncWithdrawalCapital, updateContributionsGainsChart, currentChartMode } = window;
     
-    // Update active scenario
+    // Update active scenario (global and state)
     window.activeScenario = scenarioId;
+    if (state && typeof state.setActiveScenario === 'function') {
+        state.setActiveScenario(scenarioId);
+    }
     
     // Update tab appearance
     document.querySelectorAll('.scenario-tab').forEach(tab => {

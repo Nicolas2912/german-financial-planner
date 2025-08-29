@@ -15,6 +15,14 @@ import { addNewScenario, switchToScenario } from '../../features/scenarioManager
 import { calculateBudget } from './setupBudget.js';
 import { calculateTaxes } from './setupTaxes.js';
 import { calculateWithdrawal } from './setupWithdrawal.js';
+import {
+  openSaveAnsparphaseScenarioModal,
+  closeSaveAnsparphaseScenarioModal,
+  updateAnsparphaseScenarioPreview,
+  confirmSaveAnsparphaseScenario,
+  openManageAnsparphaseScenarioModal,
+  closeManageAnsparphaseScenarioModal,
+} from '../../features/ansparphaseScenarioManager.js';
 
 // Scenario listeners and management
 export function setupScenarioListeners() {
@@ -769,9 +777,38 @@ export function setupAutoSaveScenarios() {
 }
 
 export function setupAnsparphaseScenarioListeners() {
-  // Keep as thin wrappers delegating to window.* utilities where present
-  // This preserves existing UX while removing the old monolith dependency
-  if (window.setupAnsparphaseScenarioListeners) window.setupAnsparphaseScenarioListeners();
+  // Wire Save modal
+  const saveBtn = document.getElementById('saveAnsparphaseScenario');
+  if (saveBtn) saveBtn.addEventListener('click', openSaveAnsparphaseScenarioModal);
+
+  const closeSaveModalBtn = document.getElementById('closeSaveAnsparphaseScenarioModal');
+  if (closeSaveModalBtn) closeSaveModalBtn.addEventListener('click', closeSaveAnsparphaseScenarioModal);
+
+  const cancelSaveBtn = document.getElementById('cancelSaveAnsparphaseScenario');
+  if (cancelSaveBtn) cancelSaveBtn.addEventListener('click', closeSaveAnsparphaseScenarioModal);
+
+  const confirmSaveBtn = document.getElementById('confirmSaveAnsparphaseScenario');
+  if (confirmSaveBtn) confirmSaveBtn.addEventListener('click', confirmSaveAnsparphaseScenario);
+
+  const nameInput = document.getElementById('ansparphaseScenarioName');
+  if (nameInput) nameInput.addEventListener('input', updateAnsparphaseScenarioPreview);
+  const descInput = document.getElementById('ansparphaseScenarioDescription');
+  if (descInput) descInput.addEventListener('input', updateAnsparphaseScenarioPreview);
+
+  // Wire Manage modal
+  const manageBtn = document.getElementById('manageAnsparphaseScenarios');
+  if (manageBtn) manageBtn.addEventListener('click', openManageAnsparphaseScenarioModal);
+
+  const closeManageModalBtn = document.getElementById('closeManageAnsparphaseScenarioModal');
+  if (closeManageModalBtn) closeManageModalBtn.addEventListener('click', closeManageAnsparphaseScenarioModal);
+
+  // Global click: close save/manage when clicking outside
+  window.addEventListener('click', function (event) {
+    const saveModal = document.getElementById('saveAnsparphaseScenarioModal');
+    const manageModal = document.getElementById('manageAnsparphaseScenarioModal');
+    if (event.target === saveModal) closeSaveAnsparphaseScenarioModal();
+    if (event.target === manageModal) closeManageAnsparphaseScenarioModal();
+  });
 }
 
 export function setupEntnahmephaseScenarioListeners() {

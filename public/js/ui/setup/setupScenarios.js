@@ -431,13 +431,11 @@ export function setupSavingsModeForScenario(scenarioId) {
       switchSavingsMode(scenarioId, mode);
     });
   });
-  const phaseToggleButtons = document.querySelectorAll(`.phase-toggle-btn[data-scenario="${scenarioId}"]`);
-  phaseToggleButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      const phase = parseInt(this.dataset.phase);
-      togglePhase(scenarioId, phase);
-    });
-  });
+
+  // Do not bind per-button listeners for phase toggles here.
+  // A single delegated listener (ensurePhaseToggleDelegation) handles
+  // all current and future .phase-toggle-btn clicks across scenarios.
+  // This avoids double-invocation that could toggle on and immediately off.
 
   // Add event listeners for input changes to update summaries
   const phaseInputs = document.querySelectorAll(`

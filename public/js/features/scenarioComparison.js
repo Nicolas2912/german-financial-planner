@@ -1,5 +1,6 @@
 // scenarioComparison.js - Basic Scenario Comparison Module
 import { scenarioColors as baseScenarioColors } from '../state.js';
+import { calculateWealthDevelopment } from '../core/accumulation.js';
 class ScenarioComparisonManager {
     constructor() {
         this.charts = {};
@@ -45,6 +46,11 @@ class ScenarioComparisonManager {
         this.initializeLayout();
         // Apply accent colors to scenario buttons (borders + active fill)
         this.applyScenarioButtonAccents();
+
+        // Bind inputs and initialize with active scenario values
+        this.bindParameterInputs();
+        this.populateInputsFromActiveScenario();
+        this.updateAllSummaries();
     }
 
     initializeEventListeners() {
@@ -108,13 +114,23 @@ class ScenarioComparisonManager {
 
         // Scenario chooser buttons
         document.querySelectorAll('.btn-scenario').forEach(btn => {
-            btn.addEventListener('click', () => this.selectScenario(btn));
+            btn.addEventListener('click', () => {
+                this.selectScenario(btn);
+                // When switching scenario, refresh inputs from that scenario
+                this.populateInputsFromActiveScenario();
+            });
         });
 
         // Action buttons
         document.querySelector('.comparison-btn.btn-load')?.addEventListener('click', () => this.loadTemplate());
         document.querySelector('.comparison-btn.btn-save')?.addEventListener('click', () => this.saveConfiguration());
         document.querySelector('.comparison-btn.btn-export')?.addEventListener('click', () => this.exportData());
+
+        // Budget import menu
+        const importBtn = document.getElementById('budgetImportBtn');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => this.toggleBudgetImportMenu());
+        }
     }
 
     handlePhaseNavigation(pill) {
@@ -264,6 +280,278 @@ class ScenarioComparisonManager {
         } else {
             console.log('No active scenario button found during initialization');
         }
+    }
+
+    bindParameterInputs() {
+        // Accumulation inputs
+        const accIds = ['accReturn', 'accYears', 'accInitial', 'accMonthly'];
+        accIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => this.onParamsChanged());
+                el.addEventListener('change', () => this.onParamsChanged());
+            }
+        });
+
+        // Withdrawal inputs
+        const wdIds = ['wdRate', 'wdYears'];
+        wdIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => this.onParamsChanged());
+                el.addEventListener('change', () => this.onParamsChanged());
+            }
+        });
+    }
+
+    getActiveScenarioId() {
+        const activeBtn = document.querySelector('.btn-scenario.active:not(.btn-new)');
+        return activeBtn?.getAttribute('data-scenario') || 'conservative';
+    }
+
+    populateInputsFromActiveScenario() {
+        const id = this.getActiveScenarioId();
+        const sc = this.scenarioConfigs.find(s => s.id === id);
+        if (!sc) return;
+        const g = (sel) => document.getElementById(sel);
+        if (g('accReturn')) g('accReturn').value = sc.params.accumulation.returnRate ?? '';
+        if (g('accYears')) g('accYears').value = sc.params.accumulation.years ?? '';
+        if (g('accInitial')) g('accInitial').value = sc.params.accumulation.initialCapital ?? 0;
+        if (g('accMonthly')) g('accMonthly').value = sc.params.accumulation.monthlySavings ?? '';
+        if (g('wdRate')) g('wdRate').value = sc.params.withdrawal.rate ?? '';
+        if (g('wdYears')) g('wdYears').value = sc.params.withdrawal.years ?? '';
+    }
+
+    onParamsChanged() {
+        const id = this.getActiveScenarioId();
+        const sc = this.scenarioConfigs.find(s => s.id === id);
+        if (!sc) return;
+
+        // Read inputs
+        const accReturn = parseFloat(document.getElementById('accReturn')?.value || '0');
+        const accYears = parseInt(document.getElementById('accYears')?.value || '0');
+        const accInitial = parseFloat(document.getElementById('accInitial')?.value || '0');
+        const accMonthly = parseFloat(document.getElementById('accMonthly')?.value || '0');
+        const wdRate = parseFloat(document.getElementById('wdRate')?.value || '0');
+        const wdYears = parseInt(document.getElementById('wdYears')?.value || '0');
+
+        // Update scenario params
+        sc.params.accumulation.returnRate = isNaN(accReturn) ? 0 : accReturn;
+        sc.params.accumulation.years = isNaN(accYears) ? 0 : accYears;
+        sc.params.accumulation.initialCapital = isNaN(accInitial) ? 0 : accInitial;
+        sc.params.accumulation.monthlySavings = isNaN(accMonthly) ? 0 : accMonthly;
+        sc.params.withdrawal.rate = isNaN(wdRate) ? 0 : wdRate;
+        sc.params.withdrawal.years = isNaN(wdYears) ? 0 : wdYears;
+
+        // Recompute simple accumulation end wealth using core calculation for better fidelity
+        try {
+            const final = this.computeFinalWealth(sc);
+            sc.params.results.finalWealth = final;
+        } catch (e) {
+            console.warn('Final wealth calc failed', e);
+        }
+
+        // Update summaries for both scenarios
+        this.updateAllSummaries();
+    }
+
+    computeFinalWealth(sc) {
+        // Map params to calculateWealthDevelopment inputs
+        const monthlySavings = Number(sc.params.accumulation.monthlySavings || 0);
+        const initialCapital = Number(sc.params.accumulation.initialCapital || 0);
+        const annualReturn = Number(sc.params.accumulation.returnRate || 0) / 100;
+        const duration = Number(sc.params.accumulation.years || 0);
+        // Defaults for fields not present on comparison page
+        const inflationRate = Number(sc.params.budget?.inflation || 2.0) / 100;
+        const salaryGrowth = 0;
+        const salaryToSavings = 0;
+        const includeTax = false;
+        const baseSalary = 60000;
+        const teilfreistellung = false;
+        const etfType = 'thesaurierend';
+        const res = calculateWealthDevelopment(
+            monthlySavings,
+            initialCapital,
+            annualReturn,
+            inflationRate,
+            salaryGrowth,
+            duration,
+            salaryToSavings,
+            includeTax,
+            baseSalary,
+            teilfreistellung,
+            etfType
+        );
+        const formatter = new Intl.NumberFormat('de-DE');
+        return `${formatter.format(Math.round(res.finalNominal))} €`;
+    }
+
+    updateAllSummaries() {
+        const fmt = new Intl.NumberFormat('de-DE');
+        const apply = (scId) => {
+            const sc = this.scenarioConfigs.find(s => s.id === scId);
+            if (!sc) return;
+            const prefix = scId === 'optimistic' ? 'optimistic' : (scId === 'conservative' ? 'conservative' : scId);
+            const byId = (id) => document.getElementById(id);
+            const final = sc.params.results.finalWealth || this.computeFinalWealth(sc);
+            byId(`sum-final-${prefix}`)?.replaceChildren(document.createTextNode(final));
+            byId(`sum-return-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.accumulation.returnRate ?? 0}%`));
+            byId(`sum-monthly-${prefix}`)?.replaceChildren(document.createTextNode(`${fmt.format(sc.params.accumulation.monthlySavings || 0)} €`));
+            byId(`sum-wdrate-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.withdrawal.rate ?? 0}%`));
+            byId(`sum-accyears-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.accumulation.years ?? 0}`));
+            byId(`sum-wdyears-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.withdrawal.years ?? 0}`));
+        };
+        // Update known initial scenarios
+        ['optimistic','conservative'].forEach(apply);
+    }
+
+    toggleBudgetImportMenu() {
+        const menu = document.getElementById('budgetImportMenu');
+        const list = document.getElementById('budgetImportList');
+        if (!menu || !list) return;
+        // Toggle visibility
+        menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+        if (menu.style.display === 'block') {
+            // Populate from localStorage
+            const entries = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('budgetProfile_')) {
+                    try { entries.push({ key, data: JSON.parse(localStorage.getItem(key) || '{}') }); } catch (_) {}
+                }
+            }
+            if (!entries.length) {
+                list.innerHTML = '<div style="color:#7f8c8d">Keine gespeicherten Profile gefunden.</div>';
+                return;
+            }
+            list.innerHTML = '';
+            entries.sort((a,b) => a.key.localeCompare(b.key));
+            entries.forEach(({ key, data }) => {
+                const name = (data?.name) || key.replace('budgetProfile_','');
+                const btn = document.createElement('button');
+                btn.className = 'profile-action-btn profile-load-btn';
+                btn.textContent = `📂 ${name}`;
+                btn.style.justifySelf = 'start';
+                btn.addEventListener('click', () => {
+                    this.applyBudgetProfile(name, data);
+                    menu.style.display = 'none';
+                });
+                list.appendChild(btn);
+            });
+        }
+    }
+
+    applyBudgetProfile(profileName, profileData) {
+        try {
+            const fmt = new Intl.NumberFormat('de-DE');
+            const euros = (n) => `€${fmt.format(Math.round(n || 0))}`;
+            const profile = profileData || {};
+            const totals = profile.budgetData || {};
+            const income = profile.income || {};
+            const expenses = profile.expenses || {};
+            const savings = profile.savings || { mode: 'fixed', amount: 0, percentage: 0 };
+            const periods = profile.periods || {};
+
+            const totalIncome = (typeof totals.totalIncome === 'number') ? totals.totalIncome : this.sumNumbers(income);
+            const totalExpenses = (typeof totals.totalExpenses === 'number') ? totals.totalExpenses : this.sumNumbers(expenses);
+            const available = Math.max(0, (totalIncome || 0) - (totalExpenses || 0));
+
+            const pretty = (k) => this.prettyLabel(k);
+
+            // Build vertical key-over-value lists for readability
+            const buildList = (entries) => {
+                return `<div class="kvv-list">${entries.map(([k,v,code]) => `
+                    <div class="kvv-item"${code ? ` data-key="${code}"` : ''}>
+                        <div class="kvv-k">${k}</div>
+                        <div class="kvv-v">${v}</div>
+                    </div>`).join('')}</div>`;
+            };
+            const group = (title, entries) => `
+                <div class="budget-group">
+                    <div class="budget-chip">${title}</div>
+                    ${buildList(entries)}
+                </div>`;
+
+            const incomeEntries = Object.entries(income).map(([k, v]) => [pretty(k), euros(this.parseNumber(v)), k]);
+            const expenseEntries = Object.entries(expenses).map(([k, v]) => [pretty(k), euros(this.parseNumber(v))]);
+            const savingsEntries = [
+                ['Sparmodus', savings.mode === 'fixed' ? 'Fester Betrag' : 'Prozentsatz'],
+                ['Sparrate', euros(this.parseNumber(savings.amount))],
+                ['Spar‑Prozentsatz', `${this.parseNumber(savings.percentage) || 0}%`]
+            ];
+            const periodEntries = [
+                ['Einkommen‑Periode', pretty(periods.income || 'monthly')],
+                ['Fixkosten‑Periode', pretty(periods.fixed || 'monthly')],
+                ['Variable‑Periode', pretty(periods.variable || 'monthly')]
+            ];
+            const summaryEntries = [
+                ['Gesamteinkommen', euros(totalIncome)],
+                ['Gesamtausgaben', euros(totalExpenses)],
+                ['Verfügbar', euros(available)],
+                ['Profil', profile.name || profileName || '—']
+            ];
+            if (profile.description) summaryEntries.push(['Beschreibung', this.escape(String(profile.description))]);
+            if (profile.createdAt) summaryEntries.push(['Erstellt', new Date(profile.createdAt).toLocaleDateString('de-DE')]);
+
+            const html = `
+                <div class="budget-grid">
+                  <div class="budget-card summary">
+                    ${group('Zusammenfassung', summaryEntries)}
+                    ${group('Sparen', savingsEntries)}
+                  </div>
+                  <div class="budget-card income">${group('Einkommen', incomeEntries)}</div>
+                  <div class="budget-card expenses">${group('Ausgaben', expenseEntries)}</div>
+                </div>`;
+
+            const container = document.getElementById('budgetReadonly');
+            if (container) container.innerHTML = html;
+        } catch (e) {
+            console.warn('Failed to apply budget profile', e);
+        }
+    }
+
+    sumNumbers(obj) {
+        if (!obj || typeof obj !== 'object') return 0;
+        return Object.values(obj).reduce((acc, v) => acc + (parseFloat(String(v).replace(/\./g,'').replace(',','.')) || 0), 0);
+    }
+
+    parseNumber(v) {
+        return parseFloat(String(v ?? 0).replace(/\./g,'').replace(',','.')) || 0;
+    }
+
+    escape(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    prettyLabel(key) {
+        const map = {
+            // Income
+            salary: 'Gehalt',
+            sideIncome: 'Nebeneinkommen',
+            otherIncome: 'Sonstige Einnahmen',
+            // Expenses
+            rent: 'Miete',
+            utilities: 'Nebenkosten',
+            health: 'Gesundheit',
+            insurance: 'Versicherungen',
+            internet: 'Internet',
+            gez: 'Rundfunkbeitrag',
+            food: 'Lebensmittel',
+            transport: 'Transport',
+            leisure: 'Freizeit',
+            clothing: 'Kleidung',
+            subscriptions: 'Abos',
+            miscellaneous: 'Sonstiges',
+            // Periods
+            monthly: 'Monatlich',
+            yearly: 'Jährlich',
+            income: 'Einkommen',
+            fixed: 'Fixkosten',
+            variable: 'Variable Kosten'
+        };
+        return map[key] || key;
     }
 
     applyScenarioButtonAccents() {

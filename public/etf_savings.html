@@ -981,35 +981,35 @@
                             <button class="pill" data-target="withdrawal">Entnahmephase</button>
                         </div>
 
-                        <!-- Budget Section -->
+                        <!-- Budget Section (read-only; import only) -->
                         <div class="param-section" id="comparisonBudgetSection">
                             <div class="param-header" data-toggle="budgetGrid">
                                 <h4>💼 Budgetplanung</h4>
                                 <div class="header-actions">
-                                    <button class="btn-import">Importieren ▼</button>
+                                    <button class="btn-import" id="budgetImportBtn">Importieren ▼</button>
                                     <span class="toggle-icon">▼</span>
                                 </div>
                             </div>
                             <div class="param-grid active" id="budgetGrid">
-                                <div class="field">
-                                    <label>Einkommen (€/Monat)</label>
-                                    <input class="input-field" type="number" placeholder="4000" />
-                                </div>
-                                <div class="field">
-                                    <label>Ausgaben (€/Monat)</label>
-                                    <input class="input-field" type="number" placeholder="3000" />
-                                </div>
-                                <div class="field">
-                                    <label>Sparrate (€)</label>
-                                    <input class="input-field" type="number" placeholder="1000" />
-                                </div>
-                                <div class="field">
-                                    <label>Inflation p.a. (%)</label>
-                                    <input class="input-field" type="number" placeholder="2.2" />
-                                </div>
-                                <div class="field">
-                                    <label>Lohnwachstum p.a. (%)</label>
-                                    <input class="input-field" type="number" placeholder="1.5" />
+                                <div id="budgetReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Budget">
+                                            <span class="k">Gesamteinkommen</span><span class="v" id="budgetIncome">—</span>
+                                            <span class="k">Gesamtausgaben</span><span class="v" id="budgetExpenses">—</span>
+                                            <span class="k">Sparrate</span><span class="v" id="budgetSavings">—</span>
+                                            <span class="k">Verfügbar</span><span class="v" id="budgetAvailable">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Annahmen">
+                                            <span class="k">Inflation p.a.</span><span class="v" id="budgetInflation">—</span>
+                                            <span class="k">Perioden</span><span class="v" id="budgetPeriods">—</span>
+                                            <span class="k">Profil</span><span class="v" id="budgetProfileName">—</span>
+                                            <span class="k"></span><span class="v"></span>
+                                        </div>
+                                    </div>
+                                    <div id="budgetImportMenu" style="display:none; margin-top:12px; border:1px solid #e5e7eb; border-radius:8px; padding:10px; background:#fff;">
+                                        <strong style="display:block; margin-bottom:8px; color:#2c3e50;">Profil wählen</strong>
+                                        <div id="budgetImportList" style="display:grid; gap:8px;"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

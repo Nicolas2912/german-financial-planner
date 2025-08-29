@@ -1492,6 +1492,9 @@ body.scenario-comparison .container:hover {
     border-radius: 999px;
 }
 
+/* Ensure space for the chip label above group */
+.kv-container .kv[data-title] { padding-top: 26px; }
+
 /* Visual separation between columns on wide screens */
 .kv-container .kv:nth-child(2) {
     border-left: 1px dashed #eef2f7;
@@ -1540,6 +1543,98 @@ body.scenario-comparison .container:hover {
 @media (max-width: 680px) {
   .kv-container .kv:nth-child(2) { border-left: none; padding-left: 0; }
 }
+
+/* -------------------------
+   Budget Readonly Grid (Scenario Comparison)
+   ------------------------- */
+.budget-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* always single column */
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+@media (max-width: 840px) {
+  .budget-grid { grid-template-columns: 1fr; }
+}
+
+.budget-card {
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+  padding: 10px 12px;
+}
+
+/* Emphasis and colors per card type */
+.budget-card.summary { padding: 14px 16px; }
+.budget-card.summary .kvv-k { font-size: 0.86rem; }
+.budget-card.summary .kvv-v { font-size: 1rem; }
+.budget-card.income { border-left: 4px solid var(--success); background: linear-gradient(0deg, rgba(39,174,96,0.04), rgba(39,174,96,0.02)); }
+.budget-card.expenses { border-left: 4px solid var(--danger); background: linear-gradient(0deg, rgba(231,76,60,0.04), rgba(231,76,60,0.02)); }
+.budget-card.income .kvv-v { color: #1e7e34; }
+.budget-card.expenses .kvv-v { color: #a83232; }
+
+.budget-card .kv { margin-bottom: 8px; }
+.budget-card .kv:last-child { margin-bottom: 0; }
+
+.kv .v.strong { color: #2c3e50; font-weight: 800; }
+
+/* Tighter, smaller typography in budget cards */
+.budget-card .kv { font-size: 0.84rem; grid-template-columns: minmax(160px, 1fr) auto; }
+.budget-card .kv .k { font-weight: 600; }
+.budget-card .kv .v { font-size: 0.9rem; }
+
+/* Prevent any overflow beyond panel borders */
+.comparison-params-panel #budgetGrid { overflow: hidden; }
+.budget-card, .budget-grid, .kv { box-sizing: border-box; }
+.kv { min-width: 0; }
+/* Do not crop text in budget cards; allow wrapping */
+.budget-card .kv .k,
+.budget-card .kv .v {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-word;
+}
+
+/* Vertical key-over-value layout for Budget cards */
+.budget-card .budget-group { margin-bottom: 8px; }
+.budget-card .budget-group:last-child { margin-bottom: 0; }
+.budget-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  letter-spacing: 0.2px;
+  color: var(--muted);
+  background: #f7fafc;
+  border: 1px solid #eef2f7;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+.kvv-list { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px 12px; }
+/* Force one column for income list; expenses keep two columns */
+.budget-card.income .kvv-list { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.budget-card.income .kvv-item { grid-column: 1 / -1; }
+.budget-card.income .kvv-item[data-key="sideIncome"],
+.budget-card.income .kvv-item[data-key="otherIncome"] { grid-column: auto; }
+.budget-card.expenses .kvv-list { grid-template-columns: repeat(2, minmax(0,1fr)); }
+@media (max-width: 840px) {
+  .kvv-list, .budget-card.expenses .kvv-list { grid-template-columns: 1fr; }
+}
+.kvv-item { display: flex; flex-direction: column; gap: 2px; }
+.kvv-k { color: var(--muted); font-weight: 600; font-size: 0.78rem; }
+.kvv-v { color: var(--text-2); font-weight: 800; font-size: 0.92rem; }
+
+/* Make income/expense item keys a touch larger */
+.budget-card.income .kvv-k,
+.budget-card.expenses .kvv-k {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
 
 /* Comparison Table Wrapper */
 .comparison-table-wrapper {

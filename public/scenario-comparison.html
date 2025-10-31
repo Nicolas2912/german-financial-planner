@@ -224,13 +224,17 @@
                                 <button class="chart-view-btn" data-view="metrics">🎯 Kennzahlen Radar</button>
                             </div>
                             <div class="scenario-visibility">
-                                <label><input type="checkbox" checked />🎯 Optimistisch</label>
-                                <label><input type="checkbox" checked />🛡️ Konservativ</label>
+                                <label><input type="checkbox" checked data-scenario="optimistic" />🎯 Optimistisch</label>
+                                <label><input type="checkbox" checked data-scenario="conservative" />🛡️ Konservativ</label>
                             </div>
                         </div>
 
                         <!-- Charts -->
                         <div class="comparison-chart-view active" id="comparisonLifecycleView">
+                            <div class="comparison-chart-phase-legend" aria-hidden="true">
+                                <span class="legend-item"><span class="legend-line solid"></span>Ansparphase</span>
+                                <span class="legend-item"><span class="legend-line dashed"></span>Entnahmephase</span>
+                            </div>
                             <canvas id="comparisonLifecycleChart"></canvas>
                         </div>
                         <div class="comparison-chart-view" id="comparisonAccumulationView">

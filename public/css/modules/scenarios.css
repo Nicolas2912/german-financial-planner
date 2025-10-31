@@ -2117,10 +2117,54 @@ body.scenario-comparison .budget-grid {
 
 .comparison-chart-view {
     display: none;
+    position: relative;
+    width: 100%;
+    padding: 16px 20px 28px;
+    background: #ffffff;
+    border-radius: 18px;
+    box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.06);
+    min-height: 360px;
 }
 
 .comparison-chart-view.active {
     display: block;
+}
+
+.comparison-chart-view canvas {
+    width: 100% !important;
+    max-width: 100%;
+    height: 320px !important;
+}
+
+.comparison-chart-phase-legend {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 0.8rem;
+    color: #64748b;
+    align-items: center;
+}
+
+.comparison-chart-phase-legend .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.comparison-chart-phase-legend .legend-line {
+    display: inline-block;
+    width: 32px;
+    height: 2px;
+    background: currentColor;
+    border-radius: 999px;
+}
+
+.comparison-chart-phase-legend .legend-line.dashed {
+    background: none;
+    border-top: 2px dashed currentColor;
+    border-radius: 0;
 }
 
 .chart-title {

@@ -697,6 +697,12 @@ if (typeof window !== 'undefined') {
 function setupComparisonChartViewToggle() {
   const chartViewButtons = document.querySelectorAll('.chart-view-btn');
   const chartViews = document.querySelectorAll('.comparison-chart-view');
+  // Modern scenario comparison uses ScenarioComparisonManager to handle
+  // chart view switching. If those identifiers are present we skip the
+  // legacy toggler to avoid conflicting inline display changes.
+  if (chartViews.length && Array.from(chartViews).some(view => view.id.startsWith('comparison'))) {
+    return;
+  }
   chartViewButtons.forEach(button => {
     button.addEventListener('click', function() {
       const viewType = this.dataset.view;

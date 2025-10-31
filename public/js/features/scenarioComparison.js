@@ -25,7 +25,8 @@ class ScenarioComparisonManager {
                     budget: { income: 4000, expenses: 3000, savingsRate: 25, inflation: 2.2 },
                     accumulation: { returnRate: 8.5, years: 30, monthlySavings: 1000 },
                     withdrawal: { rate: 4, years: 25, taxRate: 26.375, partialExemption: 30 },
-                    results: { finalWealth: '1.2 Mio €' }
+                    results: { finalWealth: '1.2 Mio €' },
+                    sources: { budgetName: '—', accumName: '—', withdrawName: '—' }
                 },
                 lifecycleData: [100, 220, 470, 820, 1200, 1000],
                 accumulationData: [50, 120, 280, 500, 820],
@@ -40,7 +41,8 @@ class ScenarioComparisonManager {
                     budget: { income: 3500, expenses: 2800, savingsRate: 15, inflation: 2.2 },
                     accumulation: { returnRate: 5.5, years: 25, monthlySavings: 500 },
                     withdrawal: { rate: 3, years: 30, taxRate: 26.375, partialExemption: 30 },
-                    results: { finalWealth: '800k €' }
+                    results: { finalWealth: '800k €' },
+                    sources: { budgetName: '—', accumName: '—', withdrawName: '—' }
                 },
                 lifecycleData: [100, 160, 270, 420, 600, 500],
                 accumulationData: [40, 90, 180, 300, 420],
@@ -65,8 +67,328 @@ class ScenarioComparisonManager {
         // And ensure accumulation/withdrawal placeholders are visible
         this.renderEmptyAccumCards();
         this.renderEmptyWithdrawCards();
+
+        // Attach edit actions to initial cards (optimistic, conservative)
+        try {
+            const initCards = document.querySelectorAll('.summary-cards .summary-card');
+            if (initCards[0]) this.attachCardActions(initCards[0], 'optimistic');
+            if (initCards[1]) this.attachCardActions(initCards[1], 'conservative');
+        } catch (_) {}
     }
 
+    // Create a scenario from the current left-side selections and add to overview
+    addSelectionAsScenario() {
+        if (this.scenarioConfigs.length >= 5) {
+            alert('⚠️ Maximal 5 Szenarien im Vergleich erlaubt.');
+            return;
+        }
+
+        const loadJson = (key) => { try { return key ? JSON.parse(localStorage.getItem(key) || '{}') : null; } catch { return null; } };
+        const getName = (prefix, key, data) => {
+            if (!key) return '—';
+            const n = data?.name || key.replace(prefix, '');
+            return n || '—';
+        };
+
+        const accData = loadJson(this.selectedAccumScenarioKey);
+        const wdData = loadJson(this.selectedWithdrawScenarioKey);
+        const budData = loadJson(this.selectedBudgetProfileKey);
+
+        const accP = accData?.scenario?.parameters || accData?.parameters || {};
+        const wdP = wdData?.scenario?.parameters || wdData?.parameters || {};
+        const num = (v, d=0) => (typeof v === 'number' && !isNaN(v)) ? v : (parseFloat(String(v||'').replace(/\./g,'').replace(',','.')) || d);
+
+        const accumulation = {
+            returnRate: num(accP.annualReturn, 0),
+            years: parseInt(accP.duration ?? 0) || 0,
+            initialCapital: num(accP.initialCapital, 0),
+            monthlySavings: num(accP.monthlySavings, 0)
+        };
+        const withdrawal = {
+            rate: num(wdP.withdrawalRate ?? wdP.rate, 0),
+            years: parseInt(wdP.duration ?? wdP.withdrawalYears ?? wdP.years ?? 0) || 0,
+            taxRate: 26.375,
+            partialExemption: 30
+        };
+        const budget = {
+            income: 0,
+            expenses: 0,
+            savingsRate: 0,
+            inflation: num(budData?.budgetData?.inflationRate ?? budData?.inflation ?? 2.0, 2.0)
+        };
+
+        const existingCustom = this.scenarioConfigs.filter(s => s.id.startsWith('custom-')).length;
+        const newId = `custom-${existingCustom + 1}`;
+        const newIndex = this.scenarioConfigs.length + 1;
+        const scColors = baseScenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
+        const pickOrder = ['C','D','E'];
+        const pick = pickOrder[existingCustom] || 'D';
+        const color = scColors[pick] || '#8e44ad';
+
+        const label = `✨ Szenario ${newIndex}`;
+        const sources = {
+            budgetName: getName('budgetProfile_', this.selectedBudgetProfileKey, budData),
+            accumName: getName('ansparphaseScenario_', this.selectedAccumScenarioKey, accData),
+            withdrawName: getName('entnahmephaseScenario_', this.selectedWithdrawScenarioKey, wdData)
+        };
+
+        const newScenario = {
+            id: newId,
+            label,
+            color,
+            params: {
+                budget,
+                accumulation,
+                withdrawal,
+                results: { finalWealth: '—' },
+                sources
+            },
+            lifecycleData: [100, 150, 220, 330, 480, 600],
+            accumulationData: [30, 70, 140, 240, 380],
+            withdrawalData: [600, 520, 440, 360, 280, 200],
+            metricsData: [7, 7, 7, 7, 7]
+        };
+
+        try { newScenario.params.results.finalWealth = this.computeFinalWealth(newScenario); } catch {}
+
+        this.scenarioConfigs.push(newScenario);
+        this.activeScenarios.add(newScenario.id);
+        this.insertScenarioUI(newScenario);
+        this.initializeCharts();
+        this.updateAllCharts();
+        this.addScenarioColumnToTable(newScenario);
+    }
+
+    insertScenarioUI(newScenario) {
+        const chooser = document.querySelector('.scenario-chooser');
+        if (chooser) {
+            const newBtn = document.createElement('button');
+            newBtn.className = 'btn-scenario';
+            newBtn.setAttribute('data-scenario', newScenario.id);
+            newBtn.textContent = newScenario.label;
+            newBtn.style.setProperty('--scenario-accent', newScenario.color);
+            newBtn.style.setProperty('--scenario-accent-light', this.hexToRgba(newScenario.color, 0.15));
+            const addBtn = chooser.querySelector('.btn-scenario.btn-new');
+            chooser.insertBefore(newBtn, addBtn);
+            newBtn.addEventListener('click', () => this.selectScenario(newBtn));
+        }
+
+        const cards = document.querySelector('.summary-cards');
+        if (cards) {
+            const card = document.createElement('div');
+            card.className = 'summary-card';
+            card.style.setProperty('--accent-color', newScenario.color);
+            const riskLabel = 'Mittel';
+            const riskClass = 'risk-medium';
+            const fmt = new Intl.NumberFormat('de-DE');
+            card.setAttribute('data-scenario-id', newScenario.id);
+            card.innerHTML = `
+                <div class="summary-compact">
+                    <div class="top">
+                        <h4>${newScenario.label}</h4>
+                        <span class="risk-badge ${riskClass}">${riskLabel}</span>
+                    </div>
+                    <div class="sources">
+                        <span class="chip chip-budget">${newScenario.params.sources.budgetName || '—'}</span>
+                        <span class="chip chip-accum">${newScenario.params.sources.accumName || '—'}</span>
+                        <span class="chip chip-withdraw">${newScenario.params.sources.withdrawName || '—'}</span>
+                    </div>
+                    <div class="headline">
+                        <span class="headline-value">${newScenario.params.results.finalWealth}</span>
+                    </div>
+                    <div class="meta">
+                        <span class="metric">${newScenario.params.accumulation.returnRate}% Rendite</span>
+                        <span class="dot">•</span>
+                        <span class="metric">${newScenario.params.accumulation.years}J Sparphase</span>
+                        <span class="dot">•</span>
+                        <span class="metric">${newScenario.params.withdrawal.years}J Entnahme</span>
+                        <span class="dot">•</span>
+                        <span class="break"></span>
+                        <span class="metric">${fmt.format(newScenario.params.accumulation.monthlySavings || 0)} € /M</span>
+                        <span class="dot">•</span>
+                        <span class="metric">${newScenario.params.withdrawal.rate}% Entnahme</span>
+                    </div>
+                </div>`;
+            cards.appendChild(card);
+            this.attachCardActions(card, newScenario.id);
+        }
+
+        const vis = document.querySelector('.scenario-visibility');
+        if (vis) {
+            const label = document.createElement('label');
+            label.innerHTML = `<input type="checkbox" checked data-scenario="${newScenario.id}" />${newScenario.label}`;
+            vis.appendChild(label);
+            const input = label.querySelector('input');
+            input?.addEventListener('change', () => this.toggleScenarioVisibility(input));
+        }
+    }
+
+    attachCardActions(card, scenarioId) {
+        const top = card.querySelector('.top');
+        if (!top) return;
+        if (!card.getAttribute('data-scenario-id')) card.setAttribute('data-scenario-id', scenarioId);
+        const wrap = document.createElement('div');
+        wrap.style.display = 'flex';
+        wrap.style.gap = '6px';
+        wrap.style.marginLeft = '8px';
+        const btnEdit = document.createElement('button');
+        btnEdit.textContent = '✏️';
+        btnEdit.title = 'Umbenennen';
+        btnEdit.style.border = '0';
+        btnEdit.style.background = 'transparent';
+        btnEdit.style.cursor = 'pointer';
+        const btnRefresh = document.createElement('button');
+        btnRefresh.textContent = '⟲';
+        btnRefresh.title = 'Mit Auswahl aktualisieren';
+        btnRefresh.style.border = '0';
+        btnRefresh.style.background = 'transparent';
+        btnRefresh.style.cursor = 'pointer';
+        const btnDelete = document.createElement('button');
+        btnDelete.textContent = '🗑️';
+        btnDelete.title = 'Szenario entfernen';
+        btnDelete.style.border = '0';
+        btnDelete.style.background = 'transparent';
+        btnDelete.style.cursor = 'pointer';
+        wrap.appendChild(btnEdit);
+        wrap.appendChild(btnRefresh);
+        wrap.appendChild(btnDelete);
+        top.appendChild(wrap);
+
+        btnEdit.addEventListener('click', () => this.renameScenarioInline(scenarioId, card));
+        btnRefresh.addEventListener('click', () => this.updateScenarioFromSelection(scenarioId, card));
+        btnDelete.addEventListener('click', () => this.removeScenarioById(scenarioId));
+    }
+
+    removeScenarioById(id) {
+        const sc = this.scenarioConfigs.find(s => s.id === id);
+        if (!sc) return;
+        const ok = confirm(`Szenario "${sc.label}" wirklich entfernen?`);
+        if (!ok) return;
+
+        // Remove from registry and active set
+        this.scenarioConfigs = this.scenarioConfigs.filter(s => s.id !== id);
+        this.activeScenarios.delete(id);
+
+        // Remove card
+        const card = document.querySelector(`.summary-cards .summary-card[data-scenario-id="${id}"]`);
+        if (card) card.remove();
+
+        // Remove chooser button
+        const btn = document.querySelector(`.btn-scenario[data-scenario="${id}"]`);
+        if (btn) btn.remove();
+
+        // Remove visibility checkbox
+        const visInput = document.querySelector(`.scenario-visibility input[data-scenario="${id}"]`);
+        if (visInput && visInput.parentElement) visInput.parentElement.remove();
+
+        // Remove table column matching label (if present)
+        const table = document.getElementById('comparisonTable');
+        if (table) {
+            const headerRow = table.querySelector('thead tr');
+            if (headerRow) {
+                const ths = Array.from(headerRow.children);
+                const colIndex = ths.findIndex(th => (th.textContent || '').trim() === sc.label.trim());
+                if (colIndex !== -1) {
+                    headerRow.removeChild(ths[colIndex]);
+                    table.querySelectorAll('tbody tr').forEach(row => {
+                        if (row.classList.contains('group-header')) {
+                            const th = row.querySelector('th');
+                            if (th) {
+                                const span = parseInt(th.getAttribute('colspan') || '3', 10);
+                                th.setAttribute('colspan', String(Math.max(1, span - 1)));
+                            }
+                        } else {
+                            const cells = Array.from(row.children);
+                            if (cells[colIndex]) row.removeChild(cells[colIndex]);
+                        }
+                    });
+                }
+            }
+        }
+
+        // Update charts
+        this.initializeCharts();
+        this.updateAllCharts();
+    }
+
+    renameScenarioInline(id, card) {
+        const sc = this.scenarioConfigs.find(s => s.id === id);
+        if (!sc) return;
+        const current = sc.label.replace(/^\p{Emoji_Presentation}\s*/u, '');
+        const name = prompt('Neuer Szenario‑Name:', current || sc.label) || sc.label;
+        sc.label = name;
+        const h4 = card.querySelector('h4');
+        if (h4) h4.textContent = name;
+        document.querySelectorAll(`.btn-scenario[data-scenario="${id}"]`).forEach(b => b.textContent = name);
+        document.querySelectorAll('.scenario-visibility label').forEach(l => {
+            const input = l.querySelector('input');
+            if (input?.dataset.scenario === id) l.lastChild.nodeValue = name;
+        });
+        const table = document.getElementById('comparisonTable');
+        if (table) {
+            const headerRow = table.querySelector('thead tr');
+            const idx = this.scenarioConfigs.findIndex(s => s.id === id);
+            if (headerRow && idx >= 0) {
+                const th = headerRow.children[idx + 1];
+                if (th) th.textContent = name;
+            }
+        }
+        Object.values(this.charts).forEach(ch => {
+            if (!ch) return;
+            ch.data.datasets?.forEach(ds => { if (ds._scenarioId === id) ds.label = name; });
+            ch.update?.('none');
+        });
+    }
+
+    updateScenarioFromSelection(id, card) {
+        const sc = this.scenarioConfigs.find(s => s.id === id);
+        if (!sc) return;
+        const loadJson = (key) => { try { return key ? JSON.parse(localStorage.getItem(key) || '{}') : null; } catch { return null; } };
+        const accData = loadJson(this.selectedAccumScenarioKey);
+        const wdData = loadJson(this.selectedWithdrawScenarioKey);
+        const budData = loadJson(this.selectedBudgetProfileKey);
+        const accP = accData?.scenario?.parameters || accData?.parameters || {};
+        const wdP = wdData?.scenario?.parameters || wdData?.parameters || {};
+        const num = (v, d=0) => (typeof v === 'number' && !isNaN(v)) ? v : (parseFloat(String(v||'').replace(/\./g,'').replace(',','.')) || d);
+        sc.params.accumulation.returnRate = num(accP.annualReturn, sc.params.accumulation.returnRate);
+        sc.params.accumulation.years = parseInt(accP.duration ?? sc.params.accumulation.years) || sc.params.accumulation.years;
+        sc.params.accumulation.initialCapital = num(accP.initialCapital, sc.params.accumulation.initialCapital || 0);
+        sc.params.accumulation.monthlySavings = num(accP.monthlySavings, sc.params.accumulation.monthlySavings || 0);
+        sc.params.withdrawal.rate = num(wdP.withdrawalRate ?? wdP.rate, sc.params.withdrawal.rate);
+        sc.params.withdrawal.years = parseInt(wdP.duration ?? wdP.withdrawalYears ?? wdP.years ?? sc.params.withdrawal.years) || sc.params.withdrawal.years;
+        sc.params.budget.inflation = num(budData?.budgetData?.inflationRate ?? budData?.inflation ?? sc.params.budget.inflation, sc.params.budget.inflation);
+        sc.params.sources = sc.params.sources || {};
+        const getDisplay = (key, data) => (data?.name || (key ? key.replace(/^[^_]+_/, '') : '—'));
+        sc.params.sources.budgetName = getDisplay(this.selectedBudgetProfileKey, budData);
+        sc.params.sources.accumName = getDisplay(this.selectedAccumScenarioKey, accData);
+        sc.params.sources.withdrawName = getDisplay(this.selectedWithdrawScenarioKey, wdData);
+
+        try { sc.params.results.finalWealth = this.computeFinalWealth(sc); } catch {}
+
+        const fmt = new Intl.NumberFormat('de-DE');
+        card.querySelector('.headline-value')?.replaceChildren(document.createTextNode(sc.params.results.finalWealth));
+        const meta = card.querySelector('.meta');
+        if (meta) {
+            meta.innerHTML = `
+                <span class="metric">${sc.params.accumulation.returnRate}% Rendite</span>
+                <span class="dot">•</span>
+                <span class="metric">${sc.params.accumulation.years}J Sparphase</span>
+                <span class="dot">•</span>
+                <span class="metric">${sc.params.withdrawal.years}J Entnahme</span>
+                <span class="dot">•</span>
+                <span class="break"></span>
+                <span class="metric">${fmt.format(sc.params.accumulation.monthlySavings || 0)} € /M</span>
+                <span class="dot">•</span>
+                <span class="metric">${sc.params.withdrawal.rate}% Entnahme</span>`;
+        }
+        const chips = card.querySelectorAll('.sources .chip');
+        if (chips?.length >= 3) {
+            chips[0].textContent = sc.params.sources.budgetName || '—';
+            chips[1].textContent = sc.params.sources.accumName || '—';
+            chips[2].textContent = sc.params.sources.withdrawName || '—';
+        }
+        this.updateAllCharts();
+    }
     // Render helpers to ensure values show even if static spans are missing
     renderAccumValues(vals) {
         const fmt = new Intl.NumberFormat('de-DE');
@@ -244,6 +566,12 @@ class ScenarioComparisonManager {
         const withdrawImportBtn = document.getElementById('withdrawImportBtn');
         if (withdrawImportBtn) {
             withdrawImportBtn.addEventListener('click', () => this.toggleWithdrawImportMenu());
+        }
+        
+        // Compose: add selection to overview
+        const addBtn = document.getElementById('addSelectionToOverview');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.addSelectionAsScenario());
         }
     }
 
@@ -925,6 +1253,11 @@ class ScenarioComparisonManager {
             byId(`sum-wdrate-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.withdrawal.rate ?? 0}%`));
             byId(`sum-accyears-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.accumulation.years ?? 0}`));
             byId(`sum-wdyears-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.withdrawal.years ?? 0}`));
+            if (sc.params.sources) {
+                byId(`sum-source-budget-${prefix}`)?.replaceChildren(document.createTextNode(sc.params.sources.budgetName || '—'));
+                byId(`sum-source-accum-${prefix}`)?.replaceChildren(document.createTextNode(sc.params.sources.accumName || '—'));
+                byId(`sum-source-withdraw-${prefix}`)?.replaceChildren(document.createTextNode(sc.params.sources.withdrawName || '—'));
+            }
         };
         // Update known initial scenarios
         ['optimistic','conservative'].forEach(apply);
@@ -1649,6 +1982,8 @@ class ScenarioComparisonManager {
             withdrawalData: cloned(base.withdrawalData),
             metricsData: base.metricsData.map(v => Math.max(1, Math.min(10, Math.round(v + (Math.random() * 2 - 1)))))
         };
+        // Ensure sources field exists for chips
+        newScenario.params.sources = newScenario.params.sources || { budgetName: '—', accumName: '—', withdrawName: '—' };
 
         this.scenarioConfigs.push(newScenario);
         this.activeScenarios.add(newScenario.id);
@@ -1674,22 +2009,46 @@ class ScenarioComparisonManager {
             const card = document.createElement('div');
             card.className = 'summary-card';
             card.style.setProperty('--accent-color', newScenario.color);
+            const riskLabel = 'Mittel';
+            const riskClass = 'risk-medium';
             card.innerHTML = `
-                <h4>${newScenario.label}</h4>
-                <div class=\"kv-container\">
-                    <div class=\"kv\"> 
-                        <span class=\"k\">Endvermögen</span><span class=\"v\">${newScenario.params.results.finalWealth}</span>
-                        <span class=\"k\">Ø Rendite</span><span class=\"v\">${newScenario.params.accumulation.returnRate}%</span>
-                        <span class=\"k\">Sparrate (€)</span><span class=\"v\">${new Intl.NumberFormat('de-DE').format(newScenario.params.accumulation.monthlySavings)} €</span>
-                        <span class=\"k\">Entnahmerate</span><span class=\"v\">${newScenario.params.withdrawal.rate}%</span>
+                <div class=\"summary-compact\">
+                    <div class=\"top\">
+                        <h4>${newScenario.label}</h4>
+                        <span class=\"risk-badge ${riskClass}\">${riskLabel}</span>
                     </div>
-                    <div class=\"kv\"> 
-                        <span class=\"k\">Ansparphase (in Jahre)</span><span class=\"v\">${newScenario.params.accumulation.years}</span>
-                        <span class=\"k\">Entnahmedauer (in Jahre)</span><span class=\"v\">${newScenario.params.withdrawal.years}</span>
-                        <span class=\"k\">Risikoprofil</span><span class=\"v\">Mittel</span>
+                    <div class=\"headline\">
+                        <span class=\"headline-value\">${newScenario.params.results.finalWealth}</span>
+                    </div>
+                    <div class=\"meta\"> 
+                        <span class=\"metric\">${newScenario.params.accumulation.returnRate}% Rendite</span>
+                        <span class=\"dot\">•</span>
+                        <span class=\"metric\">${newScenario.params.accumulation.years}J Sparphase</span>
+                        <span class=\"dot\">•</span>
+                        <span class=\"metric\">${newScenario.params.withdrawal.years}J Entnahme</span>
+                        <span class=\"dot\">•</span>
+                        <span class=\"break\"></span>
+                        <span class=\"metric\">${new Intl.NumberFormat('de-DE').format(newScenario.params.accumulation.monthlySavings)} € /M</span>
+                        <span class=\"dot\">•</span>
+                        <span class=\"metric\">${newScenario.params.withdrawal.rate}% Entnahme</span>
                     </div>
                 </div>`;
             cards.appendChild(card);
+            // Inject sources chips before headline and attach actions
+            try {
+                const compact = card.querySelector('.summary-compact');
+                const headline = card.querySelector('.headline');
+                if (compact && headline) {
+                    const sourcesDiv = document.createElement('div');
+                    sourcesDiv.className = 'sources';
+                    sourcesDiv.innerHTML = `
+                        <span class="chip chip-budget">${newScenario.params.sources.budgetName || '—'}</span>
+                        <span class="chip chip-accum">${newScenario.params.sources.accumName || '—'}</span>
+                        <span class="chip chip-withdraw">${newScenario.params.sources.withdrawName || '—'}</span>`;
+                    compact.insertBefore(sourcesDiv, headline);
+                }
+                this.attachCardActions(card, newScenario.id);
+            } catch (_) {}
         }
 
         // UI: add visibility checkbox

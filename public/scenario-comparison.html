@@ -40,6 +40,11 @@
                             <button class="pill" data-target="withdrawal">Entnahmephase</button>
                         </div>
 
+                        <!-- Compose selection into a scenario -->
+                        <div class="params-actions">
+                            <button id="addSelectionToOverview" class="comparison-btn btn-add-to-overview">➕ Zur Übersicht hinzufügen</button>
+                        </div>
+
                         <!-- Budget Section -->
                         <div class="param-section" id="comparisonBudgetSection">
                             <div class="param-header" data-toggle="budgetGrid">
@@ -153,34 +158,58 @@
                         <h3>🏆 Szenario-Übersicht</h3>
                         <div class="summary-cards">
                             <div class="summary-card primary">
-                                <h4>🎯 Optimistisch</h4>
-                                <div class="kv-container">
-                                    <div class="kv">
-                                        <span class="k">Endvermögen</span><span class="v" id="sum-final-optimistic">—</span>
-                                        <span class="k">Ø Rendite</span><span class="v" id="sum-return-optimistic">—</span>
-                                        <span class="k">Sparrate (€)</span><span class="v" id="sum-monthly-optimistic">—</span>
-                                        <span class="k">Entnahmerate</span><span class="v" id="sum-wdrate-optimistic">—</span>
+                                <div class="summary-compact">
+                                    <div class="top">
+                                        <h4>🎯 Optimistisch</h4>
+                                        <span class="risk-badge risk-high">Hoch</span>
                                     </div>
-                                    <div class="kv">
-                                        <span class="k">Ansparphase (in Jahre)</span><span class="v" id="sum-accyears-optimistic">—</span>
-                                        <span class="k">Entnahmedauer (in Jahre)</span><span class="v" id="sum-wdyears-optimistic">—</span>
-                                        <span class="k">Risikoprofil</span><span class="v">Hoch</span>
+                                    <div class="sources">
+                                        <span class="chip chip-budget" id="sum-source-budget-optimistic">—</span>
+                                        <span class="chip chip-accum" id="sum-source-accum-optimistic">—</span>
+                                        <span class="chip chip-withdraw" id="sum-source-withdraw-optimistic">—</span>
+                                    </div>
+                                    <div class="headline">
+                                        <span class="headline-value" id="sum-final-optimistic">—</span>
+                                    </div>
+                                    <div class="meta" aria-label="Optimistisches Szenario Kennzahlen">
+                                        <span class="metric"><span id="sum-return-optimistic">—</span> Rendite</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-accyears-optimistic">—</span>J Sparphase</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-wdyears-optimistic">—</span>J Entnahme</span>
+                                        <span class="dot">•</span>
+                                        <span class="break"></span>
+                                        <span class="metric"><span id="sum-monthly-optimistic">—</span> €/M</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-wdrate-optimistic">—</span>% Entnahme</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="summary-card success">
-                                <h4>🛡️ Konservativ</h4>
-                                <div class="kv-container">
-                                    <div class="kv">
-                                        <span class="k">Endvermögen</span><span class="v" id="sum-final-conservative">—</span>
-                                        <span class="k">Ø Rendite</span><span class="v" id="sum-return-conservative">—</span>
-                                        <span class="k">Sparrate (€)</span><span class="v" id="sum-monthly-conservative">—</span>
-                                        <span class="k">Entnahmerate</span><span class="v" id="sum-wdrate-conservative">—</span>
+                                <div class="summary-compact">
+                                    <div class="top">
+                                        <h4>🛡️ Konservativ</h4>
+                                        <span class="risk-badge risk-low">Niedrig</span>
                                     </div>
-                                    <div class="kv">
-                                        <span class="k">Ansparphase (in Jahre)</span><span class="v" id="sum-accyears-conservative">—</span>
-                                        <span class="k">Entnahmedauer (in Jahre)</span><span class="v" id="sum-wdyears-conservative">—</span>
-                                        <span class="k">Risikoprofil</span><span class="v">Niedrig</span>
+                                    <div class="sources">
+                                        <span class="chip chip-budget" id="sum-source-budget-conservative">—</span>
+                                        <span class="chip chip-accum" id="sum-source-accum-conservative">—</span>
+                                        <span class="chip chip-withdraw" id="sum-source-withdraw-conservative">—</span>
+                                    </div>
+                                    <div class="headline">
+                                        <span class="headline-value" id="sum-final-conservative">—</span>
+                                    </div>
+                                    <div class="meta" aria-label="Konservatives Szenario Kennzahlen">
+                                        <span class="metric"><span id="sum-return-conservative">—</span> Rendite</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-accyears-conservative">—</span>J Sparphase</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-wdyears-conservative">—</span>J Entnahme</span>
+                                        <span class="dot">•</span>
+                                        <span class="break"></span>
+                                        <span class="metric"><span id="sum-monthly-conservative">—</span> €/M</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-wdrate-conservative">—</span>% Entnahme</span>
                                     </div>
                                 </div>
                             </div>

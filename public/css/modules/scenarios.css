@@ -1479,7 +1479,7 @@ body.scenario-comparison .container:hover {
 /* Summary Cards */
 /* Results panel heading and summary cards layout */
 .comparison-results-panel > h3 {
-    margin: 0 0 12px;
+    margin: 0 0 16px;
     color: var(--text-2);
     font-size: 1.05rem;
     font-weight: 700;
@@ -1488,17 +1488,17 @@ body.scenario-comparison .container:hover {
 
 .summary-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px; /* more breathing room between cards */
     align-items: stretch;
-    margin-bottom: 18px;
+    margin-bottom: 24px;
 }
 
 .summary-card {
     background: #ffffff;
     border: 1px solid #eef2f7;
-    border-radius: 12px;
-    padding: 12px;
+    border-radius: 14px;
+    padding: 16px; /* increase inner spacing */
     box-shadow: 0 6px 18px rgba(0,0,0,0.06);
     transition: var(--transition);
     position: relative;
@@ -1511,7 +1511,7 @@ body.scenario-comparison .container:hover {
     left: 0;
     top: 0;
     bottom: 0;
-    width: 6px;
+    width: 8px; /* slightly thicker accent */
     background-color: var(--accent-color, transparent);
 }
 
@@ -1525,8 +1525,8 @@ body.scenario-comparison .container:hover {
 }
 
 .summary-card h4 {
-    margin: 0 0 6px;
-    font-size: 0.98rem;
+    margin: 0;
+    font-size: 1rem;
     font-weight: 700;
     display: flex;
     align-items: center;
@@ -1534,16 +1534,79 @@ body.scenario-comparison .container:hover {
     color: var(--text-2);
 }
 
-.kv-container {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+/* Compact, single-column summary inside each card */
+.summary-compact {
+    display: grid;
+    grid-template-rows: auto;
+    gap: 10px;
+}
+
+/* Source chips (show selected profile/phase scenarios) */
+.summary-compact .sources {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.summary-compact .sources .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid #e6ebf2;
+  color: var(--text);
+  background: #f7fafc;
+  max-width: 100%;
+}
+.summary-compact .sources .chip-budget { border-color: #d6e4ff; background: #f3f7ff; }
+.summary-compact .sources .chip-accum { border-color: #d3f2df; background: #f3fcf6; }
+.summary-compact .sources .chip-withdraw { border-color: #ffe8cc; background: #fff7ef; }
+
+/* Top row with title and risk badge */
+.summary-compact .top { display: flex; justify-content: space-between; align-items: center; }
+
+.risk-badge { font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 8px; }
+/* Risk badge color themes */
+.summary-card.primary .risk-badge { background: #fff3e6; color: #b14a00; }
+.summary-card.success .risk-badge { background: #eaf8ee; color: #1e7e34; }
+.risk-badge.risk-high { background: #fff3e6; color: #b14a00; }
+.risk-badge.risk-low { background: #eaf8ee; color: #1e7e34; }
+.risk-badge.risk-medium { background: #eef5ff; color: #1d5fa7; }
+
+/* Headline amount */
+.summary-compact .headline { margin-top: 2px; }
+.summary-compact .headline-value { font-weight: 800; color: var(--text-2); white-space: nowrap; font-size: clamp(1.05rem, 0.95rem + 0.35vw, 1.35rem); }
+
+/* Meta line with bullets */
+.summary-compact .meta { color: var(--muted); font-weight: 600; display: flex; gap: 10px 12px; align-items: center; flex-wrap: wrap; white-space: normal; overflow: visible; font-size: 0.88rem; line-height: 1.3; }
+.summary-compact .meta .metric { color: var(--text); }
+.summary-compact .meta .dot { color: #cfd8e3; }
+.summary-compact .meta span[id^="sum-"] { font-weight: 800; color: var(--text-2); }
+
+/* Ensure meta items are plain text (no chip styling from elsewhere) */
+.summary-compact .meta .metric,
+.summary-compact .meta .dot,
+.summary-compact .meta span { background: none !important; border: 0 !important; padding: 0 !important; border-radius: 0 !important; }
+
+/* Avoid overflow within cards */
+.summary-card .summary-compact { min-width: 0; }
+.summary-card .summary-compact .meta > * { min-width: 0; }
+.summary-card .summary-compact .meta .break { flex-basis: 100%; height: 0; }
+
+.summary-card .kv-container {
+    display: grid;
+    grid-template-columns: minmax(0,1fr) minmax(0,1fr); /* prevent overflow */
+    gap: 16px; /* wider column gap */
+    align-items: start;
+    min-width: 0; /* allow children to shrink */
 }
 
 /* Column headers for structure */
-.kv-container { position: relative; }
-.kv-container .kv { position: relative; padding-top: 0; }
-.kv-container .kv[data-title]::before {
+.summary-card .kv-container { position: relative; }
+.summary-card .kv-container .kv { position: relative; padding-top: 0; }
+.summary-card .kv-container .kv[data-title]::before {
     position: absolute;
     top: 0;
     left: 0;
@@ -1559,55 +1622,66 @@ body.scenario-comparison .container:hover {
 }
 
 /* Ensure space for the chip label above group */
-.kv-container .kv[data-title] { padding-top: 26px; }
+.summary-card .kv-container .kv[data-title] { padding-top: 26px; }
 
 /* Visual separation between columns on wide screens */
-.kv-container .kv:nth-child(2) {
-    border-left: 1px dashed #eef2f7;
-    padding-left: 12px;
+.summary-card .kv-container .kv:nth-child(2) {
+    border-left: 1px dashed #f1f4f8;
+    padding-left: 16px;
 }
 
-.kv {
+.summary-card .kv {
     flex: 1;
-    min-width: 220px;
+    min-width: 0; /* prevent horizontal overflow */
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0,1fr) max-content; /* labels grow, values size to content */
     row-gap: 6px;
-    column-gap: 10px;
-    font-size: 0.9rem;
-    line-height: 1.3;
+    column-gap: 12px;
+    font-size: 0.86rem; /* smaller to fit one line */
+    line-height: 1.25; /* tighter to keep row compact */
 }
 
-.kv .k {
+.summary-card .kv .k {
     color: var(--muted);
     font-weight: 500;
+    min-width: 0;
+    white-space: nowrap;        /* force single-line labels */
+    overflow: hidden;           /* prevent overflow */
+    text-overflow: ellipsis;    /* graceful truncation when needed */
 }
 
-.kv .v {
+.summary-card .kv .v {
     font-weight: 700;
     color: var(--text);
     text-align: right;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap; /* keep currency with value */
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    font-size: 0.9rem; /* balance with smaller labels */
 }
 
 /* Optional subtle row separators for readability (no last row) */
-.kv span { padding-bottom: 4px; border-bottom: 1px dashed #eef2f7; }
-.kv span:nth-last-child(-n+2) { border-bottom: none; padding-bottom: 0; }
+.summary-card .kv span { padding-bottom: 6px; border-bottom: 1px dashed #f1f4f8; }
+.summary-card .kv span:nth-last-child(-n+2) { border-bottom: none; padding-bottom: 0; }
 
 /* Featured first metric (Endvermögen) */
-.kv .k:nth-child(1) { color: var(--text-2); font-weight: 600; }
-.kv .v:nth-child(2) {
-    font-size: 1.02rem;
+.summary-card .kv .k:nth-child(1) { color: var(--text-2); font-weight: 600; font-size: 0.9rem; }
+.summary-card .kv .v:nth-child(2) {
+    font-size: 0.98rem; /* keep highlight but smaller */
     font-weight: 800;
-    padding: 2px 6px;
-    border-radius: 8px;
+    padding: 3px 8px;
+    border-radius: 10px;
 }
 /* Neutral highlight for featured metric so all cards look coherent */
 .summary-card .kv .v:nth-child(2) { background: #f7fafc; }
 
 /* Mobile tweaks: stacked columns shouldn’t show column divider */
 @media (max-width: 680px) {
-  .kv-container .kv:nth-child(2) { border-left: none; padding-left: 0; }
+  .summary-card .kv-container { grid-template-columns: 1fr; }
+  .summary-card .kv-container .kv:nth-child(2) { border-left: none; padding-left: 0; }
 }
 
 /* -------------------------
@@ -1633,6 +1707,26 @@ body.scenario-comparison .budget-grid {
   box-sizing: border-box;
   margin: 0;
 }
+
+/* Compose button under left panel sections */
+.params-actions {
+  margin: 8px 0 16px;
+}
+.btn-add-to-overview {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #e8f4fd;
+  color: #1c4980;
+  border: 1px solid #cfe6fb;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-add-to-overview:hover { background: #dff0fd; }
 
 @media (max-width: 840px) {
   body.scenario-comparison .budget-grid { grid-template-columns: 1fr; }

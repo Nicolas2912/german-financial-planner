@@ -354,6 +354,11 @@ export function setupPhaseToggle() {
     setActivePhase(scenarioComparisonBtn);
     showSingleSection(scenarioComparisonSection);
     if (window.recalculateAll) window.recalculateAll();
+    // Ensure the scenario-comparison budget import list reflects the
+    // latest profiles created in Budgetplanung without manual refresh.
+    if (window.scenarioComparison && typeof window.scenarioComparison.refreshBudgetImportDropdown === 'function') {
+      window.scenarioComparison.refreshBudgetImportDropdown(false);
+    }
     loadComparisonProfiles();
     updateScenarioCheckboxVisibility();
     if (window.resetStickyScenarioCards) window.resetStickyScenarioCards();

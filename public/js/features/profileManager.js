@@ -233,7 +233,6 @@ export function confirmSaveProfile() {
         expenses: {
             rent: document.getElementById('rent').value,
             utilities: document.getElementById('utilities').value,
-            health: document.getElementById('health').value,
             insurance: document.getElementById('insurance').value,
             internet: document.getElementById('internet').value,
             gez: document.getElementById('gez').value,
@@ -829,7 +828,6 @@ export function applyProfileToScenario(profileName, scenarioId) {
     // Calculate fixed expenses from profile
     let rentValue = parseGermanNumber(profile.expenses?.rent || '0');
     let utilitiesValue = parseGermanNumber(profile.expenses?.utilities || '0');
-    let healthValue = parseGermanNumber(profile.expenses?.health || '0');
     let insuranceValue = parseGermanNumber(profile.expenses?.insurance || '0');
     let internetValue = parseGermanNumber(profile.expenses?.internet || '0');
     let gezValue = parseGermanNumber(profile.expenses?.gez || '0');
@@ -839,13 +837,12 @@ export function applyProfileToScenario(profileName, scenarioId) {
     if (fixedPeriod === 'yearly') {
         rentValue /= 12;
         utilitiesValue /= 12;
-        healthValue /= 12;
         insuranceValue /= 12;
         internetValue /= 12;
         gezValue /= 12;
     }
     
-    const fixedExpenses = rentValue + utilitiesValue + healthValue + insuranceValue + internetValue + gezValue;
+    const fixedExpenses = rentValue + utilitiesValue + insuranceValue + internetValue + gezValue;
     
     // Calculate variable expenses from profile
     let foodValue = parseGermanNumber(profile.expenses?.food || '0');

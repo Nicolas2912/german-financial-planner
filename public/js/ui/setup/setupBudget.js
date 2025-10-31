@@ -22,7 +22,6 @@ export function calculateBudget() {
     expenses: {
       rent: document.getElementById('rent')?.value || '0',
       utilities: document.getElementById('utilities')?.value || '0',
-      health: document.getElementById('health')?.value || '0',
       insurance: document.getElementById('insurance')?.value || '0',
       internet: document.getElementById('internet')?.value || '0',
       gez: document.getElementById('gez')?.value || '0',
@@ -186,7 +185,7 @@ function resetBudget() {
     document.getElementById('otherIncome').value = '0';
 
     const expenseDefaults = {
-      rent: '800', utilities: '150', health: '100', insurance: '80',
+      rent: '800', utilities: '150', insurance: '80',
       internet: '30', gez: '18', food: '300', transport: '100',
       leisure: '200', clothing: '50', subscriptions: '30', miscellaneous: '100'
     };
@@ -267,7 +266,7 @@ export function setupBudgetListeners() {
     if (el) el.addEventListener('input', calculateBudget);
   });
 
-  const expenseInputs = ['rent', 'utilities', 'health', 'insurance', 'internet', 'gez', 'food', 'transport', 'leisure', 'clothing', 'subscriptions', 'miscellaneous'];
+  const expenseInputs = ['rent', 'utilities', 'insurance', 'internet', 'gez', 'food', 'transport', 'leisure', 'clothing', 'subscriptions', 'miscellaneous'];
   expenseInputs.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', calculateBudget);
@@ -313,4 +312,3 @@ export function setupBudgetListeners() {
     showNotification('✅ Übernommen', 'Die Sparrate wurde in die Ansparphase übertragen.', 'success');
   });
 }
-

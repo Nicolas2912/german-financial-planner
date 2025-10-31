@@ -5,6 +5,8 @@ class ScenarioComparisonManager {
     constructor() {
         this.charts = {};
         this.currentChartView = 'lifecycle';
+        // Track selected budget profile for toggle/deselect behavior
+        this.selectedBudgetProfileKey = null;
         // Base scenarios registry powering charts/table/overview
         const scColors = baseScenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
         this.scenarioConfigs = [
@@ -51,6 +53,9 @@ class ScenarioComparisonManager {
         this.bindParameterInputs();
         this.populateInputsFromActiveScenario();
         this.updateAllSummaries();
+        // Ensure the budget readonly area uses the same card layout even
+        // when no profile is selected yet
+        this.renderEmptyBudgetCards();
     }
 
     initializeEventListeners() {
@@ -112,14 +117,24 @@ class ScenarioComparisonManager {
             });
         }
 
-        // Scenario chooser buttons
+        // Scenario chooser buttons (toggleable)
         document.querySelectorAll('.btn-scenario').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.selectScenario(btn);
-                // When switching scenario, refresh inputs from that scenario
                 this.populateInputsFromActiveScenario();
             });
         });
+
+        // Inject a small clear-selection button if missing
+        const chooser = document.querySelector('.scenario-chooser');
+        if (chooser && !chooser.querySelector('.btn-clear')) {
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'btn-scenario btn-clear';
+            clearBtn.textContent = 'Auswahl löschen';
+            clearBtn.title = 'Aktive Szenarioauswahl aufheben';
+            clearBtn.addEventListener('click', () => this.clearActiveScenario());
+            chooser.appendChild(clearBtn);
+        }
 
         // Action buttons
         document.querySelector('.comparison-btn.btn-load')?.addEventListener('click', () => this.loadTemplate());
@@ -236,15 +251,25 @@ class ScenarioComparisonManager {
         if (btn.classList.contains('btn-new')) {
             this.createNewScenario();
         } else {
-            // Update active scenario
+            // Toggle selection: clicking the active button deselects
+            const alreadyActive = btn.classList.contains('active');
             document.querySelectorAll('.btn-scenario:not(.btn-new)').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            
-            // Update layout border color based on selected scenario
-            const scenarioType = btn.getAttribute('data-scenario');
-            console.log(`Scenario clicked: ${scenarioType}`);
-            this.updateLayoutBorder(scenarioType);
+            if (!alreadyActive) {
+                btn.classList.add('active');
+                const scenarioType = btn.getAttribute('data-scenario');
+                this.updateLayoutBorder(scenarioType);
+            } else {
+                this.clearActiveScenario();
+            }
         }
+    }
+
+    clearActiveScenario() {
+        document.querySelectorAll('.btn-scenario:not(.btn-new)').forEach(b => b.classList.remove('active'));
+        this.updateLayoutBorder(null);
+        // Clear parameter inputs to reflect no selection
+        const ids = ['accReturn','accYears','accInitial','accMonthly','wdRate','wdYears'];
+        ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     }
 
     updateLayoutBorder(scenarioType) {
@@ -262,12 +287,18 @@ class ScenarioComparisonManager {
         }
         
         // Set accent variables on layout (border + light fill) based on scenario color
-        const sc = this.scenarioConfigs.find(s => s.id === scenarioType);
-        const color = sc?.color || '#3498db';
-        layout.style.setProperty('--accent-color', color);
-        layout.style.setProperty('--accent-light', this.hexToRgba(color, 0.15));
+        if (scenarioType) {
+            const sc = this.scenarioConfigs.find(s => s.id === scenarioType);
+            const color = sc?.color || '#3498db';
+            layout.style.setProperty('--accent-color', color);
+            layout.style.setProperty('--accent-light', this.hexToRgba(color, 0.15));
+        } else {
+            // Neutral accent when nothing selected
+            layout.style.setProperty('--accent-color', '#cbd5e1');
+            layout.style.setProperty('--accent-light', 'rgba(203,213,225,0.25)');
+        }
 
-        console.log(`Layout border updated to: ${scenarioType}`);
+        console.log(`Layout border updated to: ${scenarioType || 'none'}`);
     }
 
     initializeLayout() {
@@ -306,13 +337,16 @@ class ScenarioComparisonManager {
 
     getActiveScenarioId() {
         const activeBtn = document.querySelector('.btn-scenario.active:not(.btn-new)');
-        return activeBtn?.getAttribute('data-scenario') || 'conservative';
+        return activeBtn?.getAttribute('data-scenario') || null;
     }
 
     populateInputsFromActiveScenario() {
         const id = this.getActiveScenarioId();
-        const sc = this.scenarioConfigs.find(s => s.id === id);
-        if (!sc) return;
+        const sc = id ? this.scenarioConfigs.find(s => s.id === id) : null;
+        if (!sc) {
+            // No active scenario; inputs remain empty
+            return;
+        }
         const g = (sel) => document.getElementById(sel);
         if (g('accReturn')) g('accReturn').value = sc.params.accumulation.returnRate ?? '';
         if (g('accYears')) g('accYears').value = sc.params.accumulation.years ?? '';
@@ -324,7 +358,7 @@ class ScenarioComparisonManager {
 
     onParamsChanged() {
         const id = this.getActiveScenarioId();
-        const sc = this.scenarioConfigs.find(s => s.id === id);
+        const sc = id ? this.scenarioConfigs.find(s => s.id === id) : null;
         if (!sc) return;
 
         // Read inputs
@@ -406,42 +440,146 @@ class ScenarioComparisonManager {
     }
 
     toggleBudgetImportMenu() {
-        const menu = document.getElementById('budgetImportMenu');
-        const list = document.getElementById('budgetImportList');
-        if (!menu || !list) return;
-        // Toggle visibility
-        menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
-        if (menu.style.display === 'block') {
-            // Populate from localStorage
-            const entries = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith('budgetProfile_')) {
-                    try { entries.push({ key, data: JSON.parse(localStorage.getItem(key) || '{}') }); } catch (_) {}
-                }
-            }
-            if (!entries.length) {
-                list.innerHTML = '<div style="color:#7f8c8d">Keine gespeicherten Profile gefunden.</div>';
-                return;
-            }
-            list.innerHTML = '';
-            entries.sort((a,b) => a.key.localeCompare(b.key));
-            entries.forEach(({ key, data }) => {
-                const name = (data?.name) || key.replace('budgetProfile_','');
-                const btn = document.createElement('button');
-                btn.className = 'profile-action-btn profile-load-btn';
-                btn.textContent = `📂 ${name}`;
-                btn.style.justifySelf = 'start';
-                btn.addEventListener('click', () => {
-                    this.applyBudgetProfile(name, data);
-                    menu.style.display = 'none';
-                });
-                list.appendChild(btn);
-            });
+        // Ensure dropdown container exists directly below the header, so it appears at the top
+        const section = document.getElementById('comparisonBudgetSection');
+        const header = section?.querySelector('.param-header');
+        if (!section || !header) return;
+
+        let dropdown = section.querySelector('#budgetImportDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'budgetImportDropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.marginTop = '10px';
+            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.borderRadius = '8px';
+            dropdown.style.padding = '10px';
+            dropdown.style.background = '#fff';
+            // Insert after header, before the grid
+            header.after(dropdown);
         }
+
+        // Toggle visibility
+        const willOpen = (dropdown.style.display === 'none' || dropdown.style.display === '');
+        dropdown.style.display = willOpen ? 'block' : 'none';
+
+        // Toggle arrow on the button
+        const importBtn = document.getElementById('budgetImportBtn');
+        if (importBtn) importBtn.textContent = willOpen ? 'Importieren ▲' : 'Importieren ▼';
+
+        if (!willOpen) return;
+
+        // Build the list of profiles when opening
+        const list = document.createElement('div');
+        list.id = 'budgetImportDropdownList';
+        list.style.display = 'flex';
+        list.style.flexWrap = 'wrap';
+        list.style.gap = '8px';
+
+        const entries = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('budgetProfile_')) {
+                try { entries.push({ key, data: JSON.parse(localStorage.getItem(key) || '{}') }); } catch (_) {}
+            }
+        }
+
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Profil wählen</strong>';
+        if (!entries.length) {
+            dropdown.insertAdjacentHTML('beforeend', '<div style="color:#7f8c8d">Keine gespeicherten Profile gefunden.</div>');
+            return;
+        }
+
+        entries.sort((a,b) => a.key.localeCompare(b.key));
+        entries.forEach(({ key, data }) => {
+            const name = (data?.name) || key.replace('budgetProfile_','');
+            const btn = document.createElement('button');
+            btn.className = 'profile-action-btn profile-load-btn';
+            btn.textContent = `📂 ${name}`;
+            btn.style.justifySelf = 'start';
+            btn.dataset.key = key;
+            if (this.selectedBudgetProfileKey === key) {
+                btn.classList.add('active');
+            }
+            btn.addEventListener('click', () => {
+                // Toggle: clicking the same profile deselects and resets view
+                if (this.selectedBudgetProfileKey === key) {
+                    this.clearBudgetProfile();
+                    // keep dropdown open and refresh list
+                    this.refreshBudgetImportDropdown(true);
+                } else {
+                    this.applyBudgetProfile(name, data, key);
+                    // keep dropdown open and refresh list
+                    this.refreshBudgetImportDropdown(true);
+                }
+            });
+            list.appendChild(btn);
+        });
+        dropdown.appendChild(list);
     }
 
-    applyBudgetProfile(profileName, profileData) {
+    // Rebuild the dropdown list from localStorage without changing open state,
+    // unless keepOpen is true (ensures it stays open while refreshing).
+    refreshBudgetImportDropdown(keepOpen = false) {
+        const section = document.getElementById('comparisonBudgetSection');
+        const header = section?.querySelector('.param-header');
+        if (!section || !header) return;
+        let dropdown = section.querySelector('#budgetImportDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'budgetImportDropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.marginTop = '10px';
+            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.borderRadius = '8px';
+            dropdown.style.padding = '10px';
+            dropdown.style.background = '#fff';
+            header.after(dropdown);
+        }
+        const wasOpen = dropdown.style.display !== 'none';
+        // Always rebuild content
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Profil wählen</strong>';
+        const list = document.createElement('div');
+        list.id = 'budgetImportDropdownList';
+        list.style.display = 'flex';
+        list.style.flexWrap = 'wrap';
+        list.style.gap = '8px';
+
+        const entries = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('budgetProfile_')) {
+                try { entries.push({ key, data: JSON.parse(localStorage.getItem(key) || '{}') }); } catch (_) {}
+            }
+        }
+        entries.sort((a,b) => a.key.localeCompare(b.key));
+        entries.forEach(({ key, data }) => {
+            const name = (data?.name) || key.replace('budgetProfile_','');
+            const btn = document.createElement('button');
+            btn.className = 'profile-action-btn profile-load-btn';
+            btn.textContent = `📂 ${name}`;
+            btn.style.justifySelf = 'start';
+            btn.dataset.key = key;
+            if (this.selectedBudgetProfileKey === key) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                if (this.selectedBudgetProfileKey === key) {
+                    this.clearBudgetProfile();
+                } else {
+                    this.applyBudgetProfile(name, data, key);
+                }
+                // Stay open and refresh
+                this.refreshBudgetImportDropdown(true);
+            });
+            list.appendChild(btn);
+        });
+        dropdown.appendChild(list);
+        // Restore visibility
+        dropdown.style.display = (keepOpen || wasOpen) ? 'block' : 'none';
+        const importBtn = document.getElementById('budgetImportBtn');
+        if (importBtn) importBtn.textContent = dropdown.style.display === 'block' ? 'Importieren ▲' : 'Importieren ▼';
+    }
+
+    applyBudgetProfile(profileName, profileData, profileKey = null) {
         try {
             const fmt = new Intl.NumberFormat('de-DE');
             const euros = (n) => `€${fmt.format(Math.round(n || 0))}`;
@@ -453,7 +591,20 @@ class ScenarioComparisonManager {
             const periods = profile.periods || {};
 
             const totalIncome = (typeof totals.totalIncome === 'number') ? totals.totalIncome : this.sumNumbers(income);
-            const totalExpenses = (typeof totals.totalExpenses === 'number') ? totals.totalExpenses : this.sumNumbers(expenses);
+            // Guard against legacy profiles that may still contain a removed
+            // health insurance field ("health"). Exclude it from fallback sums
+            // and also from precomputed totals when present.
+            let totalExpenses;
+            if (typeof totals.totalExpenses === 'number') {
+                // Prefer stored total, but subtract legacy health if the raw
+                // expenses object still carries it to avoid double counting.
+                const legacyHealth = this.parseNumber(expenses.health);
+                totalExpenses = totals.totalExpenses - (isNaN(legacyHealth) ? 0 : legacyHealth);
+            } else {
+                // Derive by summing all expense fields except legacy health
+                const { health, ...rest } = expenses || {};
+                totalExpenses = this.sumNumbers(rest);
+            }
             const available = Math.max(0, (totalIncome || 0) - (totalExpenses || 0));
 
             const pretty = (k) => this.prettyLabel(k);
@@ -473,7 +624,9 @@ class ScenarioComparisonManager {
                 </div>`;
 
             const incomeEntries = Object.entries(income).map(([k, v]) => [pretty(k), euros(this.parseNumber(v)), k]);
-            const expenseEntries = Object.entries(expenses).map(([k, v]) => [pretty(k), euros(this.parseNumber(v))]);
+            const expenseEntries = Object.entries(expenses)
+                .filter(([k]) => k !== 'health')
+                .map(([k, v]) => [pretty(k), euros(this.parseNumber(v))]);
             const savingsEntries = [
                 ['Sparmodus', savings.mode === 'fixed' ? 'Fester Betrag' : 'Prozentsatz'],
                 ['Sparrate', euros(this.parseNumber(savings.amount))],
@@ -501,13 +654,52 @@ class ScenarioComparisonManager {
                   </div>
                   <div class="budget-card income">${group('Einkommen', incomeEntries)}</div>
                   <div class="budget-card expenses">${group('Ausgaben', expenseEntries)}</div>
-                </div>`;
+                </div>
+                `;
 
             const container = document.getElementById('budgetReadonly');
             if (container) container.innerHTML = html;
+
+            // Remember selection key for toggle behavior
+            if (profileKey) this.selectedBudgetProfileKey = profileKey;
         } catch (e) {
             console.warn('Failed to apply budget profile', e);
         }
+    }
+
+    clearBudgetProfile() {
+        this.selectedBudgetProfileKey = null;
+        this.renderEmptyBudgetCards();
+    }
+
+    renderEmptyBudgetCards() {
+        const placeholder = (label) => label;
+        const group = (title, entries) => `
+            <div class="budget-group">
+                <div class="budget-chip">${title}</div>
+                <div class="kvv-list">
+                  ${entries.map(([k,v]) => `
+                    <div class="kvv-item"><div class="kvv-k">${k}</div><div class="kvv-v">—</div></div>
+                  `).join('')}
+                </div>
+            </div>`;
+        const summaryEntries = [['Gesamteinkommen','—'],['Gesamtausgaben','—'],['Verfügbar','—'],['Profil','—']];
+        const savingsEntries = [['Sparmodus','—'],['Sparrate','—'],['Spar‑Prozentsatz','—']];
+        const incomeEntries = [['Gehalt','—'],['Nebeneinkommen','—'],['Sonstige Einnahmen','—']];
+        const expenseEntries = [['Miete','—'],['Nebenkosten','—'],['Versicherungen','—'],['Internet','—'],['Rundfunkbeitrag','—'],['Lebensmittel','—'],['Transport','—'],['Freizeit','—'],['Kleidung','—'],['Abos','—'],['Sonstiges','—']];
+
+        const html = `
+            <div class="budget-grid">
+              <div class="budget-card summary">
+                ${group('Zusammenfassung', summaryEntries)}
+                ${group('Sparen', savingsEntries)}
+              </div>
+              <div class="budget-card income">${group('Einkommen', incomeEntries)}</div>
+              <div class="budget-card expenses">${group('Ausgaben', expenseEntries)}</div>
+            </div>`;
+
+        const container = document.getElementById('budgetReadonly');
+        if (container) container.innerHTML = html;
     }
 
     sumNumbers(obj) {
@@ -534,7 +726,6 @@ class ScenarioComparisonManager {
             // Expenses
             rent: 'Miete',
             utilities: 'Nebenkosten',
-            health: 'Gesundheit',
             insurance: 'Versicherungen',
             internet: 'Internet',
             gez: 'Rundfunkbeitrag',

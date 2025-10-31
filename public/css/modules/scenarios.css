@@ -1332,6 +1332,11 @@ body.scenario-comparison .container:hover {
     height: fit-content;
     position: sticky;
     top: 20px;
+    /* Make the left panel scroll independently to avoid the right side
+       grabbing the scroll when the pointer is over the parameters. */
+    max-height: calc(100vh - 40px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Results Panel */
@@ -1359,6 +1364,48 @@ body.scenario-comparison .container:hover {
     color: #1f2d3a !important;
     border-color: var(--accent-color) !important;
     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+/* Clear-selection button style */
+.btn-scenario.btn-clear {
+  background: #ffffff;
+  border: 1px solid #dde4ee;
+  color: #6b7280;
+}
+.btn-scenario.btn-clear:hover {
+  background: #f7fafc;
+}
+
+/* Budget profile dropdown: show a small check at the right for the
+   active (selected) profile button. Scoped to the comparison UI. */
+#budgetImportDropdown .profile-action-btn.profile-load-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-width: unset;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+#budgetImportDropdown .profile-action-btn.profile-load-btn.active::after {
+  content: '✓';
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #ffffff; /* distinct pill background */
+  color: #27ae60;      /* green check on white */
+  font-weight: 800;
+  font-size: 0.85rem;
+  line-height: 1.1;
+  border: 1px solid rgba(39, 174, 96, 0.25);
+}
+
+/* Make profile items wrap across columns to use available width */
+#budgetImportDropdownList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 /* Chart Controls Bar */
@@ -1546,10 +1593,22 @@ body.scenario-comparison .container:hover {
 
 /* -------------------------
    Budget Readonly Grid (Scenario Comparison)
+   Scope to scenario comparison page to avoid overriding main budget layout
    ------------------------- */
-.budget-grid {
+/* Standalone comparison page */
+body.scenario-comparison .budget-grid {
   display: grid;
-  grid-template-columns: 1fr; /* always single column */
+  grid-template-columns: 1fr; /* always single column in comparison UI */
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+}
+
+/* Embedded comparison section inside etf_savings.html */
+#scenarioComparisonSection .budget-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* force single column to avoid overlap */
   gap: 12px;
   width: 100%;
   box-sizing: border-box;
@@ -1557,7 +1616,7 @@ body.scenario-comparison .container:hover {
 }
 
 @media (max-width: 840px) {
-  .budget-grid { grid-template-columns: 1fr; }
+  body.scenario-comparison .budget-grid { grid-template-columns: 1fr; }
 }
 
 .budget-card {

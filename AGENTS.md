@@ -1,8 +1,9 @@
-# Repository 
+# Repository
 
 ## Important rules
 - Do not run the server on any port. It is already running on port 3000.
 - Do not delete any files EVER!
+- DO not every read app_old.js or modify it!
 
 ## Project Structure & Module Organization
 - `public/`: App assets and entry pages (e.g., `etf_savings.html`, `scenario-comparison.html`).
@@ -62,7 +63,7 @@
 ### Technology Stack
 - **Frontend**: Pure JavaScript ES6 modules (no framework dependencies)
 - **Styling**: Modular CSS architecture
-- **Charts**: Chart.js for data visualization  
+- **Charts**: Chart.js for data visualization
 - **Architecture**: Client-side only, no backend required
 - **Development**: Served via local HTTP server (Python/Node.js/PHP)
 
@@ -102,7 +103,7 @@ german-financial-planner/
 ### Understanding User Flow
 1. **Budget Planning** → Set income, expenses, determine savings rate
 2. **ETF Accumulation** → Configure investment parameters, scenarios
-3. **Withdrawal Planning** → Plan retirement withdrawal strategy  
+3. **Withdrawal Planning** → Plan retirement withdrawal strategy
 4. **Scenario Comparison** → Compare different financial strategies
 
 ### Key Architecture Patterns
@@ -117,7 +118,7 @@ german-financial-planner/
 
 ### 🔧 **MODIFYING FINANCIAL CALCULATIONS**
 **Target Files**:
-- `public/js/core/accumulation.js` - ETF growth calculations  
+- `public/js/core/accumulation.js` - ETF growth calculations
 - `public/js/core/withdrawal.js` - Retirement withdrawal logic
 - `public/js/core/tax.js` - German tax calculations
 - `public/js/core/budget.js` - Budget analysis
@@ -155,7 +156,7 @@ german-financial-planner/
 ### 📊 **CHART AND VISUALIZATION**
 **Target Files**:
 - `public/js/ui/mainChart.js` - Primary accumulation charts
-- `public/js/ui/withdrawalChart.js` - Withdrawal phase charts  
+- `public/js/ui/withdrawalChart.js` - Withdrawal phase charts
 - `public/js/ui/budgetChart.js` - Budget pie charts
 
 **Chart Types**:
@@ -206,14 +207,14 @@ german-financial-planner/
 - **Handles**: Compound interest, multi-phase savings, tax calculations
 - **German Features**: Vorabpauschale, Teilfreistellung
 
-#### `public/js/core/tax.js`  
+#### `public/js/core/tax.js`
 - **Purpose**: German tax calculations
 - **Key Features**: Abgeltungssteuer (25%), Vorabpauschale calculation
 - **Tax Types**: Income tax, solidarity surcharge, church tax
 - **Modify When**: Tax law changes, new calculation methods
 
 #### `public/js/core/withdrawal.js`
-- **Purpose**: Retirement withdrawal phase calculations  
+- **Purpose**: Retirement withdrawal phase calculations
 - **Key Features**: Safe withdrawal rates, tax on gains, inflation adjustment
 - **German Features**: Sparerpauschbetrag (€1,000 annual exemption)
 
@@ -247,7 +248,7 @@ german-financial-planner/
 - **Key Exports**: Event listener setup for all application phases
 - **Modify When**: Adding new interactive elements
 
-#### `public/js/ui/dom.js`  
+#### `public/js/ui/dom.js`
 - **Purpose**: DOM manipulation utilities
 - **Key Functions**: `updateScenarioResults()`, `showNotification()`
 - **Modify When**: Changing result displays, notification system
@@ -257,7 +258,7 @@ german-financial-planner/
 - **Chart Types**: Scenario comparison, contributions vs gains
 - **Features**: Dynamic legend, hover interactions, responsive design
 
-#### `public/js/ui/withdrawalChart.js`  
+#### `public/js/ui/withdrawalChart.js`
 - **Purpose**: Withdrawal phase and integrated timeline charts
 - **Key Features**: Cashflow visualization, lifecycle timeline
 - **German Features**: Tax visualization, real vs nominal values
@@ -274,7 +275,7 @@ german-financial-planner/
 - **Key Variables**: Color scheme, spacing scale, typography hierarchy
 - **Modify When**: Changing design system fundamentals
 
-#### `public/css/modules/components.css`  
+#### `public/css/modules/components.css`
 - **Purpose**: Interactive elements (buttons, toggles, forms, cards)
 - **Key Components**: `.phase-button`, `.toggle`, `.result-card`, `.savings-mode-btn`
 - **Modify When**: Changing component appearance, adding new components
@@ -285,7 +286,7 @@ german-financial-planner/
 - **Modify When**: Changing scenario management UI
 
 #### `public/css/modules/layout.css`
-- **Purpose**: Page structure, grids, responsive layout  
+- **Purpose**: Page structure, grids, responsive layout
 - **Key Classes**: `.container`, `.budget-grid`, `.results-grid`
 - **Modify When**: Changing page layout, responsive behavior
 
@@ -300,7 +301,7 @@ german-financial-planner/
 
 ### ➕ **Adding New Input Fields**
 1. **HTML**: Add input to relevant section in `etf_savings.html`
-2. **JavaScript**: Add to calculation functions in `core/` modules  
+2. **JavaScript**: Add to calculation functions in `core/` modules
 3. **CSS**: Style in appropriate `modules/` file
 4. **State**: Add to state management if needed in `state.js`
 
@@ -328,7 +329,7 @@ german-financial-planner/
 
 ### 🚫 **Files to AVOID**
 - `public/app_old.js` - Legacy file, do not modify
-- `public/style_old.css` - Legacy file, do not modify  
+- `public/style_old.css` - Legacy file, do not modify
 - Any file with `_old` suffix
 
 ### 🎯 **Development Best Practices**
@@ -338,9 +339,9 @@ german-financial-planner/
 - **Validate calculations**: Cross-check financial calculations for accuracy
 - **German compliance**: Maintain German tax law accuracy
 
-### 🔄 **State Management Principles**  
+### 🔄 **State Management Principles**
 - **Centralized State**: Use `state.js` for global state
-- **Reactive Updates**: Changes trigger `recalculateAll()` 
+- **Reactive Updates**: Changes trigger `recalculateAll()`
 - **Debounced Recalc**: UI changes are debounced for performance
 - **Local Storage**: Profiles and scenarios persist locally
 
@@ -355,7 +356,7 @@ german-financial-planner/
 
 ### 🔍 **Common Debugging Locations**
 - **Console Logs**: Check browser console for errors
-- **State Inspection**: Use `window.state` in browser console  
+- **State Inspection**: Use `window.state` in browser console
 - **Calculation Verification**: Add logging to `core/` modules
 - **UI State**: Inspect DOM classes and attributes
 
@@ -372,7 +373,7 @@ german-financial-planner/
 
 ### Core Documentation Files (in `/docs/`)
 - `ETF_Calculator_Documentation.md` - Core calculation explanations
-- `FORMULAS.md` - Mathematical formulas used  
+- `FORMULAS.md` - Mathematical formulas used
 - `TAX_CALCULATION_FIXES.md` - German tax calculation specifics
 - `features/features.md` - Feature specifications
 - `PRD.md` - Product Requirements Document
@@ -390,7 +391,7 @@ This German Financial Planner is a sophisticated, modular application with clear
 
 1. **Understand the Module**: Read the target file's purpose and key functions
 2. **Check Dependencies**: Understand what imports/exports the file
-3. **Test Thoroughly**: Verify changes across multiple scenarios and devices  
+3. **Test Thoroughly**: Verify changes across multiple scenarios and devices
 4. **Maintain Standards**: Follow existing code patterns and German compliance
 5. **Update Documentation**: Keep this guide current with significant changes
 

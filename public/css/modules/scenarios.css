@@ -1366,15 +1366,7 @@ body.scenario-comparison .container:hover {
     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
-/* Clear-selection button style */
-.btn-scenario.btn-clear {
-  background: #ffffff;
-  border: 1px solid #dde4ee;
-  color: #6b7280;
-}
-.btn-scenario.btn-clear:hover {
-  background: #f7fafc;
-}
+/* Removed: styles for the old clear-selection button (.btn-scenario.btn-clear) */
 
 /* Budget profile dropdown: show a small check at the right for the
    active (selected) profile button. Scoped to the comparison UI. */
@@ -1395,6 +1387,33 @@ body.scenario-comparison .container:hover {
   border-radius: 999px;
   background: #ffffff; /* distinct pill background */
   color: #27ae60;      /* green check on white */
+  font-weight: 800;
+  font-size: 0.85rem;
+  line-height: 1.1;
+  border: 1px solid rgba(39, 174, 96, 0.25);
+}
+
+/* Apply the same selected checkmark style for Ansparphase and Entnahmephase import lists */
+#accumImportDropdown .profile-action-btn.profile-load-btn,
+#withdrawImportDropdown .profile-action-btn.profile-load-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: auto;
+  min-width: unset;
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+#accumImportDropdown .profile-action-btn.profile-load-btn.active::after,
+#withdrawImportDropdown .profile-action-btn.profile-load-btn.active::after {
+  content: '✓';
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #27ae60;
   font-weight: 800;
   font-size: 0.85rem;
   line-height: 1.1;

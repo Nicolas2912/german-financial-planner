@@ -81,28 +81,35 @@
                             <div class="param-header" data-toggle="accumGrid">
                                 <h4>📈 Ansparphase</h4>
                                 <div class="header-actions">
-                                    <button class="btn-import">Importieren ▼</button>
+                                    <button class="btn-import" id="accumImportBtn">Importieren ▼</button>
                                     <button class="toggle-btn" type="button">
                                         <span class="toggle-icon">▼</span>
                                     </button>
                                 </div>
                             </div>
-                            <div class="param-grid" id="accumGrid">
-                                <div class="field">
-                                    <label for="accReturn">Rendite p.a. (%)</label>
-                                    <input id="accReturn" class="input-field" type="number" placeholder="8.5" step="0.1" />
-                                </div>
-                                <div class="field">
-                                    <label for="accYears">Dauer (Jahre)</label>
-                                    <input id="accYears" class="input-field" type="number" placeholder="30" step="1" />
-                                </div>
-                                <div class="field">
-                                    <label for="accInitial">Einmalanlage (€)</label>
-                                    <input id="accInitial" class="input-field" type="number" placeholder="10000" step="100" />
-                                </div>
-                                <div class="field">
-                                    <label for="accMonthly">Monatliche Sparrate (€)</label>
-                                    <input id="accMonthly" class="input-field" type="number" placeholder="1000" step="10" />
+                            <div class="param-grid active" id="accumGrid">
+                                <!-- Read-only accumulation display after import -->
+                                <div id="accumReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Zusammenfassung">
+                                            <span class="k">Jährliche Rendite (%)</span><span class="v" id="accAnnualReturn">—</span>
+                                            <span class="k">Anlagedauer (Jahre)</span><span class="v" id="accDuration">—</span>
+                                            <span class="k">Monatliche Sparrate (€)</span><span class="v" id="accMonthlySavings">—</span>
+                                            <span class="k">Startkapital (€)</span><span class="v" id="accInitialCapital">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Annahmen">
+                                            <span class="k">Inflationsrate (%)</span><span class="v" id="accInflation">—</span>
+                                            <span class="k">Jährliche Gehaltssteigerung (%)</span><span class="v" id="accSalaryGrowth">—</span>
+                                            <span class="k">Deutsche Abgeltungssteuer einbeziehen (25% mit Vorabpauschale)</span><span class="v" id="accTax">—</span>
+                                            <span class="k">ETF-Typ für Steuerberechnung</span><span class="v" id="accEtfType">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Gehalt">
+                                            <span class="k">Aktuelles Brutto‑Jahresgehalt (€)</span><span class="v" id="accBaseSalary">—</span>
+                                            <span class="k">Gehaltssteigerung für Sparrate (%)</span><span class="v" id="accSalaryToSavings">—</span>
+                                            <span class="k">Teilfreistellung bei Aktienfonds anwenden (30% steuerfrei)</span><span class="v" id="accTeilfreistellung">—</span>
+                                            <span class="k"></span><span class="v"></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -112,20 +119,29 @@
                             <div class="param-header" data-toggle="withdrawGrid">
                                 <h4>🏖️ Entnahmephase</h4>
                                 <div class="header-actions">
-                                    <button class="btn-import">Importieren ▼</button>
+                                    <button class="btn-import" id="withdrawImportBtn">Importieren ▼</button>
                                     <button class="toggle-btn" type="button">
                                         <span class="toggle-icon">▼</span>
                                     </button>
                                 </div>
                             </div>
-                            <div class="param-grid" id="withdrawGrid">
-                                <div class="field">
-                                    <label for="wdRate">Entnahmerate (%)</label>
-                                    <input id="wdRate" class="input-field" type="number" placeholder="4" step="0.1" />
-                                </div>
-                                <div class="field">
-                                    <label for="wdYears">Dauer (Jahre)</label>
-                                    <input id="wdYears" class="input-field" type="number" placeholder="30" step="1" />
+                            <div class="param-grid active" id="withdrawGrid">
+                                <!-- Read-only withdrawal display after import -->
+                                <div id="withdrawReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Parameter">
+                                            <span class="k">Entnahmedauer (Jahre)</span><span class="v" id="wdDuration">—</span>
+                                            <span class="k">Jährliche Rendite im Ruhestand (%)</span><span class="v" id="wdReturn">—</span>
+                                            <span class="k">Inflationsrate (%)</span><span class="v" id="wdInflation">—</span>
+                                            <span class="k">Verfügbares Kapital bei Renteneintritt (€)</span><span class="v" id="wdCapital">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Steuern">
+                                            <span class="k">Abgeltungssteuer anwenden (25%)</span><span class="v" id="wdTax">—</span>
+                                            <span class="k">Teilfreistellung (%)</span><span class="v" id="wdTeilfreistellung">—</span>
+                                            <span class="k"></span><span class="v"></span>
+                                            <span class="k"></span><span class="v"></span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -50,6 +50,8 @@ import { addNewScenario, switchToScenario, removeScenario, renameScenario, copyS
 
 // Import scenario comparison functionality
 import ScenarioComparisonManager from './features/scenarioComparison.js';
+// Ensure Entnahmephase scenario manager is loaded (registers window setup hook)
+import './features/entnahmephaseScenarioManager.js';
 
 // Import profile management functions
 import { 

@@ -1,12 +1,18 @@
 // scenarioComparison.js - Basic Scenario Comparison Module
 import { scenarioColors as baseScenarioColors } from '../state.js';
 import { calculateWealthDevelopment } from '../core/accumulation.js';
+import { calculateDirectAnnuityPayment } from '../core/withdrawal.js';
 class ScenarioComparisonManager {
     constructor() {
         this.charts = {};
         this.currentChartView = 'lifecycle';
         // Track selected budget profile for toggle/deselect behavior
         this.selectedBudgetProfileKey = null;
+        // Track selected import items for checkmark display
+        this.selectedBudgetProfileKey = this.selectedBudgetProfileKey || null;
+        this.selectedAccumScenarioKey = null;
+        this.selectedWithdrawScenarioKey = null;
+
         // Base scenarios registry powering charts/table/overview
         const scColors = baseScenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
         this.scenarioConfigs = [
@@ -56,6 +62,94 @@ class ScenarioComparisonManager {
         // Ensure the budget readonly area uses the same card layout even
         // when no profile is selected yet
         this.renderEmptyBudgetCards();
+        // And ensure accumulation/withdrawal placeholders are visible
+        this.renderEmptyAccumCards();
+        this.renderEmptyWithdrawCards();
+    }
+
+    // Render helpers to ensure values show even if static spans are missing
+    renderAccumValues(vals) {
+        const fmt = new Intl.NumberFormat('de-DE');
+        const euros = (n) => `${fmt.format(Math.round(n || 0))} €`;
+        const yesNo = (b) => b ? 'Aktiv' : 'Aus';
+        const etf = (t) => t === 'distributing' ? 'Ausschüttend' : 'Thesaurierend';
+
+        const buildList = (entries) => `
+            <div class="kvv-list">
+              ${entries.map(([k,v]) => `
+                <div class="kvv-item"><div class="kvv-k">${k}</div><div class="kvv-v">${v}</div></div>
+              `).join('')}
+            </div>`;
+        const group = (title, entries) => `
+            <div class="budget-group">
+                <div class="budget-chip">${title}</div>
+                ${buildList(entries)}
+            </div>`;
+
+        const summary = [
+          ['Jährliche Rendite (%)', `${vals.annualReturn ?? 0}%`],
+          ['Anlagedauer (Jahre)', `${vals.duration ?? 0}`],
+          ['Monatliche Sparrate (€)', euros(vals.monthlySavings)],
+          ['Startkapital (€)', euros(vals.initialCapital)],
+        ];
+        const assumptions = [
+          ['Inflationsrate (%)', `${vals.inflationRate ?? 0}%`],
+          ['Jährliche Gehaltssteigerung (%)', `${vals.salaryGrowth ?? 0}%`],
+          ['Deutsche Abgeltungssteuer einbeziehen (25% mit Vorabpauschale)', yesNo(!!vals.includeTax)],
+          ['ETF-Typ für Steuerberechnung', etf(vals.etfType)],
+        ];
+        const salary = [
+          ['Aktuelles Brutto‑Jahresgehalt (€)', euros(vals.baseSalary)],
+          ['Gehaltssteigerung für Sparrate (%)', `${vals.salaryToSavings ?? 0}%`],
+          ['Teilfreistellung bei Aktienfonds anwenden (30% steuerfrei)', yesNo(!!vals.teilfreistellung)],
+        ];
+
+        const html = `
+            <div class="budget-grid">
+                <div class="budget-card summary">${group('Zusammenfassung', summary)}${group('Annahmen', assumptions)}</div>
+                <div class="budget-card income">${group('Gehalt', salary)}</div>
+            </div>`;
+
+        const container = document.getElementById('accumReadonly');
+        if (container) container.innerHTML = html;
+    }
+
+    renderWithdrawValues(vals) {
+        const fmt = new Intl.NumberFormat('de-DE');
+        const euros = (n) => `${fmt.format(Math.round(n || 0))} €`;
+        const yesNo = (b) => b ? 'Aktiv' : 'Aus';
+
+        const buildList = (entries) => `
+            <div class="kvv-list">
+              ${entries.map(([k,v]) => `
+                <div class="kvv-item"><div class="kvv-k">${k}</div><div class="kvv-v">${v}</div></div>
+              `).join('')}
+            </div>`;
+        const group = (title, entries) => `
+            <div class="budget-group">
+                <div class="budget-chip">${title}</div>
+                ${buildList(entries)}
+            </div>`;
+
+        const params = [
+          ['Entnahmedauer (Jahre)', `${vals.withdrawalDuration ?? vals.years ?? 0}`],
+          ['Jährliche Rendite im Ruhestand (%)', `${vals.postRetirementReturn ?? vals.return ?? 0}%`],
+          ['Inflationsrate (%)', `${vals.withdrawalInflation ?? vals.inflation ?? 0}%`],
+          ['Verfügbares Kapital bei Renteneintritt (€)', euros(vals.retirementCapital ?? vals.capital)],
+        ];
+        const tax = [
+          ['Abgeltungssteuer anwenden (25%)', yesNo(!!(vals.withdrawalTaxActive ?? vals.taxActive))],
+          ['Teilfreistellung (%)', `${vals.teilfreistellungRate ?? vals.teilRate ?? 0}%`],
+        ];
+
+        const html = `
+            <div class="budget-grid">
+                <div class="budget-card summary">${group('Parameter', params)}</div>
+                <div class="budget-card income">${group('Steuern', tax)}</div>
+            </div>`;
+
+        const container = document.getElementById('withdrawReadonly');
+        if (container) container.innerHTML = html;
     }
 
     initializeEventListeners() {
@@ -126,15 +220,8 @@ class ScenarioComparisonManager {
         });
 
         // Inject a small clear-selection button if missing
-        const chooser = document.querySelector('.scenario-chooser');
-        if (chooser && !chooser.querySelector('.btn-clear')) {
-            const clearBtn = document.createElement('button');
-            clearBtn.className = 'btn-scenario btn-clear';
-            clearBtn.textContent = 'Auswahl löschen';
-            clearBtn.title = 'Aktive Szenarioauswahl aufheben';
-            clearBtn.addEventListener('click', () => this.clearActiveScenario());
-            chooser.appendChild(clearBtn);
-        }
+        // Removed: previously injected a separate "Auswahl löschen" button.
+        // Users can still deselect by clicking the active scenario again.
 
         // Action buttons
         document.querySelector('.comparison-btn.btn-load')?.addEventListener('click', () => this.loadTemplate());
@@ -145,6 +232,18 @@ class ScenarioComparisonManager {
         const importBtn = document.getElementById('budgetImportBtn');
         if (importBtn) {
             importBtn.addEventListener('click', () => this.toggleBudgetImportMenu());
+        }
+
+        // Accumulation import menu
+        const accumImportBtn = document.getElementById('accumImportBtn');
+        if (accumImportBtn) {
+            accumImportBtn.addEventListener('click', () => this.toggleAccumImportMenu());
+        }
+
+        // Withdrawal import menu
+        const withdrawImportBtn = document.getElementById('withdrawImportBtn');
+        if (withdrawImportBtn) {
+            withdrawImportBtn.addEventListener('click', () => this.toggleWithdrawImportMenu());
         }
     }
 
@@ -245,6 +344,398 @@ class ScenarioComparisonManager {
 
         // Update all charts
         this.updateAllCharts();
+    }
+
+    // ============= Accumulation Import (Ansparphase) =============
+    toggleAccumImportMenu() {
+        const section = document.getElementById('comparisonAccumSection');
+        const header = section?.querySelector('.param-header');
+        if (!section || !header) return;
+
+        let dropdown = section.querySelector('#accumImportDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'accumImportDropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.marginTop = '10px';
+            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.borderRadius = '8px';
+            dropdown.style.padding = '10px';
+            dropdown.style.background = '#fff';
+            header.after(dropdown);
+        }
+
+        const willOpen = (dropdown.style.display === 'none' || dropdown.style.display === '');
+        dropdown.style.display = willOpen ? 'block' : 'none';
+
+        const importBtn = document.getElementById('accumImportBtn');
+        if (importBtn) importBtn.textContent = willOpen ? 'Importieren ▲' : 'Importieren ▼';
+
+        if (!willOpen) return;
+
+        // Build list from localStorage
+        const entries = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ansparphaseScenario_')) {
+                try { entries.push({ key, data: JSON.parse(localStorage.getItem(key) || '{}') }); } catch (_) {}
+            }
+        }
+
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Ansparphase‑Szenario wählen</strong>';
+        const list = document.createElement('div');
+        list.id = 'accumImportDropdownList';
+        list.style.display = 'flex';
+        list.style.flexWrap = 'wrap';
+        list.style.gap = '8px';
+
+        if (!entries.length) {
+            list.innerHTML = '<div style="color:#7f8c8d">Keine gespeicherten Ansparphase‑Szenarien gefunden.</div>';
+        } else {
+            entries.sort((a,b) => (a.data?.name || a.key).localeCompare(b.data?.name || b.key));
+            entries.forEach(({ key, data }) => {
+                const name = (data?.name) || key.replace('ansparphaseScenario_','');
+                const btn = document.createElement('button');
+                btn.className = 'profile-action-btn profile-load-btn';
+                btn.textContent = `📂 ${name}`;
+                btn.style.justifySelf = 'start';
+                btn.dataset.storageKey = key;
+                if (this.selectedAccumScenarioKey === key) btn.classList.add('active');
+                btn.addEventListener('click', () => {
+                    const isDeselect = (this.selectedAccumScenarioKey === key);
+                    this.selectedAccumScenarioKey = isDeselect ? null : key;
+                    if (isDeselect) {
+                        // Clear values back to placeholders
+                        this.renderEmptyAccumCards();
+                    } else {
+                        this.applyAccumScenarioByKey(key);
+                    }
+                    this.refreshAccumImportDropdown(true);
+                });
+                list.appendChild(btn);
+            });
+        }
+        dropdown.appendChild(list);
+    }
+
+    refreshAccumImportDropdown(keepOpen = false) {
+        const section = document.getElementById('comparisonAccumSection');
+        const header = section?.querySelector('.param-header');
+        if (!section || !header) return;
+        let dropdown = section.querySelector('#accumImportDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'accumImportDropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.marginTop = '10px';
+            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.borderRadius = '8px';
+            dropdown.style.padding = '10px';
+            dropdown.style.background = '#fff';
+            header.after(dropdown);
+        }
+        const wasOpen = dropdown.style.display !== 'none';
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Ansparphase‑Szenario wählen</strong>';
+        const list = document.createElement('div');
+        list.id = 'accumImportDropdownList';
+        list.style.display = 'flex';
+        list.style.flexWrap = 'wrap';
+        list.style.gap = '8px';
+        const entries = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('ansparphaseScenario_')) {
+                try { entries.push({ key, data: JSON.parse(localStorage.getItem(key) || '{}') }); } catch (_) {}
+            }
+        }
+        entries.sort((a,b) => (a.data?.name || a.key).localeCompare(b.data?.name || b.key));
+        entries.forEach(({ key, data }) => {
+            const name = (data?.name) || key.replace('ansparphaseScenario_','');
+            const btn = document.createElement('button');
+            btn.className = 'profile-action-btn profile-load-btn';
+            btn.textContent = `📂 ${name}`;
+            btn.dataset.storageKey = key;
+            if (this.selectedAccumScenarioKey === key) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                const isDeselect = (this.selectedAccumScenarioKey === key);
+                this.selectedAccumScenarioKey = isDeselect ? null : key;
+                if (isDeselect) {
+                    this.renderEmptyAccumCards();
+                } else {
+                    this.applyAccumScenarioByKey(key);
+                }
+                this.refreshAccumImportDropdown(true);
+            });
+            list.appendChild(btn);
+        });
+        dropdown.appendChild(list);
+        dropdown.style.display = (keepOpen || wasOpen) ? 'block' : 'none';
+        const importBtn = document.getElementById('accumImportBtn');
+        if (importBtn) importBtn.textContent = dropdown.style.display === 'block' ? 'Importieren ▲' : 'Importieren ▼';
+    }
+
+    applyAccumScenarioByKey(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            this.applyAccumScenario(data);
+        } catch (e) {
+            console.warn('Failed to load accumulation scenario by key', key, e);
+        }
+    }
+
+    applyAccumScenario(data) {
+        try {
+            // Support both wrapped and direct structures
+            const p = data?.scenario?.parameters || data?.parameters || {};
+            const num = (v, d=0) => (typeof v === 'number' && !isNaN(v)) ? v : (parseFloat(String(v||'').replace(/\./g,'').replace(',','.')) || d);
+            const fmt = new Intl.NumberFormat('de-DE');
+
+            const accReturn = num(p.annualReturn, 0);
+            const accYears = parseInt(p.duration ?? 0) || 0;
+            const accInitial = num(p.initialCapital, 0);
+            const accMonthly = num(p.monthlySavings, 0);
+            const inflation = num(p.inflationRate, 0);
+            const salaryGrowth = num(p.salaryGrowth, 0);
+            const baseSalary = num(p.baseSalary, 0);
+            const salaryToSavings = num(p.salaryToSavings, 0);
+            const taxActive = !!p.includeTax;
+            const teilfrei = !!p.teilfreistellung;
+            const etfType = p.etfType === 'distributing' ? 'Ausschüttend' : 'Thesaurierend';
+
+            const byId = (id) => document.getElementById(id);
+            byId('accAnnualReturn') && (byId('accAnnualReturn').textContent = `${accReturn}%`);
+            byId('accDuration') && (byId('accDuration').textContent = `${accYears}`);
+            byId('accMonthlySavings') && (byId('accMonthlySavings').textContent = `${fmt.format(accMonthly)} €`);
+            byId('accInitialCapital') && (byId('accInitialCapital').textContent = `${fmt.format(accInitial)} €`);
+            byId('accInflation') && (byId('accInflation').textContent = `${inflation}%`);
+            byId('accSalaryGrowth') && (byId('accSalaryGrowth').textContent = `${salaryGrowth}%`);
+            byId('accTax') && (byId('accTax').textContent = taxActive ? 'Aktiv' : 'Aus');
+            byId('accEtfType') && (byId('accEtfType').textContent = etfType);
+            byId('accBaseSalary') && (byId('accBaseSalary').textContent = `${fmt.format(baseSalary)} €`);
+            byId('accSalaryToSavings') && (byId('accSalaryToSavings').textContent = `${salaryToSavings}%`);
+            byId('accTeilfreistellung') && (byId('accTeilfreistellung').textContent = teilfrei ? 'Aktiv' : 'Aus');
+
+            // Force-render the card to avoid any stale placeholders
+            this.renderAccumValues({
+                annualReturn: accReturn,
+                duration: accYears,
+                monthlySavings: accMonthly,
+                initialCapital: accInitial,
+                inflationRate: inflation,
+                salaryGrowth,
+                includeTax: taxActive,
+                etfType: (p.etfType || 'thesaurierend'),
+                baseSalary,
+                salaryToSavings,
+                teilfreistellung: teilfrei,
+            });
+
+            // Also update local scenario snapshot for table and summaries
+            const id = this.getActiveScenarioId() || 'conservative';
+            const sc = this.scenarioConfigs.find(s => s.id === id) || this.scenarioConfigs[0];
+            if (sc) {
+                sc.params.accumulation.returnRate = accReturn;
+                sc.params.accumulation.years = accYears;
+                sc.params.accumulation.initialCapital = accInitial;
+                sc.params.accumulation.monthlySavings = accMonthly;
+            }
+            this.updateAllSummaries();
+        } catch (e) {
+            console.warn('Failed to apply accumulation scenario', e);
+        }
+    }
+
+    // ============= Withdrawal Import (Entnahmephase) =============
+    toggleWithdrawImportMenu() {
+        const section = document.getElementById('comparisonWithdrawSection');
+        const header = section?.querySelector('.param-header');
+        if (!section || !header) return;
+
+        let dropdown = section.querySelector('#withdrawImportDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'withdrawImportDropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.marginTop = '10px';
+            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.borderRadius = '8px';
+            dropdown.style.padding = '10px';
+            dropdown.style.background = '#fff';
+            header.after(dropdown);
+        }
+
+        const willOpen = (dropdown.style.display === 'none' || dropdown.style.display === '');
+        dropdown.style.display = willOpen ? 'block' : 'none';
+
+        const importBtn = document.getElementById('withdrawImportBtn');
+        if (importBtn) importBtn.textContent = willOpen ? 'Importieren ▲' : 'Importieren ▼';
+
+        if (!willOpen) return;
+
+        // Build list from localStorage
+        const entries = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('entnahmephaseScenario_')) {
+                try { entries.push({ key, data: JSON.parse(localStorage.getItem(key) || '{}') }); } catch (_) {}
+            }
+        }
+
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Entnahmephase‑Szenario wählen</strong>';
+        const list = document.createElement('div');
+        list.id = 'withdrawImportDropdownList';
+        list.style.display = 'flex';
+        list.style.flexWrap = 'wrap';
+        list.style.gap = '8px';
+
+        if (!entries.length) {
+            list.innerHTML = '<div style="color:#7f8c8d">Keine gespeicherten Entnahmephase‑Szenarien gefunden.</div>';
+        } else {
+            entries.sort((a,b) => (a.data?.name || a.key).localeCompare(b.data?.name || b.key));
+            entries.forEach(({ key, data }) => {
+                const name = (data?.name) || key.replace('entnahmephaseScenario_','');
+                const btn = document.createElement('button');
+                btn.className = 'profile-action-btn profile-load-btn';
+                btn.textContent = `📂 ${name}`;
+                btn.style.justifySelf = 'start';
+                btn.dataset.storageKey = key;
+                if (this.selectedWithdrawScenarioKey === key) btn.classList.add('active');
+                btn.addEventListener('click', () => {
+                    const isDeselect = (this.selectedWithdrawScenarioKey === key);
+                    this.selectedWithdrawScenarioKey = isDeselect ? null : key;
+                    if (isDeselect) {
+                        this.renderEmptyWithdrawCards();
+                    } else {
+                        this.applyWithdrawScenarioByKey(key);
+                    }
+                    this.refreshWithdrawImportDropdown(true);
+                });
+                list.appendChild(btn);
+            });
+        }
+        dropdown.appendChild(list);
+    }
+
+    refreshWithdrawImportDropdown(keepOpen = false) {
+        const section = document.getElementById('comparisonWithdrawSection');
+        const header = section?.querySelector('.param-header');
+        if (!section || !header) return;
+        let dropdown = section.querySelector('#withdrawImportDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'withdrawImportDropdown';
+            dropdown.style.display = 'none';
+            dropdown.style.marginTop = '10px';
+            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.borderRadius = '8px';
+            dropdown.style.padding = '10px';
+            dropdown.style.background = '#fff';
+            header.after(dropdown);
+        }
+        const wasOpen = dropdown.style.display !== 'none';
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Entnahmephase‑Szenario wählen</strong>';
+        const list = document.createElement('div');
+        list.id = 'withdrawImportDropdownList';
+        list.style.display = 'flex';
+        list.style.flexWrap = 'wrap';
+        list.style.gap = '8px';
+        const entries = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('entnahmephaseScenario_')) {
+                try { entries.push({ key, data: JSON.parse(localStorage.getItem(key) || '{}') }); } catch (_) {}
+            }
+        }
+        entries.sort((a,b) => (a.data?.name || a.key).localeCompare(b.data?.name || b.key));
+        entries.forEach(({ key, data }) => {
+            const name = (data?.name) || key.replace('entnahmephaseScenario_','');
+            const btn = document.createElement('button');
+            btn.className = 'profile-action-btn profile-load-btn';
+            btn.textContent = `📂 ${name}`;
+            btn.dataset.storageKey = key;
+            if (this.selectedWithdrawScenarioKey === key) btn.classList.add('active');
+            btn.addEventListener('click', () => {
+                const isDeselect = (this.selectedWithdrawScenarioKey === key);
+                this.selectedWithdrawScenarioKey = isDeselect ? null : key;
+                if (isDeselect) {
+                    this.renderEmptyWithdrawCards();
+                } else {
+                    this.applyWithdrawScenarioByKey(key);
+                }
+                this.refreshWithdrawImportDropdown(true);
+            });
+            list.appendChild(btn);
+        });
+        dropdown.appendChild(list);
+        dropdown.style.display = (keepOpen || wasOpen) ? 'block' : 'none';
+        const importBtn = document.getElementById('withdrawImportBtn');
+        if (importBtn) importBtn.textContent = dropdown.style.display === 'block' ? 'Importieren ▲' : 'Importieren ▼';
+    }
+
+    applyWithdrawScenarioByKey(key) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+            const data = JSON.parse(raw);
+            this.applyWithdrawScenario(data);
+        } catch (e) {
+            console.warn('Failed to load withdrawal scenario by key', key, e);
+        }
+    }
+
+    applyWithdrawScenario(data) {
+        try {
+            const p = data?.parameters || data?.scenario?.parameters || {};
+            const num = (v, d=0) => (typeof v === 'number' && !isNaN(v)) ? v : (parseFloat(String(v||'').replace(/\./g,'').replace(',','.')) || d);
+            const fmt = new Intl.NumberFormat('de-DE');
+
+            const capital = num(p.retirementCapital, 0);
+            const years = parseInt(p.withdrawalDuration ?? 0) || 0;
+            const nominalReturnPct = num(p.postRetirementReturn, 0);
+            const inflationPct = num(p.withdrawalInflation, 0);
+            const taxActive = !!p.withdrawalTaxActive;
+            const teilRate = num(p.teilfreistellungRate, 0);
+
+            // Implied Entnahmerate for table summaries
+            let ratePct = 0;
+            if (capital > 0 && years > 0) {
+                try {
+                    const annualPayment = calculateDirectAnnuityPayment(capital, years, nominalReturnPct/100);
+                    ratePct = (annualPayment / capital) * 100;
+                } catch (_) {}
+            }
+
+            const byId = (id) => document.getElementById(id);
+            byId('wdDuration') && (byId('wdDuration').textContent = `${years}`);
+            byId('wdReturn') && (byId('wdReturn').textContent = `${nominalReturnPct}%`);
+            byId('wdInflation') && (byId('wdInflation').textContent = `${inflationPct}%`);
+            byId('wdCapital') && (byId('wdCapital').textContent = `${fmt.format(capital)} €`);
+            byId('wdTax') && (byId('wdTax').textContent = taxActive ? 'Aktiv' : 'Aus');
+            byId('wdTeilfreistellung') && (byId('wdTeilfreistellung').textContent = `${teilRate}%`);
+
+            // Force-render the card to avoid any stale placeholders
+            this.renderWithdrawValues({
+                retirementCapital: capital,
+                withdrawalDuration: years,
+                postRetirementReturn: nominalReturnPct,
+                withdrawalInflation: inflationPct,
+                withdrawalTaxActive: taxActive,
+                teilfreistellungRate: teilRate,
+            });
+
+            // Update local snapshot for table
+            const id = this.getActiveScenarioId() || 'conservative';
+            const sc = this.scenarioConfigs.find(s => s.id === id) || this.scenarioConfigs[0];
+            if (sc) {
+                sc.params.withdrawal.rate = Number(ratePct.toFixed(2));
+                sc.params.withdrawal.years = years;
+            }
+            this.updateAllSummaries();
+        } catch (e) {
+            console.warn('Failed to apply withdrawal scenario', e);
+        }
     }
 
     selectScenario(btn) {
@@ -699,6 +1190,49 @@ class ScenarioComparisonManager {
             </div>`;
 
         const container = document.getElementById('budgetReadonly');
+        if (container) container.innerHTML = html;
+    }
+
+    renderEmptyAccumCards() {
+        const group = (title, entries) => `
+            <div class="budget-group">
+                <div class="budget-chip">${title}</div>
+                <div class="kvv-list">
+                  ${entries.map(([k]) => `
+                    <div class="kvv-item"><div class="kvv-k">${k}</div><div class="kvv-v">—</div></div>
+                  `).join('')}
+                </div>
+            </div>`;
+        const summary = [['Jährliche Rendite (%)'],['Anlagedauer (Jahre)'],['Monatliche Sparrate (€)'],['Startkapital (€)']];
+        const assumptions = [['Inflationsrate (%)'],['Jährliche Gehaltssteigerung (%)'],['Deutsche Abgeltungssteuer einbeziehen (25% mit Vorabpauschale)'],['ETF-Typ für Steuerberechnung']];
+        const salary = [['Aktuelles Brutto‑Jahresgehalt (€)'],['Gehaltssteigerung für Sparrate (%)'],['Teilfreistellung bei Aktienfonds anwenden (30% steuerfrei)']];
+        const html = `
+            <div class="budget-grid">
+                <div class="budget-card summary">${group('Zusammenfassung', summary)}${group('Annahmen', assumptions)}</div>
+                <div class="budget-card income">${group('Gehalt', salary)}</div>
+            </div>`;
+        const container = document.getElementById('accumReadonly');
+        if (container) container.innerHTML = html;
+    }
+
+    renderEmptyWithdrawCards() {
+        const group = (title, entries) => `
+            <div class="budget-group">
+                <div class="budget-chip">${title}</div>
+                <div class="kvv-list">
+                  ${entries.map(([k]) => `
+                    <div class="kvv-item"><div class="kvv-k">${k}</div><div class="kvv-v">—</div></div>
+                  `).join('')}
+                </div>
+            </div>`;
+        const params = [['Entnahmedauer (Jahre)'],['Jährliche Rendite im Ruhestand (%)'],['Inflationsrate (%)'],['Verfügbares Kapital bei Renteneintritt (€)']];
+        const tax = [['Abgeltungssteuer anwenden (25%)'],['Teilfreistellung (%)']];
+        const html = `
+            <div class="budget-grid">
+                <div class="budget-card summary">${group('Parameter', params)}</div>
+                <div class="budget-card income">${group('Steuern', tax)}</div>
+            </div>`;
+        const container = document.getElementById('withdrawReadonly');
         if (container) container.innerHTML = html;
     }
 

@@ -34,6 +34,7 @@ import {
 
 import { 
     updateScenarioResults,
+    refreshScenarioResultNames,
     updateScenarioCheckboxes,
     updateContributionsScenarioDropdown,
     updateScenarioCheckboxVisibility,
@@ -256,6 +257,9 @@ window.updateScenarioCheckboxes = updateScenarioCheckboxes;
 window.updateContributionsScenarioDropdown = updateContributionsScenarioDropdown;
 window.showNotification = showNotification;
 window.updateScenarioSliderValue = updateScenarioSliderValue;
+window.updateScenarioResults = updateScenarioResults;
+window.updateScenarioSelector = updateScenarioSelector;
+window.refreshScenarioResultNames = refreshScenarioResultNames;
 
 // Add missing utility functions for scenario management
 window.getScenarioValue = function(inputId, scenarioId) {

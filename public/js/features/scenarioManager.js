@@ -681,7 +681,16 @@ export function removeScenario(scenarioId) {
  */
 export function renameScenario(scenarioId) {
     const scenarios = window.scenarios || [];
-    const { showNotification, updateScenarioCheckboxes, updateContributionsScenarioDropdown } = window;
+    const { 
+        showNotification, 
+        updateScenarioCheckboxes, 
+        updateContributionsScenarioDropdown,
+        updateScenarioResults,
+        updateScenarioSelector,
+        refreshScenarioResultNames,
+        recalculateAll,
+        updateMainChart
+    } = window;
     
     const scenario = scenarios.find(s => s.id === scenarioId);
     if (!scenario) {
@@ -730,9 +739,48 @@ export function renameScenario(scenarioId) {
         tab.innerHTML = `📈 ${scenario.name}`;
     }
     
+    // Update existing result card title immediately without waiting for recalculation
+    const resultCardTitle = document.querySelector(`.scenario-result-card[data-scenario="${scenarioId}"] .scenario-result-title`);
+    if (resultCardTitle) {
+        resultCardTitle.textContent = `📊 ${scenario.name}`;
+    }
+    
     // Update scenario checkboxes and dropdown
     updateScenarioCheckboxes();
     updateContributionsScenarioDropdown();
+    
+    // Sync state store with the new name
+    if (state && typeof state.updateScenario === 'function') {
+        state.updateScenario(scenarioId, { name: scenario.name });
+    }
+    
+    // Refresh scenario summary cards and selectors immediately
+    if (typeof updateScenarioResults === 'function') {
+        updateScenarioResults();
+    }
+    if (typeof refreshScenarioResultNames === 'function') {
+        refreshScenarioResultNames();
+    }
+    // Ensure DOM paints after prompt close, then re-apply names just in case
+    if (typeof refreshScenarioResultNames === 'function') {
+        setTimeout(() => refreshScenarioResultNames(), 0);
+    }
+    if (typeof updateScenarioSelector === 'function') {
+        updateScenarioSelector();
+    }
+
+    // If this is the active scenario, update the withdrawal sync indicator label
+    if (state && state.activeScenario === scenarioId) {
+        const syncNameEl = document.getElementById('syncScenarioName');
+        if (syncNameEl) syncNameEl.textContent = scenario.name;
+    }
+    
+    // Refresh comparison UI elements so the new name appears immediately
+    if (typeof recalculateAll === 'function') {
+        recalculateAll();
+    } else if (typeof updateMainChart === 'function') {
+        updateMainChart();
+    }
     
     if (showNotification) {
         showNotification('✅ Erfolg', `Szenario wurde zu "${scenario.name}" umbenannt.`, 'success');

@@ -70,6 +70,24 @@ export function updateScenarioResults() {
     });
 }
 
+/**
+ * Refresh only the scenario names in the results cards without re-rendering values
+ * Useful after quick rename actions to avoid full recalculation.
+ */
+export function refreshScenarioResultNames() {
+  const container = document.getElementById('scenarioResults');
+  if (!container) return;
+  const map = new Map(state.scenarios.map(s => [s.id, s.name]));
+  container.querySelectorAll('.scenario-result-card').forEach(card => {
+    const sid = card.getAttribute('data-scenario');
+    const titleEl = card.querySelector('.scenario-result-title');
+    const name = map.get(sid);
+    if (sid && titleEl && name) {
+      titleEl.textContent = `📊 ${name}`;
+    }
+  });
+}
+
 // ==================== Withdrawal Phase Results ====================
 
 /**

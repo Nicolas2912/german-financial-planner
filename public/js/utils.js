@@ -61,16 +61,7 @@ export function formatGermanNumber(value, decimals = 2) {
  * @param {string} text - The text to escape
  * @returns {string} HTML-escaped text
  */
-export function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
+// (Removed duplicate escapeHtml — feature modules provide local helpers)
 
 /**
  * Debounce function to limit the rate at which a function can fire

@@ -131,6 +131,8 @@ class ScenarioComparisonManager {
             if (initCards[0] && optScenario) this.updateScenarioCardElements(optScenario, initCards[0]);
             if (initCards[1] && consScenario) this.updateScenarioCardElements(consScenario, initCards[1]);
         } catch (_) {}
+
+        // Note: comparison presets remain independent from A/B app scenarios
     }
 
     // Create a scenario from the current left-side selections and add to overview
@@ -175,10 +177,18 @@ class ScenarioComparisonManager {
         const expensesTotal = typeof budParams.totalExpenses === 'number'
             ? budParams.totalExpenses
             : this.sumNumbers(budData?.expenses);
+        // Compute an estimated end capital from the accumulation inputs to use as a
+        // sensible fallback for retirement capital (more accurate than initialCapital)
+        let accEndFallback = 0;
+        try {
+            const accSeries = this.calculateAccumulationSeries(accumulation, {});
+            if (accSeries?.values?.length) accEndFallback = accSeries.values[accSeries.values.length - 1] || 0;
+        } catch (_) { /* ignore */ }
+
         const withdrawal = {
             rate: num(wdP.withdrawalRate ?? wdP.rate, 0),
-            years: parseInt(wdP.duration ?? wdP.withdrawalYears ?? wdP.years ?? 0) || 0,
-            retirementCapital: num(wdP.retirementCapital, accumulation.initialCapital || 0),
+            years: parseInt(wdP.duration ?? wdP.withdrawalYears ?? wdP.withdrawalDuration ?? wdP.years ?? 0) || 0,
+            retirementCapital: num(wdP.retirementCapital, accEndFallback || accumulation.initialCapital || 0),
             postRetirementReturn: num(wdP.postRetirementReturn ?? wdP.nominalReturn, 0),
             withdrawalInflation: num(wdP.withdrawalInflation ?? wdP.inflationRate, accumulation.inflationRate ?? 0),
             withdrawalTaxActive: !!(wdP.withdrawalTaxActive ?? wdP.includeTax),
@@ -476,7 +486,7 @@ class ScenarioComparisonManager {
         sc.params.accumulation.initialCapital = num(accP.initialCapital, sc.params.accumulation.initialCapital || 0);
         sc.params.accumulation.monthlySavings = num(accP.monthlySavings, sc.params.accumulation.monthlySavings || 0);
         sc.params.withdrawal.rate = num(wdP.withdrawalRate ?? wdP.rate, sc.params.withdrawal.rate);
-        sc.params.withdrawal.years = parseInt(wdP.duration ?? wdP.withdrawalYears ?? wdP.years ?? sc.params.withdrawal.years) || sc.params.withdrawal.years;
+        sc.params.withdrawal.years = parseInt(wdP.duration ?? wdP.withdrawalYears ?? wdP.withdrawalDuration ?? wdP.years ?? sc.params.withdrawal.years) || sc.params.withdrawal.years;
         sc.params.budget.inflation = num(budData?.budgetData?.inflationRate ?? budData?.inflation ?? sc.params.budget.inflation, sc.params.budget.inflation);
         sc.params.sources = sc.params.sources || {};
         const getDisplay = (key, data) => (data?.name || (key ? key.replace(/^[^_]+_/, '') : '—'));
@@ -489,6 +499,8 @@ class ScenarioComparisonManager {
         this.updateScenarioCardElements(sc, card);
         this.updateAllCharts();
     }
+
+    // (Deliberately no coupling to A/B scenarios here)
     // Render helpers to ensure values show even if static spans are missing
     renderAccumValues(vals) {
         const fmt = new Intl.NumberFormat('de-DE');
@@ -741,6 +753,10 @@ class ScenarioComparisonManager {
             targetView.classList.add('active');
             // Lazily (re)create the chart when its view becomes active
             this.ensureChartExists(view);
+            // Ensure derived metrics are current before drawing the radar chart
+            if (view === 'metrics') {
+                this.refreshScenarioData();
+            }
             // Update and resize after toggling visibility to keep canvas dimensions in sync
             this.updateChart(view);
         }
@@ -964,25 +980,9 @@ class ScenarioComparisonManager {
                 teilfreistellung: teilfrei,
             });
 
-            // Also update local scenario snapshot for table and summaries
-            const id = this.getActiveScenarioId() || 'conservative';
-            const sc = this.scenarioConfigs.find(s => s.id === id) || this.scenarioConfigs[0];
-            if (sc) {
-                sc.params.accumulation.returnRate = accReturn;
-                sc.params.accumulation.years = accYears;
-                sc.params.accumulation.initialCapital = accInitial;
-                sc.params.accumulation.monthlySavings = accMonthly;
-                sc.params.accumulation.inflationRate = inflation;
-                sc.params.accumulation.salaryGrowth = salaryGrowth;
-                sc.params.accumulation.salaryToSavings = salaryToSavings;
-                sc.params.accumulation.includeTax = taxActive;
-                sc.params.accumulation.baseSalary = baseSalary;
-                sc.params.accumulation.teilfreistellung = teilfrei;
-                sc.params.accumulation.etfType = (p.etfType || 'thesaurierend');
-            }
-            this.refreshScenarioData(sc);
-            this.updateAllSummaries();
-            this.updateAllCharts();
+            // Do not mutate comparison scenarios when previewing imports.
+            // The overview only changes when "Zur Übersicht hinzufügen" is used
+            // or when the refresh icon on a scenario card is clicked.
         } catch (e) {
             console.warn('Failed to apply accumulation scenario', e);
         }
@@ -1132,20 +1132,28 @@ class ScenarioComparisonManager {
             const num = (v, d=0) => (typeof v === 'number' && !isNaN(v)) ? v : (parseFloat(String(v||'').replace(/\./g,'').replace(',','.')) || d);
             const fmt = new Intl.NumberFormat('de-DE');
 
-            const capital = num(p.retirementCapital, 0);
-            const years = parseInt(p.withdrawalDuration ?? 0) || 0;
-            const nominalReturnPct = num(p.postRetirementReturn, 0);
-            const inflationPct = num(p.withdrawalInflation, 0);
-            const taxActive = !!p.withdrawalTaxActive;
-            const teilRate = num(p.teilfreistellungRate, 0);
+            // Accept multiple possible key variants from saved scenarios
+            const capital = num(p.retirementCapital ?? p.withdrawalCapital ?? p.startCapital ?? p.capital, 0);
+            const years = parseInt(p.duration ?? p.withdrawalYears ?? p.withdrawalDuration ?? p.years ?? 0, 10) || 0;
+            const nominalReturnPct = num(p.postRetirementReturn ?? p.nominalReturn ?? p.return, 0);
+            const inflationPct = num(p.withdrawalInflation ?? p.inflationRate ?? p.inflation, 0);
+            const taxActive = !!(p.withdrawalTaxActive ?? p.includeTax ?? p.taxActive);
+            const teilRate = num(p.teilfreistellungRate ?? p.teilfreistellung ?? p.teilRate, 0);
 
-            // Implied Entnahmerate for table summaries
+            // Implied Entnahmerate and annual withdrawal for table summaries
             let ratePct = 0;
+            let annualPaymentCalc = NaN;
             if (capital > 0 && years > 0) {
                 try {
-                    const annualPayment = calculateDirectAnnuityPayment(capital, years, nominalReturnPct/100);
-                    ratePct = (annualPayment / capital) * 100;
-                } catch (_) {}
+                    // Use real rate to account for inflation where available
+                    const realRate = calculateRealInterestRate(nominalReturnPct/100, inflationPct/100);
+                    annualPaymentCalc = calculateDirectAnnuityPayment(capital, years, realRate);
+                    ratePct = (annualPaymentCalc / capital) * 100;
+                } catch (_) {
+                    // Fallback to simple division if needed
+                    annualPaymentCalc = capital / years;
+                    ratePct = (annualPaymentCalc / capital) * 100;
+                }
             }
 
             const byId = (id) => document.getElementById(id);
@@ -1166,24 +1174,8 @@ class ScenarioComparisonManager {
                 teilfreistellungRate: teilRate,
             });
 
-            // Update local snapshot for table
-            const id = this.getActiveScenarioId() || 'conservative';
-            const sc = this.scenarioConfigs.find(s => s.id === id) || this.scenarioConfigs[0];
-            if (sc) {
-                sc.params.withdrawal.rate = Number(ratePct.toFixed(2));
-                sc.params.withdrawal.years = years;
-                sc.params.withdrawal.retirementCapital = capital;
-                sc.params.withdrawal.postRetirementReturn = nominalReturnPct;
-                sc.params.withdrawal.withdrawalInflation = inflationPct;
-                sc.params.withdrawal.withdrawalTaxActive = taxActive;
-                sc.params.withdrawal.teilfreistellungRate = teilRate;
-                if (Number.isFinite(annualPayment)) {
-                    sc.params.withdrawal.annualWithdrawal = annualPayment;
-                }
-            }
-            this.refreshScenarioData(sc);
-            this.updateAllSummaries();
-            this.updateAllCharts();
+            // Do not mutate comparison scenarios when previewing imports.
+            // The overview only changes when composing a new scenario or refreshing a specific card.
         } catch (e) {
             console.warn('Failed to apply withdrawal scenario', e);
         }
@@ -1397,9 +1389,12 @@ class ScenarioComparisonManager {
             phaseBreakIndex
         };
         const lastAccumulationValue = accumulationSeries.values.length ? accumulationSeries.values[accumulationSeries.values.length - 1] : 0;
+        // Use accumulation end value for the card headline to match the Ansparphase chart
         sc.derived.totals = {
-            finalWealth: lifecycleValues.length ? lifecycleValues[lifecycleValues.length - 1] : lastAccumulationValue || 0,
-            totalInvested: accumulationSeries.totalInvested
+            finalWealth: lastAccumulationValue || 0,
+            totalInvested: accumulationSeries.totalInvested,
+            accumulationFinal: lastAccumulationValue,
+            lifecycleFinal: lifecycleValues.length ? lifecycleValues[lifecycleValues.length - 1] : lastAccumulationValue || 0
         };
         sc.derived.metrics = this.calculateScenarioMetrics(sc);
 
@@ -1844,20 +1839,8 @@ class ScenarioComparisonManager {
             const container = document.getElementById('budgetReadonly');
             if (container) container.innerHTML = html;
 
-            const scenarioId = this.getActiveScenarioId();
-            const scenario = scenarioId ? this.scenarioConfigs.find(s => s.id === scenarioId) : this.scenarioConfigs[0];
-            if (scenario) {
-                scenario.params.budget = {
-                    income: totalIncome || 0,
-                    expenses: totalExpenses || 0,
-                    savingsRate: this.parseNumber(savings.percentage),
-                    available,
-                    inflation: this.parseNumber(profile.budgetData?.inflationRate ?? profile.inflation ?? scenario.params.budget?.inflation ?? 2.0)
-                };
-                this.refreshScenarioData(scenario);
-                this.updateAllSummaries();
-                this.updateAllCharts();
-            }
+            // Do not mutate comparison scenarios during budget profile preview.
+            // Users can compose a new scenario with the selected profile via the add button.
 
             // Remember selection key for toggle behavior
             if (profileKey) this.selectedBudgetProfileKey = profileKey;
@@ -1994,10 +1977,8 @@ class ScenarioComparisonManager {
         document.querySelectorAll('.btn-scenario').forEach(btn => {
             const id = btn.getAttribute('data-scenario');
             if (!id || id === 'new') return;
-            const color = colorById.get(id)
-                || (id === 'optimistic' ? (this.scenarioConfigs[0]?.color || '#3498db')
-                    : id === 'conservative' ? (this.scenarioConfigs[1]?.color || '#27ae60')
-                    : null);
+            // Always use explicit color mapping by ID to avoid coupling to array order
+            const color = colorById.get(id) || '#3498db';
             if (color) {
                 btn.style.setProperty('--scenario-accent', color);
                 btn.style.setProperty('--scenario-accent-light', this.hexToRgba(color, 0.15));
@@ -2039,19 +2020,23 @@ class ScenarioComparisonManager {
                     label: sc.label,
                     data: metrics,
                     borderColor: sc.color,
-                    backgroundColor: this.hexToRgba(sc.color, 0.2),
+                    backgroundColor: this.hexToRgba(sc.color, 0.18),
                     pointBackgroundColor: sc.color,
                     _scenarioId: sc.id,
                     hidden: !this.activeScenarios.has(sc.id),
+                    // Draw connected polygon with fill
+                    showLine: true,
                     fill: true,
-                    tension: 0.25,
-                    borderWidth: 2
+                    tension: 0.2,
+                    borderWidth: 2,
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
                 };
             });
             return { labels, datasets };
         }
 
-        const labels = this.chartLabels[chartType] || [];
+        let labels = this.chartLabels[chartType] || [];
         const datasets = this.scenarioConfigs.map((sc) => {
             const derived = sc.derived || {};
             let source = [];
@@ -2061,6 +2046,28 @@ class ScenarioComparisonManager {
                 source = derived.accumulation?.values || [];
             } else if (chartType === 'withdrawal') {
                 source = derived.withdrawal?.values || [];
+                // If withdrawal series is missing or empty, try to compute a safe fallback
+                if (!Array.isArray(source) || source.length === 0) {
+                    const w = (sc.params && sc.params.withdrawal) || {};
+                    const accEnd = (derived.accumulation && Array.isArray(derived.accumulation.values) && derived.accumulation.values.length)
+                        ? derived.accumulation.values[derived.accumulation.values.length - 1]
+                        : 0;
+                    const calc = this.calculateWithdrawalSeries({
+                        startCapital: (typeof w.retirementCapital === 'number' && w.retirementCapital > 0) ? w.retirementCapital : accEnd,
+                        years: w.years,
+                        annualReturn: w.postRetirementReturn,
+                        inflation: w.withdrawalInflation,
+                        annualWithdrawal: w.annualWithdrawal,
+                        rate: w.rate
+                    });
+                    if (calc && Array.isArray(calc.values) && calc.values.length > 0) {
+                        source = calc.values;
+                        // If global labels are empty, derive them on the fly from this series
+                        if ((!labels || labels.length === 0) && Array.isArray(calc.labels)) {
+                            labels = calc.labels.slice();
+                        }
+                    }
+                }
             }
             const data = this.fillSeries(source, labels.length);
             const dataset = {
@@ -2090,7 +2097,9 @@ class ScenarioComparisonManager {
             } else if (chartType === 'accumulation') {
                 dataset.fill = false;
             } else if (chartType === 'withdrawal') {
-                dataset.fill = true;
+                // Disable area fill to avoid Chart.js filler plugin errors when
+                // series are constructed lazily or contain leading nulls.
+                dataset.fill = false;
             }
 
             return dataset;
@@ -2264,7 +2273,41 @@ class ScenarioComparisonManager {
             this.charts.withdrawal.destroy();
         }
 
-        const { labels, datasets } = this.buildChartData('withdrawal');
+        // Ensure we have withdrawal series; if missing, derive from accumulation end value
+        const needsDerive = this.scenarioConfigs.some(sc => !sc?.derived?.withdrawal?.values || sc.derived.withdrawal.values.length === 0);
+        if (needsDerive) {
+            this.scenarioConfigs.forEach(sc => {
+                const w = (sc.params && sc.params.withdrawal) || {};
+                const accEnd = (sc.derived && sc.derived.accumulation && sc.derived.accumulation.values && sc.derived.accumulation.values.length)
+                    ? sc.derived.accumulation.values[sc.derived.accumulation.values.length - 1]
+                    : 0;
+                if (!sc.derived) sc.derived = {};
+                const derivedSeries = this.calculateWithdrawalSeries({
+                    startCapital: w.retirementCapital ?? accEnd ?? 0,
+                    years: w.years,
+                    annualReturn: w.postRetirementReturn,
+                    inflation: w.withdrawalInflation,
+                    annualWithdrawal: w.annualWithdrawal,
+                    rate: w.rate
+                });
+                if (derivedSeries) {
+                    sc.derived.withdrawal = derivedSeries;
+                }
+            });
+            this.rebuildChartLabels();
+        }
+
+        // Ensure labels are up-to-date even if no derivation was needed
+        this.rebuildChartLabels();
+
+        let { labels, datasets } = this.buildChartData('withdrawal');
+        // Fallback: if labels are empty (edge case), synthesize from first scenario config
+        if (!labels || labels.length === 0) {
+            const first = this.scenarioConfigs[0];
+            const years = Math.max(0, parseInt(first?.params?.withdrawal?.years ?? 0, 10) || 0);
+            this.chartLabels.withdrawal = this.buildSequentialLabels(years > 0 ? years + 1 : 0);
+            ({ labels, datasets } = this.buildChartData('withdrawal'));
+        }
 
         this.charts.withdrawal = new Chart(ctx, {
             type: 'line',
@@ -2276,6 +2319,8 @@ class ScenarioComparisonManager {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    // Disable filler plugin to prevent rare errors when datasets are sparse
+                    filler: false,
                     legend: {
                         position: 'bottom',
                         labels: {
@@ -2341,16 +2386,44 @@ class ScenarioComparisonManager {
 
         const { labels, datasets } = this.buildChartData('metrics');
 
+        // Custom plugin to fill radar polygons without relying on Chart.js filler
+        const radarFillPlugin = {
+            id: 'comparisonRadarFill',
+            beforeDatasetsDraw: (chart) => {
+                if (!chart || chart.config?.type !== 'radar') return;
+                const { ctx } = chart;
+                chart.data.datasets.forEach((ds, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    if (!meta || meta.hidden) return;
+                    const pts = meta.data || [];
+                    if (!pts.length) return;
+                    ctx.save();
+                    ctx.fillStyle = ds.backgroundColor || 'rgba(52,152,219,0.18)';
+                    ctx.beginPath();
+                    for (let k = 0; k < pts.length; k += 1) {
+                        const p = pts[k];
+                        const pos = p.getProps ? p.getProps(['x','y'], true) : p;
+                        if (k === 0) ctx.moveTo(pos.x, pos.y); else ctx.lineTo(pos.x, pos.y);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                });
+            }
+        };
+
         this.charts.metrics = new Chart(ctx, {
             type: 'radar',
             data: {
                 labels,
                 datasets
             },
+            plugins: [radarFillPlugin],
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
+                    filler: false,
                     legend: {
                         position: 'bottom',
                         labels: {
@@ -2358,6 +2431,10 @@ class ScenarioComparisonManager {
                             padding: 20
                         }
                     }
+                },
+                elements: {
+                    line: { borderWidth: 2 },
+                    point: { radius: 3 }
                 },
                 scales: {
                     r: {
@@ -2381,6 +2458,14 @@ class ScenarioComparisonManager {
             const id = dataset._scenarioId || dataset.label;
             dataset.hidden = !this.activeScenarios.has(id);
         });
+
+        // Safety: never render an empty Radar chart due to visibility sync glitches.
+        if (chartType === 'metrics') {
+            const anyVisible = datasets.some(ds => !ds.hidden);
+            if (!anyVisible) {
+                datasets.forEach(ds => { ds.hidden = false; });
+            }
+        }
 
         chart.data.labels = labels;
         chart.data.datasets = datasets;

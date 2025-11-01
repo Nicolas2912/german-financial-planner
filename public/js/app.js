@@ -96,6 +96,7 @@ export function recalculateAll() {
             createIntegratedTimeline();
         }
     }
+
 }
 
 // Debounced version of recalculateAll
@@ -279,13 +280,12 @@ window.setupSavingsModeForScenario = function(scenarioId) {
 };
 
 // Make core functions available globally
+// Note: these were already bound earlier; keep them consistent and do not override.
 window.recalculateAll = recalculateAll;
-window.debouncedRecalculateAll = debounce(recalculateAll, 100);
+window.debouncedRecalculateAll = debouncedRecalculateAll;
 window.updateMainChart = updateMainChart;
-window.autoSyncWithdrawalCapital = function(showNotification) {
-    console.log('autoSyncWithdrawalCapital called with:', showNotification);
-    // This function needs to be implemented in the withdrawal module
-};
+// Expose the real implementation so withdrawal sync and charts work correctly
+window.autoSyncWithdrawalCapital = autoSyncWithdrawalCapital;
 
 // Make scenario management functions available globally
 window.addNewScenario = addNewScenario;

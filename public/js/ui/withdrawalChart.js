@@ -6,9 +6,11 @@
  */
 
 // Import required modules
-import { formatCurrency, parseGermanNumber } from '../utils/utils.js';
+import { formatCurrency, parseGermanNumber } from '../utils.js';
 import { calculateTotalContributionsFromAccumulation, calculateWithdrawalPlan } from '../core/withdrawal.js';
 import { displayChartErrorMessage } from './mainChart.js';
+import { showNotification } from './dom.js';
+import * as state from '../state.js';
 
 // Chart instances (global for destruction)
 let withdrawalChart = null;
@@ -208,12 +210,8 @@ export function createIntegratedTimeline() {
         integratedChart.destroy();
     }
 
-    // Get accumulation data from active scenario
-    // Note: This requires access to global scenarios and activeScenario variables
-    // These need to be available in the scope where this function is called
-    const currentActiveScenario = typeof scenarios !== 'undefined' && typeof activeScenario !== 'undefined' 
-        ? scenarios.find(s => s.id === activeScenario) || scenarios[0]
-        : null;
+    // Get accumulation data from active scenario using state module
+    const currentActiveScenario = state.getActiveScenario();
         
     if (!currentActiveScenario || !currentActiveScenario.yearlyData || currentActiveScenario.yearlyData.length === 0) {
         console.log('No accumulation data available for integrated timeline');
@@ -227,20 +225,56 @@ export function createIntegratedTimeline() {
         return;
     }
 
-    // Get withdrawal data
-    const retirementCapital = parseGermanNumber(document.getElementById('retirementCapital').value);
+    // Get withdrawal data - for integrated timeline, ALWAYS use the retirement capital from input field
+    // This ensures the withdrawal phase starts exactly where the user has specified
+    let retirementCapital = parseGermanNumber(document.getElementById('retirementCapital').value);
+    
+    console.log(`🎯 Integrated Timeline: Using retirement capital from input field: €${retirementCapital.toLocaleString()}`);
+    
+    // Log the accumulation vs retirement capital difference for awareness
+    if (currentActiveScenario.yearlyData && currentActiveScenario.yearlyData.length > 0) {
+        const actualFinalCapital = currentActiveScenario.yearlyData[currentActiveScenario.yearlyData.length - 1].capital;
+        const difference = Math.abs(actualFinalCapital - retirementCapital);
+        if (difference > 1000) {
+            console.log(`ℹ️ Note: Accumulation ends with €${actualFinalCapital.toLocaleString()}, withdrawal starts with €${retirementCapital.toLocaleString()}`);
+            console.log(`📊 Difference at retirement: €${difference.toLocaleString()} (${difference > 0 ? 'increase' : 'decrease'})`);
+        }
+    }
+    
     const withdrawalDuration = parseInt(document.getElementById('withdrawalDuration').value);
     const postRetirementReturn = parseFloat(document.getElementById('postRetirementReturn').value) / 100;
     const inflationRate = parseFloat(document.getElementById('withdrawalInflation').value) / 100;
     const includeTax = document.getElementById('withdrawalTaxToggle').classList.contains('active');
+    
+    // Debug: Log withdrawal parameters to check for unreasonable values
+    console.log(`📊 Withdrawal Parameters:`, {
+        retirementCapital: retirementCapital,
+        withdrawalDuration: withdrawalDuration,
+        postRetirementReturn: postRetirementReturn * 100 + '%',
+        inflationRate: inflationRate * 100 + '%',
+        includeTax: includeTax
+    });
 
+    // Prepare accumulation data
+    const accumulationYears = currentActiveScenario.yearlyData.map(d => d.year);
+    const accumulationCapital = currentActiveScenario.yearlyData.map(d => d.capital);
+    const accumulationReal = currentActiveScenario.yearlyData.map(d => d.realCapital);
+    
+    // Always use the retirement capital from input for withdrawal calculations in integrated timeline
+    // This ensures the withdrawal phase starts exactly at the user-specified value
+    const lastAccumulationCapital = accumulationCapital[accumulationCapital.length - 1];
+
+    // Use proper withdrawal calculation that depletes portfolio to zero
     let withdrawalData = [];
     try {
-        // Calculate total contributions for the integrated timeline
+        // Calculate total contributions for the withdrawal calculation
         const calculatedTotalContributions = calculateTotalContributionsFromAccumulation();
         const validatedContributions = calculatedTotalContributions > 0 ? 
             Math.min(calculatedTotalContributions, retirementCapital) : 
             retirementCapital * 0.6; // fallback estimate
+        
+        console.log(`💰 Calculating optimal withdrawal that depletes portfolio to €0 in ${withdrawalDuration} years`);
+        console.log(`Starting capital: €${retirementCapital.toLocaleString()}`);
         
         const withdrawalResults = calculateWithdrawalPlan(
             retirementCapital, withdrawalDuration, postRetirementReturn, 
@@ -248,47 +282,122 @@ export function createIntegratedTimeline() {
         );
         withdrawalData = withdrawalResults.yearlyData || [];
         
-        // Debug: Check if we got the expected number of years
-        console.log(`Integrated Timeline: Requested ${withdrawalDuration} years, got ${withdrawalData.length} data points`);
-        console.log(`Withdrawal data sample:`, withdrawalData.slice(0, 3));
-        console.log(`Withdrawal final capital:`, withdrawalResults.finalCapital);
-        if (withdrawalData.length < withdrawalDuration) {
-            console.log('Portfolio depleted early - this is normal if withdrawal rate is too high');
-        }
+        console.log(`Withdrawal calculation complete: ${withdrawalData.length} years of data`);
+        console.log(`Final portfolio value: €${withdrawalResults.finalCapital.toLocaleString()}`);
+        console.log(`Monthly withdrawal amount: €${withdrawalResults.monthlyGrossWithdrawal.toLocaleString()}`);
+        
     } catch (error) {
-        console.log('Could not calculate withdrawal data for integrated timeline:', error);
+        console.error('Withdrawal calculation failed for integrated timeline:', error);
+        
+        // Fallback: simple withdrawal simulation
+        console.log('Using fallback withdrawal simulation...');
+        const annualWithdrawalAmount = retirementCapital * 0.04;
+        let currentCapital = retirementCapital;
+        
+        for (let year = 1; year <= withdrawalDuration; year++) {
+            const startCapital = currentCapital;
+            const capitalAfterReturn = startCapital * (1 + postRetirementReturn);
+            const inflationAdjustedWithdrawal = annualWithdrawalAmount * Math.pow(1 + inflationRate, year - 1);
+            const endCapital = Math.max(0, capitalAfterReturn - inflationAdjustedWithdrawal);
+            
+            withdrawalData.push({
+                year: year,
+                startCapital: startCapital,
+                endCapital: endCapital,
+                grossWithdrawal: inflationAdjustedWithdrawal,
+                netWithdrawal: inflationAdjustedWithdrawal,
+                capitalAfterReturns: capitalAfterReturn
+            });
+            
+            currentCapital = endCapital;
+            if (endCapital <= 0) break;
+        }
     }
-
-    // Prepare accumulation data
-    const accumulationYears = currentActiveScenario.yearlyData.map(d => d.year);
-    const accumulationCapital = currentActiveScenario.yearlyData.map(d => d.capital);
-    const accumulationReal = currentActiveScenario.yearlyData.map(d => d.realCapital);
     
     // Prepare withdrawal data with proper continuation
     const maxAccumulationYear = Math.max(...accumulationYears);
     console.log(`Creating integrated timeline: maxAccumulationYear = ${maxAccumulationYear}`);
     const withdrawalYears = withdrawalData.map(d => maxAccumulationYear + d.year);
-    const withdrawalCapital = withdrawalData.map(d => d.endCapital);
     
-    // Fix real value calculation for withdrawal phase - use accumulation inflation rate for consistency
+    // Debug: Log withdrawal data to identify the issue
+    console.log(`Withdrawal data debugging:`, {
+        withdrawalDataLength: withdrawalData.length,
+        maxAccumulationYear: maxAccumulationYear,
+        withdrawalYears: withdrawalYears.slice(0, 5),
+        withdrawalStartCapitals: withdrawalData.slice(0, 5).map(d => d.startCapital),
+        withdrawalEndCapitals: withdrawalData.slice(0, 5).map(d => d.endCapital),
+        lastAccumulationCapital: accumulationCapital[accumulationCapital.length - 1]
+    });
+    
+    // Verify that withdrawal data makes sense
+    if (withdrawalData.length > 0) {
+        console.log(`✅ Withdrawal data verification:`);
+        console.log(`   First withdrawal year start: €${withdrawalData[0].startCapital.toLocaleString()}`);
+        console.log(`   First withdrawal year end: €${withdrawalData[0].endCapital.toLocaleString()}`);
+        console.log(`   Last withdrawal year start: €${withdrawalData[withdrawalData.length - 1].startCapital.toLocaleString()}`);
+        console.log(`   Last withdrawal year end: €${withdrawalData[withdrawalData.length - 1].endCapital.toLocaleString()}`);
+        console.log(`   Portfolio correctly declining: ${withdrawalData[0].startCapital > withdrawalData[withdrawalData.length - 1].endCapital ? 'YES' : 'NO'}`);
+        console.log(`   Any negative end values: ${withdrawalData.some(d => d.endCapital < 0) ? 'YES' : 'NO'}`);
+    }
+    
+    // Get accumulation inflation rate for consistent real value calculations
     const accumulationInflationRate = parseFloat(getScenarioValue('inflationRate', currentActiveScenario.id)) / 100;
-    const withdrawalReal = withdrawalData.map(d => {
+
+    // Create seamless transition by extending accumulation data to match retirement capital
+    const difference = Math.abs(lastAccumulationCapital - retirementCapital);
+    
+    let finalAccumulationYears = [...accumulationYears];
+    let finalAccumulationCapital = [...accumulationCapital];
+    let finalAccumulationReal = [...accumulationReal];
+    
+    // Always ensure the accumulation phase ends exactly at retirement capital for perfect visual connection
+    console.log(`🌉 Ensuring seamless transition: Accumulation ends at €${lastAccumulationCapital.toLocaleString()}, retirement starts at €${retirementCapital.toLocaleString()}`);
+    
+    // Always add/update the retirement capital as the final point of accumulation phase
+    if (finalAccumulationYears[finalAccumulationYears.length - 1] === maxAccumulationYear) {
+        // Update existing final year
+        finalAccumulationCapital[finalAccumulationCapital.length - 1] = retirementCapital;
+        finalAccumulationReal[finalAccumulationReal.length - 1] = retirementCapital / Math.pow(1 + accumulationInflationRate, maxAccumulationYear);
+    } else {
+        // Add new final year
+        finalAccumulationYears.push(maxAccumulationYear);
+        finalAccumulationCapital.push(retirementCapital);
+        finalAccumulationReal.push(retirementCapital / Math.pow(1 + accumulationInflationRate, maxAccumulationYear));
+    }
+    
+    console.log(`📊 Accumulation phase now ends exactly at €${retirementCapital.toLocaleString()} in year ${maxAccumulationYear}`);
+    
+    // For integrated timeline, show the portfolio decline by using endCapital
+    // This will show the portfolio value AFTER withdrawals are made, reaching exactly €0
+    const withdrawalEndCapital = withdrawalData.map(d => d.endCapital);
+    
+    // Create seamless transition by including the transition point
+    // Start with retirement capital, then show the declining portfolio after each withdrawal
+    const withdrawalYearsWithTransition = [maxAccumulationYear, ...withdrawalYears];
+    const withdrawalCapitalWithTransition = [retirementCapital, ...withdrawalEndCapital];
+    
+    // For real values, use endCapital to match the nominal values and show decline to €0
+    const withdrawalRealFromEnd = withdrawalData.map(d => {
         // Calculate real value using total years from start of accumulation
         const totalYears = maxAccumulationYear + d.year - 1;
         return d.endCapital / Math.pow(1 + accumulationInflationRate, totalYears);
     });
-
-    // Create seamless connection by adding transition points
-    const lastAccumulationCapital = accumulationCapital[accumulationCapital.length - 1];
-    const lastAccumulationReal = accumulationReal[accumulationReal.length - 1];
+    const withdrawalRealWithTransition = [retirementCapital / Math.pow(1 + accumulationInflationRate, maxAccumulationYear), ...withdrawalRealFromEnd];
     
-    // Add transition point to withdrawal data (year 0 of withdrawal = final year of accumulation)
-    const withdrawalYearsWithTransition = [maxAccumulationYear, ...withdrawalYears];
-    const withdrawalCapitalWithTransition = [lastAccumulationCapital, ...withdrawalCapital];
-    const withdrawalRealWithTransition = [lastAccumulationReal, ...withdrawalReal];
+    // Debug: Check the transition point
+    console.log(`🔍 Transition point analysis:`, {
+        originalAccumulationEnd: lastAccumulationCapital,
+        retirementCapitalFromInput: retirementCapital,
+        finalAccumulationEnd: finalAccumulationCapital[finalAccumulationCapital.length - 1],
+        firstWithdrawalStartCapital: withdrawalData.length > 0 ? withdrawalData[0].startCapital : 'N/A',
+        firstWithdrawalEndCapital: withdrawalData.length > 0 ? withdrawalData[0].endCapital : 'N/A',
+        bridgeAdded: difference > 1000,
+        perfectTransition: withdrawalData.length > 0 ? (Math.abs(retirementCapital - withdrawalData[0].startCapital) < 1) : 'N/A',
+        fixApplied: 'Using startCapital for withdrawal plotting to show portfolio value before withdrawal'
+    });
     
     // Update timeline info
-    document.getElementById('accumulationYears').textContent = accumulationYears.length;
+    document.getElementById('accumulationYears').textContent = finalAccumulationYears.length;
     
     // Show withdrawal duration - the mathematical calculation ensures exact depletion
     document.getElementById('withdrawalYears').textContent = withdrawalDuration;
@@ -313,8 +422,8 @@ export function createIntegratedTimeline() {
             datasets: [
                 {
                     label: 'Ansparphase (Nominal)',
-                    data: accumulationCapital.map((value, index) => ({
-                        x: accumulationYears[index],
+                    data: finalAccumulationCapital.map((value, index) => ({
+                        x: finalAccumulationYears[index],
                         y: value
                     })),
                     borderColor: '#27ae60',
@@ -335,8 +444,8 @@ export function createIntegratedTimeline() {
                 },
                 {
                     label: 'Ansparphase (Real)',
-                    data: accumulationReal.map((value, index) => ({
-                        x: accumulationYears[index],
+                    data: finalAccumulationReal.map((value, index) => ({
+                        x: finalAccumulationYears[index],
                         y: value
                     })),
                     borderColor: '#2ecc71',
@@ -438,25 +547,25 @@ export function createIntegratedTimeline() {
                     callbacks: {
                         title: function(context) {
                             const year = context[0].parsed.x;
-                            
+
                             // Use year-based logic: if year > transitionYear, it's Entnahmephase
                             const phase = year > transitionYear ? 'Entnahmephase' : 'Ansparphase';
-                            
+
                             return `Jahr ${year} (${phase})`;
                         },
                         label: function(context) {
-                            return context.dataset.label + ': €' + context.parsed.y.toLocaleString('de-DE', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
+                            return context.dataset.label + ': €' + context.parsed.y.toLocaleString('de-DE', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
                             });
                         },
                         afterBody: function(context) {
                             const year = context[0].parsed.x;
-                            
+
                             if (year === transitionYear) {
                                 return ['', '🔄 Übergang zur Entnahmephase', 'Renteneintritt erreicht!'];
                             }
-                            
+
                             // Use year-based logic: if year > transitionYear, it's Entnahmephase
                             if (year > transitionYear) {
                                 const withdrawalYear = Math.max(1, year - transitionYear);
@@ -517,14 +626,14 @@ export function createIntegratedTimeline() {
                 }
             },
             interaction: {
-                intersect: true,
-                mode: 'nearest'
+                intersect: true,     // Must intersect with data point
+                mode: 'nearest'      // Find nearest point to cursor
             },
             hover: {
-                mode: 'nearest',
-                intersect: true,
+                mode: 'nearest',     // Same as interaction
+                intersect: true,     // Same as interaction
                 animationDuration: 200,
-                axis: 'x'
+                axis: 'x'           // Primary axis for nearest calculation
             },
             elements: {
                 line: {
@@ -533,7 +642,7 @@ export function createIntegratedTimeline() {
                 },
                 point: {
                     hoverRadius: 12,
-                    hitRadius: 25,
+                    hitRadius: 50, // Increased hit detection radius for better user experience
                     pointStyle: 'circle'
                 }
             },

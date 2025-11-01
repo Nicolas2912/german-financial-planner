@@ -5,8 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ETF-Sparplan Rechner</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/main.css">
     <script type="module" src="js/app.js"></script>
+    <script>
+        // Debug script to check if JavaScript is working
+        console.log('=== DEBUG: Basic JavaScript is working ===');
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('=== DEBUG: DOM Content Loaded ===');
+            
+            // Test if basic elements exist
+            const budgetBtn = document.getElementById('budgetPhase');
+            const saveProfileBtn = document.getElementById('saveProfile');
+            
+            console.log('Budget button exists:', !!budgetBtn);
+            console.log('Save profile button exists:', !!saveProfileBtn);
+            
+            // Test if window.profileManager exists
+            setTimeout(() => {
+                console.log('window.profileManager exists:', !!window.profileManager);
+                if (window.profileManager) {
+                    console.log('profileManager functions:', Object.keys(window.profileManager));
+                }
+                
+                // Test button functionality
+                if (budgetBtn) {
+                    console.log('Adding test listener to budget button');
+                    budgetBtn.addEventListener('click', function() {
+                        console.log('=== DEBUG: Budget button clicked ===');
+                    });
+                }
+                
+                if (saveProfileBtn) {
+                    console.log('Adding test listener to save profile button');
+                    saveProfileBtn.addEventListener('click', function() {
+                        console.log('=== DEBUG: Save profile button clicked ===');
+                    });
+                }
+            }, 1000);
+        });
+        
+        // Log any errors
+        window.addEventListener('error', function(e) {
+            console.error('=== JavaScript Error ===', e.error, e.filename, e.lineno);
+        });
+    </script>
 </head>
 <body>
     <div class="container">
@@ -21,9 +64,10 @@
                 <button class="phase-button" id="budgetPhase">💼 Budgetplanung</button>
                 <button class="phase-button active" id="accumulationPhase">📈 Ansparphase</button>
                 <button class="phase-button" id="withdrawalPhase">🏖️ Entnahmephase</button>
-                <button class="phase-button" id="scenarioComparisonPhase">🔍 Szenario-Vergleich</button>
+                <button class="phase-button" id="scenarioComparisonPhase">📊 Szenario-Vergleich</button>
             </div>
             </div>
+
 
             <!-- Separate Tax Calculator -->
             <div class="tax-section">
@@ -42,9 +86,7 @@
                 <!-- Profile Controls -->
                 <div class="profile-controls">
                     <button class="profile-button" id="saveProfile">💾 Profil speichern</button>
-                    <button class="profile-button" id="loadProfile">📂 Profil laden</button>
                     <button class="profile-button" id="manageProfiles">🗂️ Profile verwalten</button>
-                    <button class="profile-button" id="resetBudget">🔄 Zurücksetzen</button>
                 </div>
 
                 <div class="budget-grid">
@@ -90,10 +132,6 @@
                         <div class="expense-item">
                             <span class="expense-label">Nebenkosten</span>
                             <input type="text" class="expense-input" id="utilities" value="150" step="10">
-                        </div>
-                        <div class="expense-item">
-                            <span class="expense-label">Krankenkasse</span>
-                            <input type="text" class="expense-input" id="health" value="180" step="10">
                         </div>
                         <div class="expense-item">
                             <span class="expense-label">Versicherungen</span>
@@ -361,9 +399,7 @@
                     <!-- Ansparphase Scenario Controls -->
                     <div class="scenario-controls">
                         <button class="scenario-button" id="saveAnsparphaseScenario">💾 Szenario speichern</button>
-                        <button class="scenario-button" id="loadAnsparphaseScenario">📂 Szenario laden</button>
                         <button class="scenario-button" id="manageAnsparphaseScenarios">🗂️ Szenarien verwalten</button>
-                        <button class="scenario-button" id="resetAnsparphaseScenario">🔄 Zurücksetzen</button>
                     </div>
 
                     <!-- Scenario Tabs -->
@@ -435,8 +471,8 @@
                                         <div class="savings-phase active" data-phase="1" data-scenario="A">
                                             <div class="phase-header">
                                                 <div class="phase-title">
-                                                    <span class="phase-icon">🌱</span>
-                                                    <h5>Phase 1: Anfangsphase</h5>
+                                                    <div class="phase-number">1</div>
+                                                    <h5>Phase 1</h5>
                                                     <div class="phase-status-indicator active"></div>
                                                 </div>
                                             </div>
@@ -455,6 +491,10 @@
                                                             <label>Monatliche Sparrate (€)</label>
                                                             <input type="text" class="phase-savings-rate" value="300" data-phase="1" data-scenario="A">
                                                         </div>
+                                                        <div class="input-group rendite-input">
+                                                            <label>Rendite (% p.a.)</label>
+                                                            <input type="text" class="phase-return-rate" value="7,0" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="1" data-scenario="A">
+                                                        </div>
                                                     </div>
                                                     <div class="phase-summary">
                                                         <span class="phase-duration">Dauer: 11 Jahre</span>
@@ -468,8 +508,8 @@
                                         <div class="savings-phase" data-phase="2" data-scenario="A">
                                             <div class="phase-header">
                                                 <div class="phase-title">
-                                                    <span class="phase-icon">📈</span>
-                                                    <h5>Phase 2: Wachstumsphase</h5>
+                                                    <div class="phase-number">2</div>
+                                                    <h5>Phase 2</h5>
                                                     <div class="phase-status-indicator"></div>
                                                 </div>
                                                 <button type="button" class="phase-toggle-btn" data-phase="2" data-scenario="A">
@@ -491,6 +531,10 @@
                                                             <label>Monatliche Sparrate (€)</label>
                                                             <input type="text" class="phase-savings-rate" value="800" data-phase="2" data-scenario="A">
                                                         </div>
+                                                        <div class="input-group rendite-input">
+                                                            <label>Rendite (% p.a.)</label>
+                                                            <input type="text" class="phase-return-rate" value="8,5" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="2" data-scenario="A">
+                                                        </div>
                                                     </div>
                                                     <div class="phase-summary">
                                                         <span class="phase-duration">Dauer: 15 Jahre</span>
@@ -504,8 +548,8 @@
                                         <div class="savings-phase" data-phase="3" data-scenario="A">
                                             <div class="phase-header">
                                                 <div class="phase-title">
-                                                    <span class="phase-icon">🚀</span>
-                                                    <h5>Phase 3: Spitzenphase</h5>
+                                                    <div class="phase-number">3</div>
+                                                    <h5>Phase 3</h5>
                                                     <div class="phase-status-indicator"></div>
                                                 </div>
                                                 <button type="button" class="phase-toggle-btn" data-phase="3" data-scenario="A">
@@ -527,6 +571,10 @@
                                                             <label>Monatliche Sparrate (€)</label>
                                                             <input type="text" class="phase-savings-rate" value="1200" data-phase="3" data-scenario="A">
                                                         </div>
+                                                        <div class="input-group rendite-input">
+                                                            <label>Rendite (% p.a.)</label>
+                                                            <input type="text" class="phase-return-rate" value="6,5" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="3" data-scenario="A">
+                                                        </div>
                                                     </div>
                                                     <div class="phase-summary">
                                                         <span class="phase-duration">Dauer: 15 Jahre</span>
@@ -540,7 +588,7 @@
                                     <!-- Multi-Phase Summary -->
                                     <div class="multi-phase-summary">
                                         <div class="summary-header">
-                                            <h4>📊 Sparplan-Übersicht</h4>
+                                            <h4>Sparplan-Übersicht</h4>
                                         </div>
                                         <div class="summary-content">
                                             <div class="summary-item">
@@ -575,7 +623,7 @@
                             <!-- Tax Toggle -->
                             <div class="toggle-container" style="margin-bottom: 30px;">
                                 <label>Deutsche Abgeltungssteuer einbeziehen (25% mit Vorabpauschale)</label>
-                                <div class="toggle scenario-toggle" id="taxToggle_A" data-scenario="A"></div>
+                                <div class="toggle scenario-toggle active" id="taxToggle_A" data-scenario="A"></div>
                             </div>
 
                             <!-- ETF Type Selection -->
@@ -718,9 +766,9 @@
                     <button class="chart-toggle-btn" id="contributionsGainsBtn">💰 Einzahlungen vs. Gewinne</button>
                 </div>
 
-                <!-- Scenario Selection Checkboxes (for comparison mode) -->
-                <div id="scenarioCheckboxes" style="margin-bottom: 20px; text-align: center; display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center;">
-                    <!-- Checkboxes will be dynamically generated by JavaScript -->
+                <!-- Scenario Selection Checkboxes (for scenario comparison mode) -->
+                <div id="scenarioCheckboxes" style="margin-bottom: 20px; text-align: center; display: flex; flex-wrap: wrap; justify-content: center; gap: 15px;">
+                    <!-- Scenario checkboxes will be dynamically generated by JavaScript -->
                 </div>
 
                 <!-- Scenario Selection Dropdown (for contributions vs gains mode) -->
@@ -745,9 +793,7 @@
                 <!-- Entnahmephase Scenario Controls -->
                 <div class="scenario-controls">
                     <button class="scenario-button" id="saveEntnahmephaseScenario">💾 Szenario speichern</button>
-                    <button class="scenario-button" id="loadEntnahmephaseScenario">📂 Szenario laden</button>
                     <button class="scenario-button" id="manageEntnahmephaseScenarios">🗂️ Szenarien verwalten</button>
-                    <button class="scenario-button" id="resetEntnahmephaseScenario">🔄 Zurücksetzen</button>
                 </div>
                 
                 <div class="withdrawal-grid">
@@ -906,672 +952,116 @@
             <!-- Scenario Comparison Section -->
             <div class="scenario-comparison-section" id="scenarioComparisonSection" style="display: none;">
                 <h2 class="section-title">🔍 Umfassender Szenario-Vergleich</h2>
+
                 
-                <!-- Scenario Management -->
-                <div class="scenario-management-section">
-                    <div class="scenario-tabs-container">
-                        <div class="scenario-tabs" id="comparisonScenarioTabs">
-                            <button class="scenario-tab active" data-scenario="A" style="--scenario-color: #3498db;">🎯 Optimistisch</button>
-                            <button class="scenario-tab" data-scenario="B" style="--scenario-color: #27ae60;">🛡️ Konservativ</button>
-                            <button class="add-scenario-btn" id="addComparisonScenarioBtn" title="Neues Szenario hinzufügen">+ Neues Szenario</button>
+
+                <!-- Layout -->
+                <div class="comparison-layout" id="comparisonLayout">
+                    <!-- Left: Parameters -->
+                    <div class="comparison-params-panel">
+                        <div class="phase-pills" id="comparisonPhasePills">
+                            <button class="pill active" data-target="budget">Budget</button>
+                            <button class="pill" data-target="accumulation">Ansparphase</button>
+                            <button class="pill" data-target="withdrawal">Entnahmephase</button>
                         </div>
-                        
-                        <div class="scenario-management-controls">
-                            <button class="management-btn" id="loadPresetBtn">📋 Vorlage laden</button>
-                            <button class="management-btn" id="saveConfigBtn">💾 Konfiguration speichern</button>
-                            <button class="management-btn" id="exportComparisonBtn">📊 Export</button>
+
+                        <div class="params-actions">
+                            <button id="addSelectionToOverview" class="comparison-btn btn-add-to-overview">➕ Zur Übersicht hinzufügen</button>
                         </div>
-                    </div>
 
-                    <!-- Preset Templates -->
-                    <div class="preset-templates" id="presetTemplates" style="display: none;">
-                        <h4>🚀 Schnellkonfiguration</h4>
-                        <div class="preset-grid">
-                            <button class="preset-btn" data-preset="optimistic">
-                                <div class="preset-icon">🎯</div>
-                                <div class="preset-name">Optimistisch</div>
-                                <div class="preset-desc">8.5% Rendite, 25% Sparquote</div>
-                            </button>
-                            <button class="preset-btn" data-preset="conservative">
-                                <div class="preset-icon">🛡️</div>
-                                <div class="preset-name">Konservativ</div>
-                                <div class="preset-desc">5.5% Rendite, 15% Sparquote</div>
-                            </button>
-                            <button class="preset-btn" data-preset="realistic">
-                                <div class="preset-icon">📊</div>
-                                <div class="preset-name">Realistisch</div>
-                                <div class="preset-desc">7% Rendite, 20% Sparquote</div>
-                            </button>
-                            <button class="preset-btn" data-preset="crisis">
-                                <div class="preset-icon">💥</div>
-                                <div class="preset-name">Krisenfall</div>
-                                <div class="preset-desc">Marktcrash mit Erholung</div>
-                            </button>
-                            <button class="preset-btn" data-preset="house">
-                                <div class="preset-icon">🏠</div>
-                                <div class="preset-name">Immobilienkauf</div>
-                                <div class="preset-desc">Reduzierte Sparrate nach Hauskauf</div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Main Comparison Layout -->
-                <div class="comparison-main-layout">
-                    <!-- Parameter Configuration Section -->
-                    <div class="parameters-configuration-section">
-                        <h3 class="section-header">⚙️ Parameter-Konfiguration</h3>
-                        
-
-
-                        
-                        <!-- Scenario Panels Container -->
-                        <div id="comparisonScenarioPanels">
-                            <!-- Scenario A Panel -->
-                            <div class="comparison-scenario-panel active" data-scenario="A">
-                                <div class="scenario-panel-header" style="--scenario-color: #3498db;">
-                                                            <h4 class="scenario-panel-title">
-                            🎯 Optimistisch
-                                        <button class="rename-scenario-btn" title="Szenario umbenennen" onclick="renameComparisonScenario('A')">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                            </svg>
-                                        </button>
-                                    </h4>
-                                    <div class="scenario-panel-actions">
-                                        <button class="panel-action-btn" onclick="duplicateComparisonScenario('A')" title="Szenario duplizieren">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                            </svg>
-                                            Kopieren
-                                        </button>
-                                        <button class="panel-action-btn delete-btn" onclick="removeComparisonScenario('A')" title="Szenario löschen">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                            </svg>
-                                            Löschen
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Parameter Sections -->
-                                <div class="parameter-sections">
-                                    <!-- Budget Planning Parameters -->
-                                    <div class="parameter-section" data-section="budget">
-                                        <div class="section-header-toggle">
-                                            <h4 class="section-header">💼 Budgetplanung</h4>
-                                            <button class="section-toggle-btn" data-target="budget-A"></button>
-                                        </div>
-                                                                <div class="parameter-grid" id="budget-A">
-                            <!-- Profile Selection for this scenario -->
-                            <div class="profile-selection-inline">
-                                <div class="profile-selection-header-inline">
-                                    <h5 class="profile-selection-title-inline">📋 Budget-Profil laden</h5>
-                                </div>
-                                <div class="profile-selection-controls-inline">
-                                    <div class="profile-dropdown-container-inline">
-                                        <select class="profile-dropdown-inline scenario-profile-select" data-scenario="A">
-                                            <option value="">-- Profil auswählen --</option>
-                                            <!-- Profiles will be loaded dynamically -->
-                                        </select>
-                                    </div>
-                                    <div class="profile-action-buttons-inline">
-                                        <button class="profile-apply-btn-inline apply-to-current" data-scenario="A" disabled>
-                                            👤 Aktuelles Szenario
-                                        </button>
-                                        <button class="profile-apply-btn-inline apply-to-all" data-scenario="A" disabled>
-                                            🌐 Alle Szenarien
-                                        </button>
-                                        <button class="profile-refresh-btn-inline refresh-profiles" data-scenario="A" title="Profile neu laden">
-                                            🔄
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="profile-selection-status-inline" data-scenario="A" style="display: none;">
-                                    <span class="status-icon">ℹ️</span>
-                                    <span class="status-message">Wählen Sie ein Profil aus um die Budget-Daten zu übernehmen</span>
+                        <!-- Budget Section (read-only; import only) -->
+                        <div class="param-section" id="comparisonBudgetSection">
+                            <div class="param-header" data-toggle="budgetGrid">
+                                <h4>💼 Budgetplanung</h4>
+                                <div class="header-actions">
+                                    <button class="btn-import" id="budgetImportBtn">Importieren ▼</button>
+                                    <span class="toggle-icon">▼</span>
                                 </div>
                             </div>
-                            
-                                                                        <div class="parameter-row">
-                                                <div class="input-group income-group">
-                                                    <label>Netto-Gehalt (€/Monat)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.netSalary" data-scenario="A" value="3.500" placeholder="3.500">
-                                                </div>
-                                                <div class="input-group income-group">
-                                                    <label>Brutto-Gehalt (€/Jahr)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.grossSalary" data-scenario="A" value="70.000" placeholder="70.000">
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group income-group">
-                                                    <label>Nebeneinkommen (€/Monat)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.sideIncome" data-scenario="A" value="200" placeholder="200">
-                                                </div>
-                                                <div class="input-group">
-                                                    <!-- Empty space for layout balance -->
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group expense-group">
-                                                    <label>Fixkosten (€/Monat)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.fixedExpenses" data-scenario="A" value="1.713" placeholder="1.713">
-                                                </div>
-                                                <div class="input-group expense-group">
-                                                    <label>Variable Kosten (€/Monat)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.variableExpenses" data-scenario="A" value="1.100" placeholder="1.100">
-                                                </div>
-                                            </div>
-                                            <div class="budget-summary-preview">
-                                                <div class="budget-calculation">
-                                                    <div class="budget-line">
-                                                        <span class="budget-label">📊 Einkommen:</span>
-                                                        <span class="budget-value total-income" data-scenario="A">€3.700</span>
-                                                    </div>
-                                                    <div class="budget-line">
-                                                        <span class="budget-label">💸 Ausgaben:</span>
-                                                        <span class="budget-value total-expenses" data-scenario="A">€2.813</span>
-                                                    </div>
-                                                    <div class="budget-line savings-line">
-                                                        <span class="budget-label">💰 Für ETF-Sparplan verfügbar:</span>
-                                                        <span class="budget-value savings-amount" data-scenario="A">€887/Monat</span>
-                                                    </div>
-                                                </div>
-                                                <div class="savings-rate-selector" data-scenario="A">
-                                                    <label class="savings-rate-label">🎯 Sparrate festlegen:</label>
-                                                    <div class="savings-rate-container">
-                                                        <div class="slider-container">
-                                                            <input type="range" class="slider savings-rate-slider" data-scenario="A" min="0" max="100" value="73" step="5">
-                                                            <span class="slider-value savings-rate-value">73%</span>
-                                                        </div>
-                                                        <div class="savings-rate-result">
-                                                            <span class="savings-rate-amount" data-scenario="A">€650/Monat</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                            <div class="param-grid active" id="budgetGrid">
+                                <div id="budgetReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Budget">
+                                            <span class="k">Gesamteinkommen</span><span class="v" id="budgetIncome">—</span>
+                                            <span class="k">Gesamtausgaben</span><span class="v" id="budgetExpenses">—</span>
+                                            <span class="k">Sparrate</span><span class="v" id="budgetSavings">—</span>
+                                            <span class="k">Verfügbar</span><span class="v" id="budgetAvailable">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Annahmen">
+                                            <span class="k">Inflation p.a.</span><span class="v" id="budgetInflation">—</span>
+                                            <span class="k">Perioden</span><span class="v" id="budgetPeriods">—</span>
+                                            <span class="k">Profil</span><span class="v" id="budgetProfileName">—</span>
+                                            <span class="k"></span><span class="v"></span>
                                         </div>
                                     </div>
-
-                                    <!-- Accumulation Phase Parameters -->
-                                    <div class="parameter-section" data-section="accumulation">
-                                        <div class="section-header-toggle">
-                                            <h4 class="section-header">📈 Ansparphase</h4>
-                                            <button class="section-toggle-btn" data-target="accumulation-A"></button>
-                                        </div>
-                                        <div class="parameter-grid" id="accumulation-A">
-                                            <!-- Ansparphase Scenario Import for this scenario -->
-                                            <div class="profile-selection-inline" style="background: rgba(52, 152, 219, 0.1); border: 2px solid rgba(52, 152, 219, 0.3);">
-                                                <div class="profile-selection-header-inline">
-                                                    <h5 class="profile-selection-title-inline">📈 Ansparphase-Szenario importieren</h5>
-                                                </div>
-                                                <div class="profile-selection-controls-inline">
-                                                    <div class="profile-dropdown-container-inline">
-                                                        <select class="scenario-import-dropdown profile-dropdown-inline" data-scenario="A">
-                                                            <option value="">-- Szenario auswählen --</option>
-                                                            <!-- Scenarios will be loaded dynamically -->
-                                                        </select>
-                                                    </div>
-                                                    <div class="profile-action-buttons-inline">
-                                                        <button class="profile-apply-btn-inline scenario-import-btn" data-scenario="A" disabled>
-                                                            📥 Importieren
-                                                        </button>
-                                                        <button class="profile-refresh-btn-inline scenario-refresh-btn" data-scenario="A" title="Szenarien neu laden">
-                                                            🔄
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div class="profile-selection-status-inline scenario-import-status" data-scenario="A" style="display: none;">
-                                                    <span class="status-icon">ℹ️</span>
-                                                    <span class="status-message">Wählen Sie ein Szenario aus der Ansparphase</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Monatliche Sparrate (€)</label>
-                                                    <div class="input-with-checkbox">
-                                                        <input type="text" class="input-field comparison-input" data-param="accumulation.monthlySavings" data-scenario="A" value="650" placeholder="650" readonly>
-                                                        <label class="checkbox-container" title="Manuelle Eingabe aktivieren">
-                                                            <input type="checkbox" class="manual-savings-checkbox" data-scenario="A">
-                                                            <span class="checkmark">✏️</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Startkapital (€)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="accumulation.initialCapital" data-scenario="A" value="5.000" placeholder="5.000">
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Jährliche Rendite (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.annualReturn" data-scenario="A" min="1" max="50" value="8.5" step="0.1">
-                                                        <span class="slider-value">8.5%</span>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Inflationsrate (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.inflationRate" data-scenario="A" min="0" max="6" value="2" step="0.1">
-                                                        <span class="slider-value">2.0%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Anlagedauer (Jahre)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.duration" data-scenario="A" min="1" max="50" value="25" step="1">
-                                                        <span class="slider-value">25 Jahre</span>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Gehaltssteigerung (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.salaryGrowth" data-scenario="A" min="0" max="8" value="3" step="0.1">
-                                                        <span class="slider-value">3.0%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Gehaltssteigerung → Sparrate (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.salaryToSavings" data-scenario="A" min="0" max="100" value="50" step="5">
-                                                        <span class="slider-value">50%</span>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>ETF-Typ</label>
-                                                    <div class="radio-group">
-                                                        <label class="radio-option">
-                                                            <input type="radio" name="etfType-A" value="thesaurierend" data-param="accumulation.etfType" data-scenario="A" checked>
-                                                            <span class="radio-custom"></span>
-                                                            Thesaurierend
-                                                        </label>
-                                                        <label class="radio-option">
-                                                            <input type="radio" name="etfType-A" value="ausschuettend" data-param="accumulation.etfType" data-scenario="A">
-                                                            <span class="radio-custom"></span>
-                                                            Ausschüttend
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="toggle-group">
-                                                    <div class="toggle-container">
-                                                        <label>Deutsche Abgeltungssteuer (25%)</label>
-                                                        <div class="toggle comparison-toggle active" data-param="accumulation.includeTax" data-scenario="A"></div>
-                                                    </div>
-                                                    <div class="toggle-container">
-                                                        <label>Teilfreistellung (30%)</label>
-                                                        <div class="toggle comparison-toggle active" data-param="accumulation.teilfreistellung" data-scenario="A"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div id="budgetImportMenu" style="display:none; margin-top:12px; border:1px solid #e5e7eb; border-radius:8px; padding:10px; background:#fff;">
+                                        <strong style="display:block; margin-bottom:8px; color:#2c3e50;">Profil wählen</strong>
+                                        <div id="budgetImportList" style="display:grid; gap:8px;"></div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
 
-                                    <!-- Withdrawal Phase Parameters -->
-                                    <div class="parameter-section" data-section="withdrawal">
-                                        <div class="section-header-toggle">
-                                            <h4 class="section-header">🏖️ Entnahmephase</h4>
-                                            <button class="section-toggle-btn" data-target="withdrawal-A"></button>
+                        <!-- Accumulation Section -->
+                        <div class="param-section" id="comparisonAccumSection">
+                            <div class="param-header" data-toggle="accumGrid">
+                                <h4>📈 Ansparphase</h4>
+                                <div class="header-actions">
+                                    <button class="btn-import" id="accumImportBtn">Importieren ▼</button>
+                                    <span class="toggle-icon">▼</span>
+                                </div>
+                            </div>
+                            <div class="param-grid active" id="accumGrid">
+                                <!-- Read-only accumulation display after import -->
+                                <div id="accumReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Zusammenfassung">
+                                            <span class="k">Jährliche Rendite (%)</span><span class="v" id="accAnnualReturn">—</span>
+                                            <span class="k">Anlagedauer (Jahre)</span><span class="v" id="accDuration">—</span>
+                                            <span class="k">Monatliche Sparrate (€)</span><span class="v" id="accMonthlySavings">—</span>
+                                            <span class="k">Startkapital (€)</span><span class="v" id="accInitialCapital">—</span>
                                         </div>
-                                        <div class="parameter-grid" id="withdrawal-A">
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Verfügbares Kapital (€)</label>
-                                                    <div class="input-with-checkbox">
-                                                        <input type="text" class="input-field comparison-input" data-param="withdrawal.retirementCapital" data-scenario="A" value="1.245.000" placeholder="1.245.000" readonly>
-                                                        <label class="checkbox-container" title="Manuelle Eingabe aktivieren">
-                                                            <input type="checkbox" class="manual-capital-checkbox" data-scenario="A">
-                                                            <span class="checkmark">✏️</span>
-                                                        </label>
-                                                    </div>
-                                                    <div class="sync-indicator">
-                                                        🔄 Auto-Sync aus Ansparphase aktiv
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Entnahmedauer (Jahre)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="withdrawal.duration" data-scenario="A" min="10" max="60" value="25" step="1">
-                                                        <span class="slider-value">25 Jahre</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Rendite im Ruhestand (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="withdrawal.postRetirementReturn" data-scenario="A" min="1" max="15" value="6" step="0.1">
-                                                        <span class="slider-value">6.0%</span>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Inflationsrate (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="withdrawal.inflationRate" data-scenario="A" min="0" max="5" value="2" step="0.1">
-                                                        <span class="slider-value">2.0%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="toggle-container">
-                                                    <label>Abgeltungssteuer anwenden (25%)</label>
-                                                    <div class="toggle comparison-toggle active" data-param="withdrawal.includeTax" data-scenario="A"></div>
-                                                </div>
-                                            </div>
+                                        <div class="kv" data-title="Annahmen">
+                                            <span class="k">Inflationsrate (%)</span><span class="v" id="accInflation">—</span>
+                                            <span class="k">Jährliche Gehaltssteigerung (%)</span><span class="v" id="accSalaryGrowth">—</span>
+                                            <span class="k">Deutsche Abgeltungssteuer einbeziehen (25% mit Vorabpauschale)</span><span class="v" id="accTax">—</span>
+                                            <span class="k">ETF-Typ für Steuerberechnung</span><span class="v" id="accEtfType">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Gehalt">
+                                            <span class="k">Aktuelles Brutto‑Jahresgehalt (€)</span><span class="v" id="accBaseSalary">—</span>
+                                            <span class="k">Gehaltssteigerung für Sparrate (%)</span><span class="v" id="accSalaryToSavings">—</span>
+                                            <span class="k">Teilfreistellung bei Aktienfonds anwenden (30% steuerfrei)</span><span class="v" id="accTeilfreistellung">—</span>
+                                            <span class="k"></span><span class="v"></span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Scenario B Panel -->
-                            <div class="comparison-scenario-panel" data-scenario="B" style="display: none;">
-                                <div class="scenario-panel-header" style="--scenario-color: #27ae60;">
-                                                            <h4 class="scenario-panel-title">
-                            🛡️ Konservativ
-                                        <button class="rename-scenario-btn" title="Szenario umbenennen" onclick="renameComparisonScenario('B')">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                                            </svg>
-                                        </button>
-                                    </h4>
-                                    <div class="scenario-panel-actions">
-                                        <button class="panel-action-btn" onclick="duplicateComparisonScenario('B')" title="Szenario duplizieren">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                                            </svg>
-                                            Kopieren
-                                        </button>
-                                        <button class="panel-action-btn delete-btn" onclick="removeComparisonScenario('B')" title="Szenario löschen">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                <path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                                            </svg>
-                                            Löschen
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Conservative scenario parameters (similar structure with different default values) -->
-                                <div class="parameter-sections">
-                                    <div class="parameter-section" data-section="budget">
-                                        <div class="section-header-toggle">
-                                            <h4 class="section-header">💼 Budgetplanung</h4>
-                                            <button class="section-toggle-btn" data-target="budget-B"></button>
-                                        </div>
-                                                                <div class="parameter-grid" id="budget-B">
-                            <!-- Profile Selection for this scenario -->
-                            <div class="profile-selection-inline">
-                                <div class="profile-selection-header-inline">
-                                    <h5 class="profile-selection-title-inline">📋 Budget-Profil laden</h5>
-                                </div>
-                                <div class="profile-selection-controls-inline">
-                                    <div class="profile-dropdown-container-inline">
-                                        <select class="profile-dropdown-inline scenario-profile-select" data-scenario="B">
-                                            <option value="">-- Profil auswählen --</option>
-                                            <!-- Profiles will be loaded dynamically -->
-                                        </select>
-                                    </div>
-                                    <div class="profile-action-buttons-inline">
-                                        <button class="profile-apply-btn-inline apply-to-current" data-scenario="B" disabled>
-                                            👤 Aktuelles Szenario
-                                        </button>
-                                        <button class="profile-apply-btn-inline apply-to-all" data-scenario="B" disabled>
-                                            🌐 Alle Szenarien
-                                        </button>
-                                        <button class="profile-refresh-btn-inline refresh-profiles" data-scenario="B" title="Profile neu laden">
-                                            🔄
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="profile-selection-status-inline" data-scenario="B" style="display: none;">
-                                    <span class="status-icon">ℹ️</span>
-                                    <span class="status-message">Wählen Sie ein Profil aus um die Budget-Daten zu übernehmen</span>
+                        <!-- Withdrawal Section -->
+                        <div class="param-section" id="comparisonWithdrawSection">
+                            <div class="param-header" data-toggle="withdrawGrid">
+                                <h4>🏖️ Entnahmephase</h4>
+                                <div class="header-actions">
+                                    <button class="btn-import" id="withdrawImportBtn">Importieren ▼</button>
+                                    <span class="toggle-icon">▼</span>
                                 </div>
                             </div>
-                            
-                            <!-- Conservative budget parameters with different defaults -->
-                                                                        <div class="parameter-row">
-                                                <div class="input-group income-group">
-                                                    <label>Netto-Gehalt (€/Monat)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.netSalary" data-scenario="B" value="3.200" placeholder="3.200">
-                                                </div>
-                                                <div class="input-group income-group">
-                                                    <label>Brutto-Gehalt (€/Jahr)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.grossSalary" data-scenario="B" value="65.000" placeholder="65.000">
-                                                </div>
-                                            </div>                                            
-                                            <div class="parameter-row">
-                                                <div class="input-group income-group">
-                                                    <label>Nebeneinkommen (€/Monat)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.sideIncome" data-scenario="B" value="0" placeholder="0">
-                                                </div>
-                                                <div class="input-group">
-                                                    <!-- Empty space for layout balance -->
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group expense-group">
-                                                    <label>Fixkosten (€/Monat)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.fixedExpenses" data-scenario="B" value="1.850" placeholder="1.850">
-                                                </div>
-                                                <div class="input-group expense-group">
-                                                    <label>Variable Kosten (€/Monat)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="budget.variableExpenses" data-scenario="B" value="900" placeholder="900">
-                                                </div>
-                                            </div>
-                                            <div class="budget-summary-preview">
-                                                <div class="budget-calculation">
-                                                    <div class="budget-line">
-                                                        <span class="budget-label">📊 Einkommen:</span>
-                                                        <span class="budget-value total-income" data-scenario="B">€3.200</span>
-                                                    </div>
-                                                    <div class="budget-line">
-                                                        <span class="budget-label">💸 Ausgaben:</span>
-                                                        <span class="budget-value total-expenses" data-scenario="B">€2.750</span>
-                                                    </div>
-                                                    <div class="budget-line savings-line">
-                                                        <span class="budget-label">💰 Für ETF-Sparplan verfügbar:</span>
-                                                        <span class="budget-value savings-amount" data-scenario="B">€450/Monat</span>
-                                                    </div>
-                                                </div>
-                                                <div class="savings-rate-selector" data-scenario="B">
-                                                    <label class="savings-rate-label">🎯 Sparrate festlegen:</label>
-                                                    <div class="savings-rate-container">
-                                                        <div class="slider-container">
-                                                            <input type="range" class="slider savings-rate-slider" data-scenario="B" min="0" max="100" value="100" step="5">
-                                                            <span class="slider-value savings-rate-value">100%</span>
-                                                        </div>
-                                                        <div class="savings-rate-result">
-                                                            <span class="savings-rate-amount" data-scenario="B">€450/Monat</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                            <div class="param-grid active" id="withdrawGrid">
+                                <!-- Read-only withdrawal display after import -->
+                                <div id="withdrawReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Parameter">
+                                            <span class="k">Entnahmedauer (Jahre)</span><span class="v" id="wdDuration">—</span>
+                                            <span class="k">Jährliche Rendite im Ruhestand (%)</span><span class="v" id="wdReturn">—</span>
+                                            <span class="k">Inflationsrate (%)</span><span class="v" id="wdInflation">—</span>
+                                            <span class="k">Verfügbares Kapital bei Renteneintritt (€)</span><span class="v" id="wdCapital">—</span>
                                         </div>
-                                    </div>
-
-                                    <!-- Conservative accumulation parameters -->
-                                    <div class="parameter-section" data-section="accumulation">
-                                        <div class="section-header-toggle">
-                                            <h4 class="section-header">📈 Ansparphase</h4>
-                                            <button class="section-toggle-btn" data-target="accumulation-B"></button>
-                                        </div>
-                                        <div class="parameter-grid" id="accumulation-B">
-                                            <!-- Ansparphase Scenario Import for this scenario -->
-                                            <div class="profile-selection-inline" style="background: rgba(52, 152, 219, 0.1); border: 2px solid rgba(52, 152, 219, 0.3);">
-                                                <div class="profile-selection-header-inline">
-                                                    <h5 class="profile-selection-title-inline">📈 Ansparphase-Szenario importieren</h5>
-                                                </div>
-                                                <div class="profile-selection-controls-inline">
-                                                    <div class="profile-dropdown-container-inline">
-                                                        <select class="scenario-import-dropdown profile-dropdown-inline" data-scenario="B">
-                                                            <option value="">-- Szenario auswählen --</option>
-                                                            <!-- Scenarios will be loaded dynamically -->
-                                                        </select>
-                                                    </div>
-                                                    <div class="profile-action-buttons-inline">
-                                                        <button class="profile-apply-btn-inline scenario-import-btn" data-scenario="B" disabled>
-                                                            📥 Importieren
-                                                        </button>
-                                                        <button class="profile-refresh-btn-inline scenario-refresh-btn" data-scenario="B" title="Szenarien neu laden">
-                                                            🔄
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                <div class="profile-selection-status-inline scenario-import-status" data-scenario="B" style="display: none;">
-                                                    <span class="status-icon">ℹ️</span>
-                                                    <span class="status-message">Wählen Sie ein Szenario aus der Ansparphase</span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Monatliche Sparrate (€)</label>
-                                                    <div class="input-with-checkbox">
-                                                        <input type="text" class="input-field comparison-input" data-param="accumulation.monthlySavings" data-scenario="B" value="450" placeholder="450" readonly>
-                                                        <label class="checkbox-container" title="Manuelle Eingabe aktivieren">
-                                                            <input type="checkbox" class="manual-savings-checkbox" data-scenario="B">
-                                                            <span class="checkmark">✏️</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Startkapital (€)</label>
-                                                    <input type="text" class="input-field comparison-input" data-param="accumulation.initialCapital" data-scenario="B" value="2.000" placeholder="2.000">
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Jährliche Rendite (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.annualReturn" data-scenario="B" min="1" max="50" value="5.5" step="0.1">
-                                                        <span class="slider-value">5.5%</span>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Inflationsrate (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.inflationRate" data-scenario="B" min="0" max="6" value="2.5" step="0.1">
-                                                        <span class="slider-value">2.5%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Anlagedauer (Jahre)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.duration" data-scenario="B" min="1" max="50" value="30" step="1">
-                                                        <span class="slider-value">30 Jahre</span>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Gehaltssteigerung (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.salaryGrowth" data-scenario="B" min="0" max="8" value="2.5" step="0.1">
-                                                        <span class="slider-value">2.5%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Gehaltssteigerung → Sparrate (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="accumulation.salaryToSavings" data-scenario="B" min="0" max="100" value="30" step="5">
-                                                        <span class="slider-value">30%</span>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>ETF-Typ</label>
-                                                    <div class="radio-group">
-                                                        <label class="radio-option">
-                                                            <input type="radio" name="etfType-B" value="thesaurierend" data-param="accumulation.etfType" data-scenario="B" checked>
-                                                            <span class="radio-custom"></span>
-                                                            Thesaurierend
-                                                        </label>
-                                                        <label class="radio-option">
-                                                            <input type="radio" name="etfType-B" value="ausschuettend" data-param="accumulation.etfType" data-scenario="B">
-                                                            <span class="radio-custom"></span>
-                                                            Ausschüttend
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="toggle-group">
-                                                    <div class="toggle-container">
-                                                        <label>Deutsche Abgeltungssteuer (25%)</label>
-                                                        <div class="toggle comparison-toggle active" data-param="accumulation.includeTax" data-scenario="B"></div>
-                                                    </div>
-                                                    <div class="toggle-container">
-                                                        <label>Teilfreistellung (30%)</label>
-                                                        <div class="toggle comparison-toggle active" data-param="accumulation.teilfreistellung" data-scenario="B"></div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Conservative withdrawal parameters -->
-                                    <div class="parameter-section" data-section="withdrawal">
-                                        <div class="section-header-toggle">
-                                            <h4 class="section-header">🏖️ Entnahmephase</h4>
-                                            <button class="section-toggle-btn" data-target="withdrawal-B"></button>
-                                        </div>
-                                        <div class="parameter-grid" id="withdrawal-B">
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Verfügbares Kapital (€)</label>
-                                                    <div class="input-with-checkbox">
-                                                        <input type="text" class="input-field comparison-input" data-param="withdrawal.retirementCapital" data-scenario="B" value="685.000" placeholder="685.000" readonly>
-                                                        <label class="checkbox-container" title="Manuelle Eingabe aktivieren">
-                                                            <input type="checkbox" class="manual-capital-checkbox" data-scenario="B">
-                                                            <span class="checkmark">✏️</span>
-                                                        </label>
-                                                    </div>
-                                                    <div class="sync-indicator">
-                                                        🔄 Auto-Sync aus Ansparphase verfügbar
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Entnahmedauer (Jahre)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="withdrawal.duration" data-scenario="B" min="10" max="60" value="30" step="1">
-                                                        <span class="slider-value">30 Jahre</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="input-group">
-                                                    <label>Rendite im Ruhestand (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="withdrawal.postRetirementReturn" data-scenario="B" min="1" max="15" value="4" step="0.1">
-                                                        <span class="slider-value">4.0%</span>
-                                                    </div>
-                                                </div>
-                                                <div class="input-group">
-                                                    <label>Inflationsrate (%)</label>
-                                                    <div class="slider-container">
-                                                        <input type="range" class="slider comparison-slider" data-param="withdrawal.inflationRate" data-scenario="B" min="0" max="5" value="2.5" step="0.1">
-                                                        <span class="slider-value">2.5%</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="parameter-row">
-                                                <div class="toggle-container">
-                                                    <label>Abgeltungssteuer anwenden (25%)</label>
-                                                    <div class="toggle comparison-toggle active" data-param="withdrawal.includeTax" data-scenario="B"></div>
-                                                </div>
-                                            </div>
+                                        <div class="kv" data-title="Steuern">
+                                            <span class="k">Abgeltungssteuer anwenden (25%)</span><span class="v" id="wdTax">—</span>
+                                            <span class="k">Teilfreistellung (%)</span><span class="v" id="wdTeilfreistellung">—</span>
+                                            <span class="k"></span><span class="v"></span>
+                                            <span class="k"></span><span class="v"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -1579,308 +1069,202 @@
                         </div>
                     </div>
 
-                    <!-- Results Visualization Section -->
-                    <div class="results-visualization-section">
-                        <h3 class="section-header">📊 Ergebnisse & Vergleich</h3>
-                        
-                        <!-- Summary Cards Grid -->
-                        <div class="scenario-results-grid" id="scenarioResultsGrid">
-                            <!-- Scenario A Results Card -->
-                            <div class="scenario-result-card" data-scenario="A">
-                                <div class="scenario-card-header">
-                                    <h4>
-                                        <span class="scenario-color-indicator" style="background-color: #3498db;"></span>
-                                        🎯 Optimistisch
-                                    </h4>
-                                    <div class="scenario-performance-badge positive">+385%</div>
-                                </div>
-                                <div class="key-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Verfügbare Sparrate</span>
-                                        <span class="metric-value">€650/Monat</span>
+                    <!-- Right: Results -->
+                    <div class="comparison-results-panel">
+                        <!-- Scenario summary cards -->
+                        <h3>🏆 Szenario-Übersicht</h3>
+                        <div class="summary-cards">
+                            <div class="summary-card primary">
+                                <div class="summary-compact">
+                                    <div class="top">
+                                        <h4>🎯 Optimistisch</h4>
+                                        <span class="risk-badge risk-high">Hoch</span>
                                     </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Kapital bei Renteneintritt</span>
-                                        <span class="metric-value">
-                                            €1.245.000
-                                            <div style="font-size: 0.8em; font-weight: normal; color: #7f8c8d; margin-top: 2px;">
-                                                (€759.000)
-                                            </div>
-                                        </span>
+                                    <div class="sources">
+                                        <span class="chip chip-budget" id="sum-source-budget-optimistic">—</span>
+                                        <span class="chip chip-accum" id="sum-source-accum-optimistic">—</span>
+                                        <span class="chip chip-withdraw" id="sum-source-withdraw-optimistic">—</span>
                                     </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Monatliche Rente</span>
-                                        <span class="metric-value">€3.850</span>
+                                    <div class="headline">
+                                        <span class="headline-value">1.2 Mio €</span>
                                     </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Reale Kaufkraft</span>
-                                        <span class="metric-value">€2.850</span>
-                                    </div>
-                                </div>
-                                <div class="scenario-details">
-                                    <div class="detail-item">
-                                        <span>Gesamteinzahlungen:</span>
-                                        <span>€200.000</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <span>Erträge:</span>
-                                        <span class="positive">€1.045.000</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <span>Steuerlast:</span>
-                                        <span class="negative">€65.000</span>
+                                    <div class="meta">
+                                        <span class="metric">8.5% Rendite</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric">30J Sparphase</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric">25J Entnahme</span>
+                                        <span class="dot">•</span>
+                                        <span class="break"></span>
+                                        <span class="metric">1.000 € /M</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric">4% Entnahme</span>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Scenario B Results Card -->
-                            <div class="scenario-result-card" data-scenario="B">
-                                <div class="scenario-card-header">
-                                    <h4>
-                                        <span class="scenario-color-indicator" style="background-color: #27ae60;"></span>
-                                        🛡️ Konservativ
-                                    </h4>
-                                    <div class="scenario-performance-badge moderate">+185%</div>
-                                </div>
-                                <div class="key-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Verfügbare Sparrate</span>
-                                        <span class="metric-value">€450/Monat</span>
+                            <div class="summary-card success">
+                                <div class="summary-compact">
+                                    <div class="top">
+                                        <h4>🛡️ Konservativ</h4>
+                                        <span class="risk-badge risk-low">Niedrig</span>
                                     </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Kapital bei Renteneintritt</span>
-                                        <span class="metric-value">
-                                            €685.000
-                                            <div style="font-size: 0.8em; font-weight: normal; color: #7f8c8d; margin-top: 2px;">
-                                                (€327.000)
-                                            </div>
-                                        </span>
+                                    <div class="sources">
+                                        <span class="chip chip-budget" id="sum-source-budget-conservative">—</span>
+                                        <span class="chip chip-accum" id="sum-source-accum-conservative">—</span>
+                                        <span class="chip chip-withdraw" id="sum-source-withdraw-conservative">—</span>
                                     </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Monatliche Rente</span>
-                                        <span class="metric-value">€2.180</span>
+                                    <div class="headline">
+                                        <span class="headline-value">800k €</span>
                                     </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Reale Kaufkraft</span>
-                                        <span class="metric-value">€1.650</span>
-                                    </div>
-                                </div>
-                                <div class="scenario-details">
-                                    <div class="detail-item">
-                                        <span>Gesamteinzahlungen:</span>
-                                        <span>€137.000</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <span>Erträge:</span>
-                                        <span class="positive">€548.000</span>
-                                    </div>
-                                    <div class="detail-item">
-                                        <span>Steuerlast:</span>
-                                        <span class="negative">€32.000</span>
+                                    <div class="meta">
+                                        <span class="metric">5.5% Rendite</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric">25J Sparphase</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric">30J Entnahme</span>
+                                        <span class="dot">•</span>
+                                        <span class="break"></span>
+                                        <span class="metric">500 € /M</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric">3% Entnahme</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Chart View Toggle -->
-                        <div class="comparison-chart-controls">
-                            <div class="chart-view-toggle">
-                                <button class="chart-view-btn active" data-view="lifecycle">
-                                    <span class="chart-btn-emoji">🔄</span>
-                                    <span class="chart-btn-text">Kompletter Lebenszyklus</span>
-                                </button>
-                                <button class="chart-view-btn" data-view="accumulation">
-                                    <span class="chart-btn-emoji">📈</span>
-                                    <span class="chart-btn-text">Ansparphase</span>
-                                </button>
-                                <button class="chart-view-btn" data-view="withdrawal">
-                                    <span class="chart-btn-emoji">🏖️</span>
-                                    <span class="chart-btn-text">Entnahmephase</span>
-                                </button>
-                                <button class="chart-view-btn" data-view="metrics">
-                                    <span class="chart-btn-emoji">🎯</span>
-                                    <span class="chart-btn-text">Kennzahlen-Radar</span>
-                                </button>
+                        <!-- Chart Controls -->
+                        <div class="chart-controls-bar">
+                            <div class="view-pills" id="comparisonChartViews">
+                                <button class="chart-view-btn active" data-view="lifecycle">🔄 Lebenszyklus</button>
+                                <button class="chart-view-btn" data-view="accumulation">📈 Ansparphase</button>
+                                <button class="chart-view-btn" data-view="withdrawal">🏖️ Entnahmephase</button>
+                                <button class="chart-view-btn" data-view="metrics">🎯 Kennzahlen Radar</button>
                             </div>
-                            
-                            <div class="chart-controls">
-                                <div class="scenario-visibility-controls">
-                                    <label class="scenario-visibility-item" style="--scenario-color: #3498db;">
-                                        <input type="checkbox" class="scenario-visibility-checkbox" data-scenario="A" checked>
-                                        🎯 Optimistisch
-                                    </label>
-                                    <label class="scenario-visibility-item" style="--scenario-color: #27ae60;">
-                                        <input type="checkbox" class="scenario-visibility-checkbox" data-scenario="B" checked>
-                                        🛡️ Konservativ
-                                    </label>
-                                </div>
+                            <div class="scenario-visibility">
+                                <label><input type="checkbox" checked />🎯 Optimistisch</label>
+                                <label><input type="checkbox" checked />🛡️ Konservativ</label>
                             </div>
                         </div>
 
-                        <!-- Comparison Charts -->
-                        <div class="comparison-charts-container">
-                            <!-- Complete Lifecycle Chart -->
-                            <div class="comparison-chart-view active" id="lifecycleChartView">
-                                <div class="chart-container">
-                                    <h4 class="chart-title">🔄 Kompletter Finanz-Lebenszyklus</h4>
-                                    <canvas id="lifecycleComparisonChart"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- Accumulation Phase Chart -->
-                            <div class="comparison-chart-view" id="accumulationChartView" style="display: none;">
-                                <div class="chart-container">
-                                    <h4 class="chart-title">📈 Ansparphase Vergleich</h4>
-                                    <canvas id="accumulationComparisonChart"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- Withdrawal Phase Chart -->
-                            <div class="comparison-chart-view" id="withdrawalComparisonChartView" style="display: none;">
-                                <div class="chart-container">
-                                    <h4 class="chart-title">🏖️ Entnahmephase Vergleich</h4>
-                                    <canvas id="withdrawalComparisonChart"></canvas>
-                                </div>
-                            </div>
-
-                            <!-- Metrics Radar Chart -->
-                            <div class="comparison-chart-view" id="metricsChartView" style="display: none;">
-                                <div class="chart-container">
-                                    <h4 class="chart-title">🎯 Kennzahlen-Vergleich</h4>
-                                    <canvas id="metricsRadarChart"></canvas>
-                                </div>
-                            </div>
+                        <!-- Charts -->
+                        <div class="comparison-chart-view active" id="comparisonLifecycleView">
+                            <canvas id="comparisonLifecycleChart"></canvas>
+                        </div>
+                        <div class="comparison-chart-view" id="comparisonAccumulationView">
+                            <canvas id="comparisonAccumulationChart"></canvas>
+                        </div>
+                        <div class="comparison-chart-view" id="comparisonWithdrawalView">
+                            <canvas id="comparisonWithdrawalChart"></canvas>
+                        </div>
+                        <div class="comparison-chart-view" id="comparisonMetricsView">
+                            <canvas id="comparisonMetricsChart"></canvas>
                         </div>
 
-                        <!-- Interactive Comparison Table -->
-                        <div class="comparison-table-container">
-                            <h4 class="table-title">Detaillierter Parameter-Vergleich</h4>
-                            <div class="table-controls">
-                                <button class="table-control-btn active" data-category="all">Alle Parameter</button>
-                                <button class="table-control-btn" data-category="budget">Budget</button>
-                                <button class="table-control-btn" data-category="accumulation">Ansparphase</button>
-                                <button class="table-control-btn" data-category="withdrawal">Entnahmephase</button>
-                                <button class="table-control-btn" data-category="results">Ergebnisse</button>
+                        <!-- Parameter Comparison Table -->
+                        <div class="comparison-table-wrapper">
+                            <div class="table-filters" id="comparisonTableFilters">
+                                <button class="filter-btn active" data-category="all">Alle</button>
+                                <button class="filter-btn" data-category="budget">Budget</button>
+                                <button class="filter-btn" data-category="accumulation">Ansparphase</button>
+                                <button class="filter-btn" data-category="withdrawal">Entnahmephase</button>
+                                <button class="filter-btn" data-category="results">Ergebnisse</button>
                             </div>
-                            
-                            <div class="comparison-table-wrapper">
-                                <table class="scenario-comparison-table" id="scenarioComparisonTable">
+                            <div class="table-content">
+                                <table id="comparisonTable">
                                     <thead>
                                         <tr>
-                                            <th class="parameter-column">Parameter</th>
-                                            <th class="scenario-column" data-scenario="A">🎯 Optimistisch</th>
-                                            <th class="scenario-column" data-scenario="B">🛡️ Konservativ</th>
+                                            <th>Parameter</th>
+                                            <th>🎯 Optimistisch</th>
+                                            <th>🛡️ Konservativ</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <!-- Budget Parameters -->
-                                        <tr class="category-header" data-category="budget">
-                                            <td colspan="3"><strong>💼 Budgetplanung</strong></td>
+                                        <!-- Budget Group -->
+                                        <tr class="group-header" data-category-group="budget">
+                                            <th colspan="3">Budget</th>
                                         </tr>
                                         <tr data-category="budget">
-                                            <td>Netto-Gehalt</td>
-                                            <td>€3.500</td>
-                                            <td>€3.200</td>
+                                            <td>Einkommen (€/Monat)</td>
+                                            <td>4000</td>
+                                            <td>3500</td>
                                         </tr>
                                         <tr data-category="budget">
-                                            <td>Verfügbare Sparrate</td>
-                                            <td class="positive">€650</td>
-                                            <td>€450</td>
+                                            <td>Ausgaben (€/Monat)</td>
+                                            <td>3000</td>
+                                            <td>2800</td>
+                                        </tr>
+                                        <tr data-category="budget">
+                                            <td>Sparrate (€)</td>
+                                            <td>1.000</td>
+                                            <td>500</td>
+                                        </tr>
+                                        <tr data-category="budget">
+                                            <td>Inflation p.a. (%)</td>
+                                            <td>2.2%</td>
+                                            <td>2.2%</td>
                                         </tr>
                                         
-                                        <!-- Accumulation Parameters -->
-                                        <tr class="category-header" data-category="accumulation">
-                                            <td colspan="3"><strong>📈 Ansparphase</strong></td>
+                                        <!-- Accumulation Group -->
+                                        <tr class="group-header" data-category-group="accumulation">
+                                            <th colspan="3">Ansparphase</th>
                                         </tr>
                                         <tr data-category="accumulation">
-                                            <td>Jährliche Rendite</td>
-                                            <td class="positive">8.5%</td>
+                                            <td>Rendite p.a. (%)</td>
+                                            <td>8.5%</td>
                                             <td>5.5%</td>
                                         </tr>
                                         <tr data-category="accumulation">
-                                            <td>Anlagedauer</td>
-                                            <td>25 Jahre</td>
-                                            <td>25 Jahre</td>
+                                            <td>Dauer (Jahre)</td>
+                                            <td>30</td>
+                                            <td>25</td>
                                         </tr>
                                         <tr data-category="accumulation">
-                                            <td>Inflationsrate</td>
-                                            <td>2.0%</td>
-                                            <td class="warning">2.5%</td>
+                                            <td>Monatl. Sparrate (€)</td>
+                                            <td>1,000</td>
+                                            <td>500</td>
                                         </tr>
                                         
-                                        <!-- Withdrawal Parameters -->
-                                        <tr class="category-header" data-category="withdrawal">
-                                            <td colspan="3"><strong>🏖️ Entnahmephase</strong></td>
+                                        <!-- Withdrawal Group -->
+                                        <tr class="group-header" data-category-group="withdrawal">
+                                            <th colspan="3">Entnahmephase</th>
                                         </tr>
                                         <tr data-category="withdrawal">
-                                            <td>Entnahmedauer</td>
-                                            <td>25 Jahre</td>
-                                            <td class="positive">30 Jahre</td>
+                                            <td>Entnahmerate (%)</td>
+                                            <td>4%</td>
+                                            <td>3%</td>
                                         </tr>
                                         <tr data-category="withdrawal">
-                                            <td>Rendite im Ruhestand</td>
-                                            <td>6.0%</td>
-                                            <td>4.0%</td>
+                                            <td>Dauer (Jahre)</td>
+                                            <td>25</td>
+                                            <td>30</td>
+                                        </tr>
+
+                                        <!-- Results Group -->
+                                        <tr class="group-header" data-category-group="results">
+                                            <th colspan="3">Ergebnisse</th>
+                                        </tr>
+                                        <tr data-category="results">
+                                            <td>Endvermögen</td>
+                                            <td>1.2 Mio €</td>
+                                            <td>800k €</td>
                                         </tr>
                                         
-                                        <!-- Results -->
-                                        <tr class="category-header" data-category="results">
-                                            <td colspan="3"><strong>📊 Ergebnisse</strong></td>
-                                        </tr>
-                                        <tr data-category="results">
-                                            <td>Kapital bei Renteneintritt</td>
-                                            <td class="positive">
-                                                €1.245.000
-                                                <div style="font-size: 0.8em; font-weight: normal; color: #7f8c8d;">
-                                                    (€759.000)
-                                                </div>
-                                            </td>
-                                            <td>
-                                                €685.000
-                                                <div style="font-size: 0.8em; font-weight: normal; color: #7f8c8d;">
-                                                    (€327.000)
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr data-category="results">
-                                            <td>Monatliche Rente</td>
-                                            <td class="positive">€3.850</td>
-                                            <td>€2.180</td>
-                                        </tr>
-                                        <tr data-category="results">
-                                            <td>Gesamtertrag</td>
-                                            <td class="positive">+385%</td>
-                                            <td>+185%</td>
-                                        </tr>
-                                        <tr data-category="results">
-                                            <td>Reale Kaufkraft</td>
-                                            <td class="positive">€2.850</td>
-                                            <td>€1.650</td>
-                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
-
-
                     </div>
                 </div>
 
-                <!-- Performance Summary -->
-                <div class="performance-summary-section">
-                    <h3 class="section-header">🏆 Zusammenfassung & Empfehlungen</h3>
-                    
-                    <div class="performance-cards" id="performanceCardsContainer">
-                        <!-- Performance cards will be dynamically generated based on actual scenario results -->
-                    </div>
+                <!-- Full Summary -->
+                <div class="comparison-full-summary">
+                    <h3>📌 Zusammenfassung & Empfehlungen</h3>
+                    <p>Das optimistische Szenario maximiert das erwartete Endvermögen bei höherer Volatilität und Drawdown-Risiko; das konservative priorisiert Stabilität und eine höhere Erfolgswahrscheinlichkeit in langen Entnahmephasen. Eine ausgewogene Allokation mit situativem Rebalancing, moderater Entnahmerate (3.5–4%) und inflationsadjustierter Planung liefert robuste Ergebnisse über verschiedene Marktregime.</p>
                 </div>
             </div>
 
-
         </div>
     </div>
-
-    <!-- Ansparphase Scenario Modals -->
     <!-- Save Ansparphase Scenario Modal -->
     <div id="saveAnsparphaseScenarioModal" class="profile-modal">
         <div class="profile-modal-content">
@@ -1923,8 +1307,8 @@
                     <h4>📋 Verfügbare Ansparphase-Szenarien</h4>
                     <p>Wählen Sie ein oder mehrere gespeicherte Szenarien aus um sie zu laden.</p>
                     <div style="margin-top: 10px;">
-                        <button class="action-btn secondary-btn" onclick="selectAllScenariosForLoad()" style="margin-right: 10px; padding: 5px 10px; font-size: 0.8rem;">✅ Alle auswählen</button>
-                        <button class="action-btn secondary-btn" onclick="clearAllScenariosForLoad()" style="padding: 5px 10px; font-size: 0.8rem;">❌ Auswahl löschen</button>
+                        <button id="selectAllAnsparphaseScenariosBtn" class="action-btn secondary-btn" style="margin-right: 10px; padding: 5px 10px; font-size: 0.8rem;">✅ Alle auswählen</button>
+                        <button id="clearAllAnsparphaseScenariosBtn" class="action-btn secondary-btn" style="padding: 5px 10px; font-size: 0.8rem;">❌ Auswahl löschen</button>
                     </div>
                 </div>
                 <div class="profile-list" id="loadAnsparphaseScenarioList">

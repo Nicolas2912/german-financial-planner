@@ -5,7 +5,7 @@
 import * as state from './state.js';
 
 // Import utility functions
-import { debounce } from './utils/utils.js';
+import { debounce } from './utils.js';
 
 // Import core calculation functions
 import { runScenario } from './core/accumulation.js';
@@ -21,6 +21,7 @@ import {
     setupPhaseToggle,
     setupGermanNumberInputs,
     setupSavingsModeFunctionality,
+    setupSavingsModeForScenario as setupSavingsModeForScenarioImpl,
     setupStickyScenarioCards,
     setupScenarioImport,
     setupAutoSaveScenarios,
@@ -29,10 +30,11 @@ import {
     calculateBudget,
     calculateTaxes,
     calculateWithdrawal
-} from './ui/setup.js';
+} from './ui/setup/index.js';
 
 import { 
     updateScenarioResults,
+    refreshScenarioResultNames,
     updateScenarioCheckboxes,
     updateContributionsScenarioDropdown,
     updateScenarioCheckboxVisibility,
@@ -45,6 +47,29 @@ import { createIntegratedTimeline } from './ui/withdrawalChart.js';
 
 // Import scenario management functions
 import { addNewScenario, switchToScenario, removeScenario, renameScenario, copyScenario } from './features/scenarioManager.js';
+
+// Import scenario comparison functionality
+import ScenarioComparisonManager from './features/scenarioComparison.js';
+// Ensure Entnahmephase scenario manager is loaded (registers window setup hook)
+import './features/entnahmephaseScenarioManager.js';
+
+// Import profile management functions
+import { 
+    openSaveProfileModal,
+    closeSaveProfileModal,
+    updateProfilePreview,
+    confirmSaveProfile,
+    openLoadProfileModal,
+    closeLoadProfileModal,
+    loadProfilesForModal,
+    selectProfileForLoad,
+    loadSelectedProfile,
+    openProfileManager,
+    closeProfileManager,
+    loadProfileList,
+    loadProfileFromManager,
+    deleteProfile
+} from './features/profileManager.js';
 
 // Import feature functions
 // Note: setupContributionsScenarioSelector is implemented inline below
@@ -71,6 +96,7 @@ export function recalculateAll() {
             createIntegratedTimeline();
         }
     }
+
 }
 
 // Debounced version of recalculateAll
@@ -173,6 +199,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setupAnsparphaseScenarioListeners();
     setupEntnahmephaseScenarioListeners();
     
+    // Initialize scenario comparison functionality
+    window.scenarioComparison = new ScenarioComparisonManager();
+    
     setupPhaseToggle();
     setupGermanNumberInputs();
     setupSavingsModeFunctionality();
@@ -231,6 +260,9 @@ window.updateScenarioCheckboxes = updateScenarioCheckboxes;
 window.updateContributionsScenarioDropdown = updateContributionsScenarioDropdown;
 window.showNotification = showNotification;
 window.updateScenarioSliderValue = updateScenarioSliderValue;
+window.updateScenarioResults = updateScenarioResults;
+window.updateScenarioSelector = updateScenarioSelector;
+window.refreshScenarioResultNames = refreshScenarioResultNames;
 
 // Add missing utility functions for scenario management
 window.getScenarioValue = function(inputId, scenarioId) {
@@ -238,36 +270,22 @@ window.getScenarioValue = function(inputId, scenarioId) {
     return element ? element.value : null;
 };
 
+// Bridge for older code paths: delegate to the full-featured setup
 window.setupSavingsModeForScenario = function(scenarioId) {
-    // This function sets up the savings mode toggle functionality for a scenario
-    // For now, we'll implement a basic version
-    console.log(`Setting up savings mode for scenario ${scenarioId}`);
-    
-    // Find and set up the savings mode buttons for this scenario
-    const modeButtons = document.querySelectorAll(`.savings-mode-btn[data-scenario="${scenarioId}"]`);
-    modeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const mode = this.dataset.mode;
-            const scenario = this.dataset.scenario;
-            
-            // Update button states
-            modeButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show/hide appropriate containers
-            const simpleContainer = document.querySelector(`.simple-savings-container[data-scenario="${scenario}"]`);
-            const multiPhaseContainer = document.querySelector(`.multi-phase-savings-container[data-scenario="${scenario}"]`);
-            
-            if (mode === 'simple') {
-                if (simpleContainer) simpleContainer.style.display = 'block';
-                if (multiPhaseContainer) multiPhaseContainer.style.display = 'none';
-            } else if (mode === 'multi-phase') {
-                if (simpleContainer) simpleContainer.style.display = 'none';
-                if (multiPhaseContainer) multiPhaseContainer.style.display = 'block';
-            }
-        });
-    });
+    if (typeof setupSavingsModeForScenarioImpl === 'function') {
+        setupSavingsModeForScenarioImpl(scenarioId);
+    } else {
+        console.warn('setupSavingsModeForScenario implementation missing');
+    }
 };
+
+// Make core functions available globally
+// Note: these were already bound earlier; keep them consistent and do not override.
+window.recalculateAll = recalculateAll;
+window.debouncedRecalculateAll = debouncedRecalculateAll;
+window.updateMainChart = updateMainChart;
+// Expose the real implementation so withdrawal sync and charts work correctly
+window.autoSyncWithdrawalCapital = autoSyncWithdrawalCapital;
 
 // Make scenario management functions available globally
 window.addNewScenario = addNewScenario;
@@ -275,6 +293,22 @@ window.switchToScenario = switchToScenario;
 window.removeScenario = removeScenario;
 window.renameScenario = renameScenario;
 window.copyScenario = copyScenario;
+
+// Make profile management functions available globally
+window.openSaveProfileModal = openSaveProfileModal;
+window.closeSaveProfileModal = closeSaveProfileModal;
+window.updateProfilePreview = updateProfilePreview;
+window.confirmSaveProfile = confirmSaveProfile;
+window.openLoadProfileModal = openLoadProfileModal;
+window.closeLoadProfileModal = closeLoadProfileModal;
+window.loadProfilesForModal = loadProfilesForModal;
+window.selectProfileForLoad = selectProfileForLoad;
+window.loadSelectedProfile = loadSelectedProfile;
+window.openProfileManager = openProfileManager;
+window.closeProfileManager = closeProfileManager;
+window.loadProfileList = loadProfileList;
+window.loadProfileFromManager = loadProfileFromManager;
+window.deleteProfile = deleteProfile;
 
 // Export main functions for external use
 export { updateScenarioSelector };

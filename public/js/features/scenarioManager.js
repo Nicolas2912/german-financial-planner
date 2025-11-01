@@ -5,8 +5,8 @@
  * switching, renaming, copying, and removing scenarios.
  */
 
-import { formatGermanNumber, parseGermanNumber } from '../utils/utils.js';
-import { setupScenarioInputListeners } from '../ui/setup.js';
+import { formatGermanNumber, parseGermanNumber } from "../utils.js";
+import { setupScenarioInputListeners } from '../ui/setup/setupScenarios.js';
 import * as state from '../state.js';
 
 // ===================================
@@ -142,8 +142,11 @@ export function createScenarioTab(scenario) {
 export function switchToScenario(scenarioId) {
     const { autoSyncWithdrawalCapital, updateContributionsGainsChart, currentChartMode } = window;
     
-    // Update active scenario
+    // Update active scenario (global and state)
     window.activeScenario = scenarioId;
+    if (state && typeof state.setActiveScenario === 'function') {
+        state.setActiveScenario(scenarioId);
+    }
     
     // Update tab appearance
     document.querySelectorAll('.scenario-tab').forEach(tab => {
@@ -262,8 +265,8 @@ export function createScenarioPanel(scenario) {
                     <div class="savings-phase active" data-phase="1" data-scenario="${scenario.id}">
                         <div class="phase-header">
                             <div class="phase-title">
-                                <span class="phase-icon">🌱</span>
-                                <h5>Phase 1: Anfangsphase</h5>
+                                <div class="phase-number">1</div>
+                                <h5>Phase 1</h5>
                                 <div class="phase-status-indicator active"></div>
                             </div>
                         </div>
@@ -282,6 +285,10 @@ export function createScenarioPanel(scenario) {
                                         <label>Monatliche Sparrate (€)</label>
                                         <input type="text" class="phase-savings-rate" value="300" data-phase="1" data-scenario="${scenario.id}">
                                     </div>
+                                    <div class="input-group rendite-input">
+                                        <label>Rendite (% p.a.)</label>
+                                        <input type="text" class="phase-return-rate" value="7,0" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="1" data-scenario="${scenario.id}">
+                                    </div>
                                 </div>
                                 <div class="phase-summary">
                                     <span class="phase-duration">Dauer: 11 Jahre</span>
@@ -295,8 +302,8 @@ export function createScenarioPanel(scenario) {
                     <div class="savings-phase" data-phase="2" data-scenario="${scenario.id}">
                         <div class="phase-header">
                             <div class="phase-title">
-                                <span class="phase-icon">📈</span>
-                                <h5>Phase 2: Wachstumsphase</h5>
+                                <div class="phase-number">2</div>
+                                <h5>Phase 2</h5>
                                 <div class="phase-status-indicator"></div>
                             </div>
                             <button type="button" class="phase-toggle-btn" data-phase="2" data-scenario="${scenario.id}">
@@ -318,6 +325,10 @@ export function createScenarioPanel(scenario) {
                                         <label>Monatliche Sparrate (€)</label>
                                         <input type="text" class="phase-savings-rate" value="800" data-phase="2" data-scenario="${scenario.id}">
                                     </div>
+                                    <div class="input-group rendite-input">
+                                        <label>Rendite (% p.a.)</label>
+                                        <input type="text" class="phase-return-rate" value="8,5" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="2" data-scenario="${scenario.id}">
+                                    </div>
                                 </div>
                                 <div class="phase-summary">
                                     <span class="phase-duration">Dauer: 15 Jahre</span>
@@ -331,8 +342,8 @@ export function createScenarioPanel(scenario) {
                     <div class="savings-phase" data-phase="3" data-scenario="${scenario.id}">
                         <div class="phase-header">
                             <div class="phase-title">
-                                <span class="phase-icon">🚀</span>
-                                <h5>Phase 3: Spitzenphase</h5>
+                                <div class="phase-number">3</div>
+                                <h5>Phase 3</h5>
                                 <div class="phase-status-indicator"></div>
                             </div>
                             <button type="button" class="phase-toggle-btn" data-phase="3" data-scenario="${scenario.id}">
@@ -354,6 +365,10 @@ export function createScenarioPanel(scenario) {
                                         <label>Monatliche Sparrate (€)</label>
                                         <input type="text" class="phase-savings-rate" value="1200" data-phase="3" data-scenario="${scenario.id}">
                                     </div>
+                                    <div class="input-group rendite-input">
+                                        <label>Rendite (% p.a.)</label>
+                                        <input type="text" class="phase-return-rate" value="6,5" inputmode="decimal" pattern="[0-9]+([.,][0-9]+)?" data-phase="3" data-scenario="${scenario.id}">
+                                    </div>
                                 </div>
                                 <div class="phase-summary">
                                     <span class="phase-duration">Dauer: 15 Jahre</span>
@@ -367,7 +382,7 @@ export function createScenarioPanel(scenario) {
                 <!-- Multi-Phase Summary -->
                 <div class="multi-phase-summary">
                     <div class="summary-header">
-                        <h4>📊 Sparplan-Übersicht</h4>
+                        <h4>Sparplan-Übersicht</h4>
                     </div>
                     <div class="summary-content">
                         <div class="summary-item">
@@ -666,7 +681,16 @@ export function removeScenario(scenarioId) {
  */
 export function renameScenario(scenarioId) {
     const scenarios = window.scenarios || [];
-    const { showNotification, updateScenarioCheckboxes, updateContributionsScenarioDropdown } = window;
+    const { 
+        showNotification, 
+        updateScenarioCheckboxes, 
+        updateContributionsScenarioDropdown,
+        updateScenarioResults,
+        updateScenarioSelector,
+        refreshScenarioResultNames,
+        recalculateAll,
+        updateMainChart
+    } = window;
     
     const scenario = scenarios.find(s => s.id === scenarioId);
     if (!scenario) {
@@ -715,9 +739,48 @@ export function renameScenario(scenarioId) {
         tab.innerHTML = `📈 ${scenario.name}`;
     }
     
+    // Update existing result card title immediately without waiting for recalculation
+    const resultCardTitle = document.querySelector(`.scenario-result-card[data-scenario="${scenarioId}"] .scenario-result-title`);
+    if (resultCardTitle) {
+        resultCardTitle.textContent = `📊 ${scenario.name}`;
+    }
+    
     // Update scenario checkboxes and dropdown
     updateScenarioCheckboxes();
     updateContributionsScenarioDropdown();
+    
+    // Sync state store with the new name
+    if (state && typeof state.updateScenario === 'function') {
+        state.updateScenario(scenarioId, { name: scenario.name });
+    }
+    
+    // Refresh scenario summary cards and selectors immediately
+    if (typeof updateScenarioResults === 'function') {
+        updateScenarioResults();
+    }
+    if (typeof refreshScenarioResultNames === 'function') {
+        refreshScenarioResultNames();
+    }
+    // Ensure DOM paints after prompt close, then re-apply names just in case
+    if (typeof refreshScenarioResultNames === 'function') {
+        setTimeout(() => refreshScenarioResultNames(), 0);
+    }
+    if (typeof updateScenarioSelector === 'function') {
+        updateScenarioSelector();
+    }
+
+    // If this is the active scenario, update the withdrawal sync indicator label
+    if (state && state.activeScenario === scenarioId) {
+        const syncNameEl = document.getElementById('syncScenarioName');
+        if (syncNameEl) syncNameEl.textContent = scenario.name;
+    }
+    
+    // Refresh comparison UI elements so the new name appears immediately
+    if (typeof recalculateAll === 'function') {
+        recalculateAll();
+    } else if (typeof updateMainChart === 'function') {
+        updateMainChart();
+    }
     
     if (showNotification) {
         showNotification('✅ Erfolg', `Szenario wurde zu "${scenario.name}" umbenannt.`, 'success');

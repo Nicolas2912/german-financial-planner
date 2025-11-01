@@ -1,14 +1,35 @@
-// js/utils.js
-// Utility functions for German Financial Planner
+/**
+ * Utility Functions for German Financial Planner
+ * 
+ * This module contains utility functions for number formatting, parsing, and currency display
+ * that are used throughout the application.
+ */
 
-// Number formatting functions
+/**
+ * Format a number as currency with German locale
+ * 
+ * @param {number} amount - The amount to format
+ * @returns {string} Formatted currency string (e.g., "€1.234,56")
+ */
 export function formatCurrency(amount) {
+    // Handle null, undefined, or invalid values
+    if (amount === null || amount === undefined || typeof amount !== 'number' || isNaN(amount)) {
+        return '€0,00';
+    }
+    
     return '€' + amount.toLocaleString('de-DE', { 
         minimumFractionDigits: 2, 
         maximumFractionDigits: 2 
     });
 }
 
+/**
+ * Parse a German-formatted number string into a number
+ * Handles German decimal format with comma as decimal separator
+ * 
+ * @param {string|number} value - The value to parse
+ * @returns {number} Parsed number or 0 if invalid
+ */
 export function parseGermanNumber(value) {
     if (typeof value === 'number') return value;
     if (typeof value !== 'string') return 0;
@@ -19,6 +40,13 @@ export function parseGermanNumber(value) {
     return isNaN(parsed) ? 0 : parsed;
 }
 
+/**
+ * Format a number using German locale
+ * 
+ * @param {number} value - The number to format
+ * @param {number} decimals - Number of decimal places (default: 2)
+ * @returns {string} Formatted number string
+ */
 export function formatGermanNumber(value, decimals = 2) {
     if (typeof value !== 'number' || isNaN(value)) return '0';
     return value.toLocaleString('de-DE', { 
@@ -27,19 +55,21 @@ export function formatGermanNumber(value, decimals = 2) {
     });
 }
 
-// HTML escaping for security
-export function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-}
+/**
+ * Escape HTML characters for security
+ * 
+ * @param {string} text - The text to escape
+ * @returns {string} HTML-escaped text
+ */
+// (Removed duplicate escapeHtml — feature modules provide local helpers)
 
-// Generic debounce function
+/**
+ * Debounce function to limit the rate at which a function can fire
+ * 
+ * @param {Function} func - The function to debounce
+ * @param {number} delay - The number of milliseconds to delay
+ * @returns {Function} The debounced function
+ */
 export function debounce(func, delay) {
     let timeoutId;
     return function (...args) {
@@ -48,119 +78,10 @@ export function debounce(func, delay) {
     };
 }
 
-// Notification system
-export function showNotification(title, message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <div class="notification-title">${title}</div>
-            <div class="notification-message">${message}</div>
-        </div>
-        <button class="notification-close" onclick="this.parentElement.remove()">×</button>
-    `;
-    
-    // Add styles if not already added
-    if (!document.getElementById('notificationStyles')) {
-        const styles = document.createElement('style');
-        styles.id = 'notificationStyles';
-        styles.textContent = `
-            .notification {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: white;
-                border-radius: 10px;
-                padding: 20px;
-                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                z-index: 10000;
-                max-width: 400px;
-                border-left: 5px solid #3498db;
-                animation: slideInNotification 0.3s ease-out;
-            }
-            
-            .notification-success {
-                border-left-color: #27ae60;
-            }
-            
-            .notification-error {
-                border-left-color: #e74c3c;
-            }
-            
-            .notification-content {
-                margin-right: 30px;
-            }
-            
-            .notification-title {
-                font-weight: bold;
-                color: #2c3e50;
-                margin-bottom: 5px;
-            }
-            
-            .notification-message {
-                color: #7f8c8d;
-                font-size: 0.9rem;
-            }
-            
-            .notification-close {
-                position: absolute;
-                top: 10px;
-                right: 10px;
-                background: none;
-                border: none;
-                font-size: 1.5rem;
-                color: #bdc3c7;
-                cursor: pointer;
-                width: 30px;
-                height: 30px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .notification-close:hover {
-                background: #ecf0f1;
-                color: #7f8c8d;
-            }
-            
-            @keyframes slideInNotification {
-                from {
-                    opacity: 0;
-                    transform: translateX(100%);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateX(0);
-                }
-            }
-        `;
-        document.head.appendChild(styles);
-    }
-    
-    // Add to page
-    document.body.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.style.animation = 'slideInNotification 0.3s ease-out reverse';
-            setTimeout(() => notification.remove(), 300);
-        }
-    }, 5000);
-}
+// (Removed duplicate showNotification — authoritative version lives in ui/dom.js)
 
 // Scenario utility functions
-export function getScenarioValue(inputId, scenarioId) {
-    const element = document.getElementById(inputId + '_' + scenarioId);
-    return element ? element.value : '0';
-}
-
-export function getScenarioToggleValue(toggleId, scenarioId) {
-    const element = document.getElementById(toggleId + '_' + scenarioId);
-    return element ? element.classList.contains('active') : false;
-}
+// (Removed scenario DOM helpers — maintained where needed in app/core/features modules)
 
 // Generic array utility functions
 export function findById(array, id) {

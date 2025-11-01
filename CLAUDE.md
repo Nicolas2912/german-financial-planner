@@ -1,3 +1,11 @@
+Work for now on in the branch "modular" do not modify anything in "main"!
+
+When writing commit message, use modern standards and best practices.
+
+Do not run the server on any port. It is already running on port 3000.
+
+Ignore the oll app_old.js file and style_old.css file.
+
 # Task Master AI - Claude Code Integration Guide
 
 ## Essential Commands
@@ -413,5 +421,7 @@ These commands make AI calls and may take up to a minute:
 - Recommended for complex technical tasks
 
 ---
+
+Ignore app_old.js and do not apply any changes to it.
 
 _This guide ensures Claude Code has immediate access to Task Master's essential functionality for agentic development workflows._

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Umfassender Szenario-Vergleich - ETF-Sparplan Rechner</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <script type="module" src="js/features/scenarioComparison.js"></script>
+</head>
+<body class="scenario-comparison">
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Umfassender Szenario-Vergleich</h1>
+            <p>Vergleichen Sie verschiedene Finanzplanungsszenarien und analysieren Sie deren Auswirkungen</p>
+        </div>
+
+        <div class="main-content">
+            <div class="scenario-comparison-section" id="scenarioComparisonSection">
+
+                <!-- Layout -->
+                <div class="comparison-layout scenario-conservative" id="comparisonLayout">
+                    <!-- Left: Parameters -->
+                    <div class="comparison-params-panel">
+                        <div class="phase-pills" id="comparisonPhasePills">
+                            <button class="pill active" data-target="budget">Budget</button>
+                            <button class="pill" data-target="accumulation">Ansparphase</button>
+                            <button class="pill" data-target="withdrawal">Entnahmephase</button>
+                        </div>
+
+                        <!-- Compose selection into a scenario -->
+                        <div class="params-actions">
+                            <button id="addSelectionToOverview" class="comparison-btn btn-add-to-overview">➕ Zur Übersicht hinzufügen</button>
+                        </div>
+
+                        <!-- Budget Section -->
+                        <div class="param-section" id="comparisonBudgetSection">
+                            <div class="param-header" data-toggle="budgetGrid">
+                                <h4>💼 Budgetplanung</h4>
+                                <div class="header-actions">
+                                    <button class="btn-import" id="budgetImportBtn">Importieren ▼</button>
+                                    <button class="toggle-btn" type="button">
+                                        <span class="toggle-icon">▲</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="param-grid active" id="budgetGrid">
+                                <!-- Read-only budget display after import -->
+                                <div id="budgetReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Budget">
+                                            <span class="k">Gesamteinkommen</span><span class="v" id="budgetIncome">—</span>
+                                            <span class="k">Gesamtausgaben</span><span class="v" id="budgetExpenses">—</span>
+                                            <span class="k">Sparrate</span><span class="v" id="budgetSavings">—</span>
+                                            <span class="k">Verfügbar</span><span class="v" id="budgetAvailable">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Annahmen">
+                                            <span class="k">Inflation p.a.</span><span class="v" id="budgetInflation">—</span>
+                                            <span class="k">Perioden</span><span class="v" id="budgetPeriods">—</span>
+                                            <span class="k">Profil</span><span class="v" id="budgetProfileName">—</span>
+                                            <span class="k"></span><span class="v"></span>
+                                        </div>
+                                    </div>
+                                    <div id="budgetImportMenu" style="display:none; margin-top:12px; border:1px solid #e5e7eb; border-radius:8px; padding:10px; background:#fff;">
+                                        <strong style="display:block; margin-bottom:8px; color:#2c3e50;">Profil wählen</strong>
+                                        <div id="budgetImportList" style="display:grid; gap:8px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accumulation Section -->
+                        <div class="param-section" id="comparisonAccumSection">
+                            <div class="param-header" data-toggle="accumGrid">
+                                <h4>📈 Ansparphase</h4>
+                                <div class="header-actions">
+                                    <button class="btn-import" id="accumImportBtn">Importieren ▼</button>
+                                    <button class="toggle-btn" type="button">
+                                        <span class="toggle-icon">▼</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="param-grid active" id="accumGrid">
+                                <!-- Read-only accumulation display after import -->
+                                <div id="accumReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Zusammenfassung">
+                                            <span class="k">Jährliche Rendite (%)</span><span class="v" id="accAnnualReturn">—</span>
+                                            <span class="k">Anlagedauer (Jahre)</span><span class="v" id="accDuration">—</span>
+                                            <span class="k">Monatliche Sparrate (€)</span><span class="v" id="accMonthlySavings">—</span>
+                                            <span class="k">Startkapital (€)</span><span class="v" id="accInitialCapital">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Annahmen">
+                                            <span class="k">Inflationsrate (%)</span><span class="v" id="accInflation">—</span>
+                                            <span class="k">Jährliche Gehaltssteigerung (%)</span><span class="v" id="accSalaryGrowth">—</span>
+                                            <span class="k">Deutsche Abgeltungssteuer einbeziehen (25% mit Vorabpauschale)</span><span class="v" id="accTax">—</span>
+                                            <span class="k">ETF-Typ für Steuerberechnung</span><span class="v" id="accEtfType">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Gehalt">
+                                            <span class="k">Aktuelles Brutto‑Jahresgehalt (€)</span><span class="v" id="accBaseSalary">—</span>
+                                            <span class="k">Gehaltssteigerung für Sparrate (%)</span><span class="v" id="accSalaryToSavings">—</span>
+                                            <span class="k">Teilfreistellung bei Aktienfonds anwenden (30% steuerfrei)</span><span class="v" id="accTeilfreistellung">—</span>
+                                            <span class="k"></span><span class="v"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Withdrawal Section -->
+                        <div class="param-section" id="comparisonWithdrawSection">
+                            <div class="param-header" data-toggle="withdrawGrid">
+                                <h4>🏖️ Entnahmephase</h4>
+                                <div class="header-actions">
+                                    <button class="btn-import" id="withdrawImportBtn">Importieren ▼</button>
+                                    <button class="toggle-btn" type="button">
+                                        <span class="toggle-icon">▼</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="param-grid active" id="withdrawGrid">
+                                <!-- Read-only withdrawal display after import -->
+                                <div id="withdrawReadonly" style="width: 100%;">
+                                    <div class="kv-container">
+                                        <div class="kv" data-title="Parameter">
+                                            <span class="k">Entnahmedauer (Jahre)</span><span class="v" id="wdDuration">—</span>
+                                            <span class="k">Jährliche Rendite im Ruhestand (%)</span><span class="v" id="wdReturn">—</span>
+                                            <span class="k">Inflationsrate (%)</span><span class="v" id="wdInflation">—</span>
+                                            <span class="k">Verfügbares Kapital bei Renteneintritt (€)</span><span class="v" id="wdCapital">—</span>
+                                        </div>
+                                        <div class="kv" data-title="Steuern">
+                                            <span class="k">Abgeltungssteuer anwenden (25%)</span><span class="v" id="wdTax">—</span>
+                                            <span class="k">Teilfreistellung (%)</span><span class="v" id="wdTeilfreistellung">—</span>
+                                            <span class="k"></span><span class="v"></span>
+                                            <span class="k"></span><span class="v"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Results -->
+                    <div class="comparison-results-panel">
+                        <!-- Scenario summary cards -->
+                        <h3>🏆 Szenario-Übersicht</h3>
+                        <div class="summary-cards">
+                            <div class="summary-card primary">
+                                <div class="summary-compact">
+                                    <div class="top">
+                                        <h4>🎯 Optimistisch</h4>
+                                        <span class="risk-badge risk-high">Hoch</span>
+                                    </div>
+                                    <div class="sources">
+                                        <span class="chip chip-budget" id="sum-source-budget-optimistic">—</span>
+                                        <span class="chip chip-accum" id="sum-source-accum-optimistic">—</span>
+                                        <span class="chip chip-withdraw" id="sum-source-withdraw-optimistic">—</span>
+                                    </div>
+                                    <div class="headline">
+                                        <span class="headline-value" id="sum-final-optimistic">—</span>
+                                    </div>
+                                    <div class="meta" aria-label="Optimistisches Szenario Kennzahlen">
+                                        <span class="metric"><span id="sum-return-optimistic">—</span> Rendite</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-accyears-optimistic">—</span>J Sparphase</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-wdyears-optimistic">—</span>J Entnahme</span>
+                                        <span class="dot">•</span>
+                                        <span class="break"></span>
+                                        <span class="metric"><span id="sum-monthly-optimistic">—</span> €/M</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-wdrate-optimistic">—</span>% Entnahme</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="summary-card success">
+                                <div class="summary-compact">
+                                    <div class="top">
+                                        <h4>🛡️ Konservativ</h4>
+                                        <span class="risk-badge risk-low">Niedrig</span>
+                                    </div>
+                                    <div class="sources">
+                                        <span class="chip chip-budget" id="sum-source-budget-conservative">—</span>
+                                        <span class="chip chip-accum" id="sum-source-accum-conservative">—</span>
+                                        <span class="chip chip-withdraw" id="sum-source-withdraw-conservative">—</span>
+                                    </div>
+                                    <div class="headline">
+                                        <span class="headline-value" id="sum-final-conservative">—</span>
+                                    </div>
+                                    <div class="meta" aria-label="Konservatives Szenario Kennzahlen">
+                                        <span class="metric"><span id="sum-return-conservative">—</span> Rendite</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-accyears-conservative">—</span>J Sparphase</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-wdyears-conservative">—</span>J Entnahme</span>
+                                        <span class="dot">•</span>
+                                        <span class="break"></span>
+                                        <span class="metric"><span id="sum-monthly-conservative">—</span> €/M</span>
+                                        <span class="dot">•</span>
+                                        <span class="metric"><span id="sum-wdrate-conservative">—</span>% Entnahme</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chart Controls -->
+                        <div class="chart-controls-bar">
+                            <div class="view-pills" id="comparisonChartViews">
+                                <button class="chart-view-btn active" data-view="lifecycle">🔄 Lebenszyklus</button>
+                                <button class="chart-view-btn" data-view="accumulation">📈 Ansparphase</button>
+                                <button class="chart-view-btn" data-view="withdrawal">🏖️ Entnahmephase</button>
+                                <button class="chart-view-btn" data-view="metrics">🎯 Kennzahlen Radar</button>
+                            </div>
+                            <div class="scenario-visibility">
+                                <label><input type="checkbox" checked data-scenario="optimistic" />🎯 Optimistisch</label>
+                                <label><input type="checkbox" checked data-scenario="conservative" />🛡️ Konservativ</label>
+                            </div>
+                        </div>
+
+                        <!-- Charts -->
+                        <div class="comparison-chart-view active" id="comparisonLifecycleView">
+                            <div class="comparison-chart-phase-legend" aria-hidden="true">
+                                <span class="legend-item"><span class="legend-line solid"></span>Ansparphase</span>
+                                <span class="legend-item"><span class="legend-line dashed"></span>Entnahmephase</span>
+                            </div>
+                            <canvas id="comparisonLifecycleChart"></canvas>
+                        </div>
+                        <div class="comparison-chart-view" id="comparisonAccumulationView">
+                            <canvas id="comparisonAccumulationChart"></canvas>
+                        </div>
+                        <div class="comparison-chart-view" id="comparisonWithdrawalView">
+                            <canvas id="comparisonWithdrawalChart"></canvas>
+                        </div>
+                        <div class="comparison-chart-view" id="comparisonMetricsView">
+                            <canvas id="comparisonMetricsChart"></canvas>
+                        </div>
+
+                        <!-- Parameter Comparison Table -->
+                        <div class="comparison-table-wrapper">
+                            <div class="table-filters" id="comparisonTableFilters">
+                                <button class="filter-btn active" data-category="all">Alle</button>
+                                <button class="filter-btn" data-category="budget">Budget</button>
+                                <button class="filter-btn" data-category="accumulation">Ansparphase</button>
+                                <button class="filter-btn" data-category="withdrawal">Entnahmephase</button>
+                                <button class="filter-btn" data-category="results">Ergebnisse</button>
+                            </div>
+                            <div class="table-content">
+                                <table id="comparisonTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Parameter</th>
+                                            <th>🎯 Optimistisch</th>
+                                            <th>🛡️ Konservativ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Budget Group -->
+                                        <tr class="group-header" data-category-group="budget">
+                                            <th colspan="3">Budget</th>
+                                        </tr>
+                                        <tr data-category="budget">
+                                            <td>Einkommen (€/Monat)</td>
+                                            <td>4000</td>
+                                            <td>3500</td>
+                                        </tr>
+                                        <tr data-category="budget">
+                                            <td>Ausgaben (€/Monat)</td>
+                                            <td>3000</td>
+                                            <td>2800</td>
+                                        </tr>
+                                        <tr data-category="budget">
+                                            <td>Sparrate (€)</td>
+                                            <td>1.000</td>
+                                            <td>500</td>
+                                        </tr>
+                                        <tr data-category="budget">
+                                            <td>Inflation p.a. (%)</td>
+                                            <td>2.2%</td>
+                                            <td>2.2%</td>
+                                        </tr>
+                                        
+                                        <!-- Accumulation Group -->
+                                        <tr class="group-header" data-category-group="accumulation">
+                                            <th colspan="3">Ansparphase</th>
+                                        </tr>
+                                        <tr data-category="accumulation">
+                                            <td>Rendite p.a. (%)</td>
+                                            <td>8.5%</td>
+                                            <td>5.5%</td>
+                                        </tr>
+                                        <tr data-category="accumulation">
+                                            <td>Dauer (Jahre)</td>
+                                            <td>30</td>
+                                            <td>25</td>
+                                        </tr>
+                                        <tr data-category="accumulation">
+                                            <td>Monatl. Sparrate (€)</td>
+                                            <td>1,000</td>
+                                            <td>500</td>
+                                        </tr>
+                                        
+                                        <!-- Withdrawal Group -->
+                                        <tr class="group-header" data-category-group="withdrawal">
+                                            <th colspan="3">Entnahmephase</th>
+                                        </tr>
+                                        <tr data-category="withdrawal">
+                                            <td>Entnahmerate (%)</td>
+                                            <td>4%</td>
+                                            <td>3%</td>
+                                        </tr>
+                                        <tr data-category="withdrawal">
+                                            <td>Dauer (Jahre)</td>
+                                            <td>25</td>
+                                            <td>30</td>
+                                        </tr>
+
+                                        <!-- Results Group -->
+                                        <tr class="group-header" data-category-group="results">
+                                            <th colspan="3">Ergebnisse</th>
+                                        </tr>
+                                        <tr data-category="results">
+                                            <td>Endvermögen</td>
+                                            <td>1.2 Mio €</td>
+                                            <td>800k €</td>
+                                        </tr>
+                                        
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Full Summary -->
+                <div class="comparison-full-summary">
+                    <h3>📌 Zusammenfassung & Empfehlungen</h3>
+                    <p>Das optimistische Szenario maximiert das erwartete Endvermögen bei höherer Volatilität und Drawdown-Risiko; das konservative priorisiert Stabilität und eine höhere Erfolgswahrscheinlichkeit in langen Entnahmephasen. Eine ausgewogene Allokation mit situativem Rebalancing, moderater Entnahmerate (3.5–4%) und inflationsadjustierter Planung liefert robuste Ergebnisse über verschiedene Marktregime.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Disclaimer Footer -->
+        <div class="disclaimer-footer">
+            <div class="kleingedrucktes">
+                <strong>Haftungsausschluss:</strong> Diese Anwendung dient ausschließlich zu Informationszwecken und stellt keine Anlageberatung dar. 
+                Alle Berechnungen basieren auf historischen Daten und Annahmen, die sich ändern können. Vergangene Wertentwicklungen sind 
+                kein verlässlicher Indikator für zukünftige Ergebnisse. <strong>Bitte konsultieren Sie einen Finanzberater</strong>, 
+                bevor Sie Anlageentscheidungen treffen. Der Entwickler übernimmt keine Haftung für Verluste, die durch die Nutzung 
+                dieser Anwendung entstehen könnten.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -5,7 +5,7 @@
  * including income, expenses, and savings calculations.
  */
 
-import { formatCurrency, parseGermanNumber } from '../utils/utils.js';
+import { formatCurrency, parseGermanNumber } from '../utils.js';
 
 /**
  * Convert expense amounts to monthly values based on period
@@ -57,7 +57,6 @@ export function calculateProfileTotalExpenses(profileData) {
     // Fixed expenses
     let fixedTotal = (parseGermanNumber(expenses.rent) || 0) + 
                    (parseGermanNumber(expenses.utilities) || 0) + 
-                   (parseGermanNumber(expenses.health) || 0) + 
                    (parseGermanNumber(expenses.insurance) || 0) + 
                    (parseGermanNumber(expenses.internet) || 0) + 
                    (parseGermanNumber(expenses.gez) || 0);
@@ -105,7 +104,6 @@ export function calculateBudget(inputData) {
     const fixedExpenses = {
         rent: parseGermanNumber(expenses.rent),
         utilities: parseGermanNumber(expenses.utilities),
-        health: parseGermanNumber(expenses.health),
         insurance: parseGermanNumber(expenses.insurance),
         internet: parseGermanNumber(expenses.internet),
         gez: parseGermanNumber(expenses.gez)

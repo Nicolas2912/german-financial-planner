@@ -5,7 +5,7 @@
  * that displays the breakdown of fixed expenses, variable expenses, and remaining budget.
  */
 
-import { formatCurrency } from '../utils/utils.js';
+import { formatCurrency } from '../utils.js';
 
 // Chart instance for budget pie chart
 let budgetPieChart = null;
@@ -49,7 +49,6 @@ export function updateBudgetPieChart(fixedExpenses, variableExpenses, remainingB
     const fixedCategories = {
         'Miete/Hypothek': { value: fixedExpenses.rent || 0, color: '#e74c3c' },
         'Nebenkosten': { value: fixedExpenses.utilities || 0, color: '#e67e22' },
-        'Krankenkasse': { value: fixedExpenses.health || 0, color: '#f39c12' },
         'Versicherungen': { value: fixedExpenses.insurance || 0, color: '#f1c40f' },
         'Internet/Telefon': { value: fixedExpenses.internet || 0, color: '#9b59b6' },
         'GEZ': { value: fixedExpenses.gez || 0, color: '#8e44ad' }

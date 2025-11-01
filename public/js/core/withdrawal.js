@@ -12,7 +12,7 @@
  * - Withdrawal simulations
  */
 
-import { formatCurrency, parseGermanNumber } from '../utils/utils.js';
+import { formatCurrency, parseGermanNumber } from '../utils.js';
 
 /**
  * Calculate exact annuity payment using direct mathematical formula
@@ -297,8 +297,10 @@ export function calculateWithdrawalPlan(initialCapital, duration, annualReturn, 
     console.log(`Cost Basis: €${userDefinedTotalContributions.toLocaleString()}, Unrealized Gains: €${(initialCapital - userDefinedTotalContributions).toLocaleString()}`);
     
     // Step 1: Calculate base withdrawal using direct annuity formula
-    let baseAnnualWithdrawal = calculateDirectAnnuityPayment(initialCapital, duration, annualReturn);
-    console.log(`📊 Base annuity calculation: €${baseAnnualWithdrawal.toFixed(2)}/year (€${(baseAnnualWithdrawal/12).toFixed(2)}/month)`);
+    // We need to adjust for inflation-adjusted withdrawals by using the real return rate
+    const realReturnRate = calculateRealInterestRate(annualReturn, inflationRate);
+    let baseAnnualWithdrawal = calculateDirectAnnuityPayment(initialCapital, duration, realReturnRate);
+    console.log(`📊 Base annuity calculation (real return ${(realReturnRate*100).toFixed(2)}%): €${baseAnnualWithdrawal.toFixed(2)}/year (€${(baseAnnualWithdrawal/12).toFixed(2)}/month)`);
     
     // Step 2: Adjust withdrawal amount to achieve exactly 0€ at the end
     // This is needed for both tax and no-tax scenarios due to inflation adjustments
@@ -497,6 +499,11 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
     // Handle small rounding errors in final capital
     if (Math.abs(capital) < 1) {
         capital = 0; // Consider it exactly zero if within €1
+    }
+    
+    // Ensure the last year's endCapital is exactly 0 for visual consistency
+    if (yearlyData.length > 0) {
+        yearlyData[yearlyData.length - 1].endCapital = capital;
     }
     
     console.log(`\n🏁 ETF Withdrawal Tax Calculation Summary:`);

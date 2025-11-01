@@ -1,162 +1,43 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ETF Financial Planner - Launcher</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .launcher {
-            background: white;
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
-            text-align: center;
-            max-width: 600px;
-            margin: 20px;
-        }
-        .launcher h1 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 2.5rem;
-        }
-        .launcher p {
-            color: #7f8c8d;
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-        .server-instructions {
-            background: #f8f9fa;
-            border: 2px solid #e9ecef;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: left;
-        }
-        .server-instructions h3 {
-            color: #495057;
-            margin-top: 0;
-        }
-        .code-block {
-            background: #343a40;
-            color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            margin: 10px 0;
-            font-size: 0.9rem;
-        }
-        .launch-btn {
-            display: inline-block;
-            padding: 15px 30px;
-            background: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 10px;
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin: 10px;
-            transition: all 0.3s ease;
-        }
-        .launch-btn:hover {
-            background: #2980b9;
-            transform: translateY(-2px);
-        }
-        .warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        .success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ETF Financial Planner</title>
+  <meta http-equiv="refresh" content="0; url=public/etf_savings.html">
+  <link rel="canonical" href="public/etf_savings.html">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f6f7fb;
+      color: #2c3e50;
+    }
+    .fallback {
+      text-align: center;
+      max-width: 420px;
+      padding: 24px;
+    }
+    .fallback a {
+      color: #1b6ac9;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
-    <div class="launcher">
-        <h1>💰 ETF Financial Planner</h1>
-        <p>German Financial Planning Tool for ETF Investment and Retirement Planning</p>
-        
-        <div class="warning">
-            <strong>⚠️ Important:</strong> This application uses modern JavaScript modules and needs to be served through a web server to work properly.
-        </div>
-
-        <div class="server-instructions">
-            <h3>🚀 How to Run the Application:</h3>
-            
-            <p><strong>Option 1: Python Web Server (Recommended)</strong></p>
-            <p>Open Terminal/Command Prompt in the project directory and run:</p>
-            <div class="code-block">python3 -m http.server 8000</div>
-            <p>Then open: <a href="http://localhost:8000/public/etf_savings.html" target="_blank">http://localhost:8000/public/etf_savings.html</a></p>
-            
-            <p><strong>Option 2: Node.js (if you have it installed)</strong></p>
-            <div class="code-block">npx serve .</div>
-            
-            <p><strong>Option 3: PHP (if you have it installed)</strong></p>
-            <div class="code-block">php -S localhost:8000</div>
-        </div>
-
-        <div class="success" id="serverStatus" style="display: none;">
-            <strong>✅ Server is running!</strong> Click the button below to launch the application.
-        </div>
-
-        <a href="http://localhost:8000/public/etf_savings.html" class="launch-btn" onclick="checkServer(this)">
-            🚀 Launch Application
-        </a>
-        
-        <p style="margin-top: 30px; font-size: 0.9rem; color: #95a5a6;">
-            This tool helps you plan your financial future with ETF investments, including German tax calculations, budget planning, and retirement scenarios.
-        </p>
-    </div>
-
-    <script>
-        function checkServer(link) {
-            // Try to detect if server is running
-            fetch('http://localhost:8000/public/etf_savings.html')
-                .then(response => {
-                    if (response.ok) {
-                        document.getElementById('serverStatus').style.display = 'block';
-                        return true;
-                    } else {
-                        throw new Error('Server not responding');
-                    }
-                })
-                .catch(error => {
-                    alert('⚠️ Server not detected!\n\nPlease start a local web server first:\n\n1. Open Terminal/Command Prompt\n2. Navigate to this project folder\n3. Run: python3 -m http.server 8000\n4. Then click the launch button again');
-                    return false;
-                });
-        }
-        
-        // Auto-check if server is running
-        setTimeout(() => {
-            fetch('http://localhost:8000/public/etf_savings.html')
-                .then(response => {
-                    if (response.ok) {
-                        document.getElementById('serverStatus').style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    // Server not running, show instructions
-                });
-        }, 1000);
-    </script>
+  <div class="fallback">
+    <h1>ETF Finanzplaner</h1>
+    <p>Weiterleitung zum Planner läuft ... Falls dein Browser nicht automatisch weiterleitet, nutze bitte diesen Link:</p>
+    <p><a href="public/etf_savings.html">App öffnen</a></p>
+  </div>
+  <script>
+    // Redirect as soon as possible; leave a simple fallback link for no-JS clients.
+    window.location.replace('public/etf_savings.html');
+  </script>
 </body>
 </html>

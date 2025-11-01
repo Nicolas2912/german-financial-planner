@@ -1,0 +1,10 @@
+refactor(core,ui): remove legacy interop and duplicate DOM helpers; switch HTML buttons to IDs
+
+- public/js/core/accumulation.js: drop CommonJS and `window.*` exports; standardize on ES modules across the app.
+- public/js/ui/dom.js: remove duplicate `updateScenarioSelector` (authoritative version lives in app.js).
+- public/js/utils.js: remove duplicate `showNotification` and scenario DOM helpers; keep utilities focused and avoid UI duplication.
+- public/etf_savings.html: replace inline `onclick` handlers with button IDs for modular event wiring.
+
+Rationale: modernize module boundaries, reduce duplication, and align with the ESM-only architecture. This improves cohesion, avoids conflicting implementations, and enables cleaner event listener setup.
+
+No user-facing behavior change intended; event binding is now expected via JS modules using the new element IDs.

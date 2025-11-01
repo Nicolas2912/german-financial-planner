@@ -389,22 +389,7 @@ export function updateContributionsScenarioDropdown() {
     });
 }
 
-/**
- * Updates the scenario selector dropdown
- */
-export function updateScenarioSelector() {
-    const selector = document.getElementById('scenarioSelector');
-    if (!selector) return;
-    
-    selector.innerHTML = '<option value="">Szenario wählen...</option>';
-    
-    state.scenarios.forEach(scenario => {
-        const option = document.createElement('option');
-        option.value = scenario.id;
-        option.textContent = scenario.name;
-        selector.appendChild(option);
-    });
-}
+// (Removed duplicate updateScenarioSelector — authoritative version lives in app.js)
 
 // ==================== Notification System ====================
 

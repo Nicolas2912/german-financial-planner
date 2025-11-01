@@ -524,38 +524,4 @@ function getMultiPhaseData(scenarioId) {
     return phases;
 }
 
-// ============================================================================
-// EXPORTS
-// ============================================================================
-
-// Export functions for use in other modules
-// (In ES6 modules, these would be exported using export statement)
-if (typeof module !== 'undefined' && module.exports) {
-    // CommonJS exports
-    module.exports = {
-        runScenario,
-        calculateWealthDevelopment,
-        calculateMultiPhaseWealthDevelopment,
-        updateScenarioSalaryAnalysis,
-        getScenarioValue,
-        getScenarioToggleValue,
-        getScenarioETFType,
-        getSavingsMode,
-        getMultiPhaseData
-    };
-}
-
-// For browser usage, attach to window object
-if (typeof window !== 'undefined') {
-    window.AccumulationCalculations = {
-        runScenario,
-        calculateWealthDevelopment,
-        calculateMultiPhaseWealthDevelopment,
-        updateScenarioSalaryAnalysis,
-        getScenarioValue,
-        getScenarioToggleValue,
-        getScenarioETFType,
-        getSavingsMode,
-        getMultiPhaseData
-    };
-}
+// (Removed legacy CommonJS and window exports — ES modules are used across the app)

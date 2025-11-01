@@ -1348,8 +1348,13 @@ class ScenarioComparisonManager {
         let phaseBreakIndex = Math.max(0, lifecycleValues.length - 1);
 
         const lastAccumValue = lifecycleValues.length ? lifecycleValues[lifecycleValues.length - 1] : 0;
+        // Prefer the accumulation end value as the starting capital for lifecycle continuity.
+        // Fall back to an explicitly set retirementCapital only if accumulation provides no value.
+        const startCapital = (Number.isFinite(lastAccumValue) && lastAccumValue > 0)
+            ? lastAccumValue
+            : (withdrawal.retirementCapital ?? 0);
         const withdrawalSeries = this.calculateWithdrawalSeries({
-            startCapital: withdrawal.retirementCapital ?? lastAccumValue ?? 0,
+            startCapital,
             years: withdrawal.years,
             annualReturn: withdrawal.postRetirementReturn,
             inflation: withdrawal.withdrawalInflation,
@@ -1372,8 +1377,9 @@ class ScenarioComparisonManager {
             restValues.forEach((value) => lifecycleValues.push(value));
 
             sc.params.withdrawal.annualWithdrawal = withdrawalSeries.baseWithdrawal;
-            if (withdrawal.retirementCapital) {
-                const rate = (withdrawalSeries.baseWithdrawal / withdrawal.retirementCapital) * 100;
+            // Compute an implied withdrawal rate based on the actual start capital used
+            if (startCapital) {
+                const rate = (withdrawalSeries.baseWithdrawal / startCapital) * 100;
                 sc.params.withdrawal.rate = Number.isFinite(rate) ? Number(rate.toFixed(2)) : sc.params.withdrawal.rate;
             }
         }
@@ -2070,36 +2076,40 @@ class ScenarioComparisonManager {
                 }
             }
             const data = this.fillSeries(source, labels.length);
-            const dataset = {
-                label: sc.label,
-                data,
-                borderColor: sc.color,
-                backgroundColor: this.hexToRgba(sc.color, chartType === 'withdrawal' ? 0.12 : 0.08),
-                tension: 0.3,
-                pointBackgroundColor: sc.color,
-                pointBorderColor: '#ffffff',
-                pointBorderWidth: 2,
-                spanGaps: false,
-                _scenarioId: sc.id,
-                hidden: !this.activeScenarios.has(sc.id),
-                borderWidth: 3
-            };
+        const dataset = {
+            label: sc.label,
+            data,
+            borderColor: sc.color,
+            backgroundColor: this.hexToRgba(sc.color, chartType === 'withdrawal' ? 0.12 : 0.08),
+            tension: 0.3,
+            pointBackgroundColor: sc.color,
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            // Show points only at start and every 5 years for readability
+            pointRadius: (ctx) => {
+                const i = ctx.dataIndex ?? 0;
+                return (i === 0 || i % 5 === 0) ? 3 : 0;
+            },
+            pointHoverRadius: (ctx) => {
+                const i = ctx.dataIndex ?? 0;
+                return (i === 0 || i % 5 === 0) ? 5 : 0;
+            },
+            spanGaps: false,
+            _scenarioId: sc.id,
+            hidden: !this.activeScenarios.has(sc.id),
+            borderWidth: 3
+        };
 
-            if (chartType === 'lifecycle') {
-                const phaseBreakIndex = derived.lifecycle?.phaseBreakIndex ?? 0;
-                dataset.fill = false;
-                dataset.phaseBreakIndex = phaseBreakIndex;
-                dataset.segment = {
-                    borderDash: (ctx) => (ctx.p0DataIndex >= phaseBreakIndex ? [6, 4] : undefined),
-                    borderColor: (ctx) => (ctx.p0DataIndex >= phaseBreakIndex ? this.hexToRgba(sc.color, 0.75) : sc.color),
-                    backgroundColor: (ctx) => (ctx.p0DataIndex >= phaseBreakIndex ? this.hexToRgba(sc.color, 0.1) : this.hexToRgba(sc.color, 0.18))
-                };
-            } else if (chartType === 'accumulation') {
-                dataset.fill = false;
-            } else if (chartType === 'withdrawal') {
-                // Disable area fill to avoid Chart.js filler plugin errors when
-                // series are constructed lazily or contain leading nulls.
-                dataset.fill = false;
+        if (chartType === 'lifecycle') {
+            // Solid line across phases; keep phase index only for tooltips.
+            dataset.fill = false;
+            dataset.phaseBreakIndex = derived.lifecycle?.phaseBreakIndex ?? 0;
+        } else if (chartType === 'accumulation') {
+            dataset.fill = false;
+        } else if (chartType === 'withdrawal') {
+            // Disable area fill to avoid Chart.js filler plugin errors when
+            // series are constructed lazily or contain leading nulls.
+            dataset.fill = false;
             }
 
             return dataset;

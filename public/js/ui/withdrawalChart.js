@@ -267,8 +267,11 @@ export function createIntegratedTimeline() {
     // Use proper withdrawal calculation that depletes portfolio to zero
     let withdrawalData = [];
     try {
-        // Calculate total contributions for the withdrawal calculation
-        const calculatedTotalContributions = calculateTotalContributionsFromAccumulation();
+        // Calculate total contributions / cost basis for the withdrawal calculation
+        const scenarioCostBasis = Number(currentActiveScenario?.results?.costBasis);
+        const calculatedTotalContributions = Number.isFinite(scenarioCostBasis) && scenarioCostBasis > 0
+            ? scenarioCostBasis
+            : calculateTotalContributionsFromAccumulation();
         const validatedContributions = calculatedTotalContributions > 0 ? 
             Math.min(calculatedTotalContributions, retirementCapital) : 
             retirementCapital * 0.6; // fallback estimate

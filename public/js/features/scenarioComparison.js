@@ -421,9 +421,17 @@ class ScenarioComparisonManager {
         const fmt = new Intl.NumberFormat('de-DE');
         card.querySelector('.headline-value')?.replaceChildren(document.createTextNode(sc.params.results?.finalWealth || '—'));
         const meta = card.querySelector('.meta');
+        const annualized = sc.derived?.totals?.annualizedReturn;
+        const formattedAnnualized = Number.isFinite(annualized)
+            ? `${(annualized * 100).toFixed(2)}% Rendite`
+            : `${sc.params.accumulation.returnRate ?? 0}% Rendite`;
         if (meta) {
+            const withdrawalRateDisplay = (() => {
+                const rateValue = Number(sc.params.withdrawal.rate || 0);
+                return rateValue > 1 ? `${rateValue}% Entnahme` : `${(rateValue * 100).toFixed(2)}% Entnahme`;
+            })();
             meta.innerHTML = `
-                <span class="metric">${sc.params.accumulation.returnRate ?? 0}% Rendite</span>
+                <span class="metric">${formattedAnnualized}</span>
                 <span class="dot">•</span>
                 <span class="metric">${sc.params.accumulation.years ?? 0}J Sparphase</span>
                 <span class="dot">•</span>
@@ -432,7 +440,7 @@ class ScenarioComparisonManager {
                 <span class="break"></span>
                 <span class="metric">${fmt.format(sc.params.accumulation.monthlySavings || 0)} € /M</span>
                 <span class="dot">•</span>
-                <span class="metric">${sc.params.withdrawal.rate ?? 0}% Entnahme</span>`;
+                <span class="metric">${withdrawalRateDisplay}</span>`;
         }
         const chips = card.querySelectorAll('.sources .chip');
         if (chips?.length >= 3) {
@@ -1399,8 +1407,12 @@ class ScenarioComparisonManager {
         sc.derived.totals = {
             finalWealth: lastAccumulationValue || 0,
             totalInvested: accumulationSeries.totalInvested,
+            costBasis: accumulationSeries.costBasis,
+            totalTaxesPaid: accumulationSeries.totalTaxesPaid,
+            annualizedReturn: accumulationSeries.annualizedReturn,
             accumulationFinal: lastAccumulationValue,
-            lifecycleFinal: lifecycleValues.length ? lifecycleValues[lifecycleValues.length - 1] : lastAccumulationValue || 0
+            lifecycleFinal: lifecycleValues.length ? lifecycleValues[lifecycleValues.length - 1] : lastAccumulationValue || 0,
+            durationYears: accumulationSeries.values.length ? accumulationSeries.values.length - 1 : 0
         };
         sc.derived.metrics = this.calculateScenarioMetrics(sc);
 
@@ -1409,6 +1421,12 @@ class ScenarioComparisonManager {
             sc.params.results.finalWealth = this.formatCurrency(sc.derived.totals.finalWealth);
         } else {
             sc.params.results.finalWealth = '—';
+        }
+        if (Number.isFinite(sc.derived.totals.costBasis)) {
+            sc.params.results.costBasis = sc.derived.totals.costBasis;
+        }
+        if (Number.isFinite(sc.derived.totals.totalInvested)) {
+            sc.params.results.totalInvested = sc.derived.totals.totalInvested;
         }
 
         const card = document.querySelector(`.summary-cards .summary-card[data-scenario-id="${sc.id}"]`);
@@ -1450,7 +1468,11 @@ class ScenarioComparisonManager {
             return {
                 labels,
                 values,
-                totalInvested: (lastEntry && typeof lastEntry.totalInvested === 'number') ? lastEntry.totalInvested : initialCapital + monthlySavings * 12 * duration
+                totalInvested: (lastEntry && typeof lastEntry.totalInvested === 'number') ? lastEntry.totalInvested : initialCapital + monthlySavings * 12 * duration,
+                costBasis: result.costBasis,
+                totalTaxesPaid: result.totalTaxesPaid,
+                annualizedReturn: result.annualizedReturn,
+                finalNominal: result.finalNominal
             };
         } catch (error) {
             console.warn('Fallback accumulation series calculation', error);
@@ -1465,7 +1487,11 @@ class ScenarioComparisonManager {
             return {
                 labels,
                 values,
-                totalInvested: initialCapital + monthlySavings * 12 * duration
+                totalInvested: initialCapital + monthlySavings * 12 * duration,
+                costBasis: capital,
+                totalTaxesPaid: 0,
+                annualizedReturn: returnRate,
+                finalNominal: capital
             };
         }
     }
@@ -1480,11 +1506,12 @@ class ScenarioComparisonManager {
         const returnRate = Number(annualReturn || 0) / 100;
         const inflationRate = Number(inflation || 0) / 100;
         let baseWithdrawal = Number(annualWithdrawal || 0);
-        const ratePct = Number(rate || 0);
+        const rawRate = Number(rate || 0);
+        const normalizedRate = rawRate > 1 ? rawRate / 100 : rawRate;
 
         if (!baseWithdrawal) {
-            if (ratePct > 0) {
-                baseWithdrawal = initialCapital * (ratePct / 100);
+            if (normalizedRate > 0) {
+                baseWithdrawal = initialCapital * normalizedRate;
             } else {
                 try {
                     const realRate = calculateRealInterestRate(returnRate, inflationRate);
@@ -1549,15 +1576,19 @@ class ScenarioComparisonManager {
         const totals = sc.derived?.totals || {};
         const clamp = (value) => Math.max(1, Math.min(10, Number.isFinite(value) ? value : 1));
 
-        const returnScore = clamp((Number(accumulation.returnRate) || 0) / 1.2);
-        const riskPenalty = (Number(accumulation.returnRate) || 0) / 4;
+        const effectiveReturnPct = Number.isFinite(totals.annualizedReturn)
+            ? (totals.annualizedReturn || 0) * 100
+            : (Number(accumulation.returnRate) || 0);
+        const returnScore = clamp(effectiveReturnPct / 1.2);
+        const riskPenalty = effectiveReturnPct / 4;
         const riskScore = clamp(8 - riskPenalty - (accumulation.includeTax ? 0.5 : 0));
 
         const withdrawalRate = (() => {
             if (withdrawal.annualWithdrawal && withdrawal.retirementCapital) {
                 return (withdrawal.annualWithdrawal / withdrawal.retirementCapital) * 100;
             }
-            return Number(withdrawal.rate) || 0;
+            const storedRate = Number(withdrawal.rate) || 0;
+            return storedRate > 1 ? storedRate : storedRate * 100;
         })();
         const liquidityScore = clamp(10 - (withdrawalRate * 1.2));
 
@@ -1608,9 +1639,17 @@ class ScenarioComparisonManager {
             const final = this.computeFinalWealth(sc);
             sc.params.results.finalWealth = final;
             byId(`sum-final-${prefix}`)?.replaceChildren(document.createTextNode(final));
-            byId(`sum-return-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.accumulation.returnRate ?? 0}%`));
+            const annualized = sc.derived?.totals?.annualizedReturn;
+            const annualizedDisplay = Number.isFinite(annualized)
+                ? `${(annualized * 100).toFixed(2)}%`
+                : `${sc.params.accumulation.returnRate ?? 0}%`;
+            byId(`sum-return-${prefix}`)?.replaceChildren(document.createTextNode(annualizedDisplay));
             byId(`sum-monthly-${prefix}`)?.replaceChildren(document.createTextNode(`${fmt.format(sc.params.accumulation.monthlySavings || 0)} €`));
-            byId(`sum-wdrate-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.withdrawal.rate ?? 0}%`));
+            const withdrawalRateValue = Number(sc.params.withdrawal.rate || 0);
+            const withdrawalRateDisplay = withdrawalRateValue > 1
+                ? `${withdrawalRateValue}%`
+                : `${(withdrawalRateValue * 100).toFixed(2)}%`;
+            byId(`sum-wdrate-${prefix}`)?.replaceChildren(document.createTextNode(withdrawalRateDisplay));
             byId(`sum-accyears-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.accumulation.years ?? 0}`));
             byId(`sum-wdyears-${prefix}`)?.replaceChildren(document.createTextNode(`${sc.params.withdrawal.years ?? 0}`));
             if (sc.params.sources) {

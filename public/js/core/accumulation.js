@@ -9,10 +9,319 @@
 import { parseGermanNumber, formatGermanNumber, formatCurrency } from '../utils.js';
 
 // Import tax calculation functions
-import { calculateGermanETFTax, calculateGermanNetSalary, resetETFTaxAllowance } from './tax.js';
+import { applyCapitalGainsTax, calculateGermanNetSalary, normalizeEtfType, resetETFTaxAllowance, TAX_CONSTANTS } from './tax.js';
 
-// Global variable to track used tax-free allowance
-let usedSparerpauschbetrag = 0;
+const MONTHS_PER_YEAR = 12;
+const DISTRIBUTION_YIELD_ANNUAL = 0.02;
+
+function computeMonthlyRate(annualRate = 0) {
+    const sanitized = Number(annualRate) || 0;
+    if (Math.abs(sanitized) < 1e-8) {
+        return sanitized / MONTHS_PER_YEAR;
+    }
+    return Math.pow(1 + sanitized, 1 / MONTHS_PER_YEAR) - 1;
+}
+
+function computeAnnualizedReturn(cashFlows, periodsPerYear = MONTHS_PER_YEAR) {
+    if (!Array.isArray(cashFlows) || cashFlows.length === 0) {
+        return 0;
+    }
+
+    const hasPositive = cashFlows.some(value => value > 0);
+    const hasNegative = cashFlows.some(value => value < 0);
+    if (!hasPositive || !hasNegative) {
+        return 0;
+    }
+
+    const tolerance = 1e-7;
+    let rate = 0.05 / periodsPerYear;
+
+    for (let iteration = 0; iteration < 100; iteration++) {
+        let npv = 0;
+        let derivative = 0;
+
+        for (let t = 0; t < cashFlows.length; t++) {
+            const discount = Math.pow(1 + rate, t);
+            npv += cashFlows[t] / discount;
+            if (t > 0) {
+                derivative -= t * cashFlows[t] / Math.pow(1 + rate, t + 1);
+            }
+        }
+
+        if (Math.abs(npv) < tolerance) {
+            return Math.pow(1 + rate, periodsPerYear) - 1;
+        }
+
+        if (Math.abs(derivative) < 1e-12) {
+            break;
+        }
+
+        const nextRate = rate - npv / derivative;
+        if (!Number.isFinite(nextRate) || nextRate <= -0.9999) {
+            break;
+        }
+        rate = nextRate;
+    }
+
+    const evaluate = (r) => {
+        let npv = 0;
+        for (let t = 0; t < cashFlows.length; t++) {
+            npv += cashFlows[t] / Math.pow(1 + r, t);
+        }
+        return npv;
+    };
+
+    let low = -0.9999;
+    let high = 10;
+    let npvLow = evaluate(low);
+    let npvHigh = evaluate(high);
+
+    if (npvLow * npvHigh > 0) {
+        return 0;
+    }
+
+    for (let iteration = 0; iteration < 200; iteration++) {
+        const mid = (low + high) / 2;
+        const npvMid = evaluate(mid);
+        if (Math.abs(npvMid) < tolerance) {
+            return Math.pow(1 + mid, periodsPerYear) - 1;
+        }
+        if (npvLow * npvMid < 0) {
+            high = mid;
+            npvHigh = npvMid;
+        } else {
+            low = mid;
+            npvLow = npvMid;
+        }
+    }
+
+    const approximateRate = (low + high) / 2;
+    return Math.pow(1 + approximateRate, periodsPerYear) - 1;
+}
+
+function normalizePhases(phases = []) {
+    return phases
+        .filter(phase => phase && Number.isFinite(parseFloat(phase.startYear)))
+        .map(phase => {
+            const startYear = Math.max(1, parseInt(phase.startYear, 10) || 1);
+            const endYear = Math.max(startYear, parseInt(phase.endYear, 10) || startYear);
+            return {
+                startYear,
+                endYear,
+                monthlySavingsRate: Number(phase.monthlySavingsRate || 0),
+                annualReturn: (typeof phase.annualReturn === 'number' && !Number.isNaN(phase.annualReturn)) ? phase.annualReturn : null
+            };
+        });
+}
+
+function simulateAccumulationPhase({
+    initialCapital,
+    durationYears,
+    defaultAnnualReturn,
+    inflationRate,
+    initialMonthlyContribution,
+    salaryGrowth,
+    salaryToSavings,
+    includeTax,
+    baseSalary,
+    teilfreistellung,
+    etfType,
+    phases
+}) {
+    const normalizedPhases = normalizePhases(phases);
+    const effectiveEtfType = normalizeEtfType(etfType);
+    const duration = Math.max(0, Number.isFinite(durationYears) ? durationYears : 0);
+    const totalYears = normalizedPhases.length > 0
+        ? Math.max(duration, Math.max(...normalizedPhases.map(phase => phase.endYear)))
+        : duration;
+    const effectiveYears = Math.max(0, Math.round(totalYears));
+    const totalMonths = effectiveYears * MONTHS_PER_YEAR;
+
+    resetETFTaxAllowance();
+
+    const teilfreistellungRate = teilfreistellung ? TAX_CONSTANTS.TEILFREISTELLUNG_EQUITY : 0;
+    const distributionMonthlyRate = (effectiveEtfType === 'ausschüttend') ? computeMonthlyRate(DISTRIBUTION_YIELD_ANNUAL) : 0;
+
+    let balance = initialCapital;
+    let costBasis = initialCapital;
+    let currentSalary = baseSalary;
+    let currentMonthlyContribution = initialMonthlyContribution;
+    let totalTaxesPaid = 0;
+    let totalUserContributions = initialCapital;
+
+    const yearlyData = [{
+        year: 0,
+        capital: balance,
+        realCapital: balance,
+        totalInvested: totalUserContributions,
+        monthlySavings: initialMonthlyContribution,
+        yearlySalary: currentSalary,
+        netSalary: calculateGermanNetSalary(currentSalary),
+        taxesPaid: 0,
+        cumulativeTaxesPaid: 0,
+        costBasis
+    }];
+
+    const cashFlows = new Array(totalMonths + 1).fill(0);
+    cashFlows[0] = -(initialCapital || 0);
+
+    const phaseAdjustments = normalizedPhases.map(() => 0);
+
+    let yearlyStartCapital = balance;
+    let yearlyDeposits = 0;
+    let yearlyTaxPaid = 0;
+    let lastMonthlyContribution = initialMonthlyContribution;
+
+    for (let monthIndex = 0; monthIndex < totalMonths; monthIndex++) {
+        const yearNumber = Math.floor(monthIndex / MONTHS_PER_YEAR) + 1;
+        const monthWithinYear = monthIndex % MONTHS_PER_YEAR;
+
+        let monthlyContribution;
+        let annualReturn = defaultAnnualReturn;
+
+        if (normalizedPhases.length > 0) {
+            const phaseIndex = normalizedPhases.findIndex(phase => yearNumber >= phase.startYear && yearNumber <= phase.endYear);
+            if (phaseIndex !== -1) {
+                const baseContribution = normalizedPhases[phaseIndex].monthlySavingsRate;
+                const adjustment = phaseAdjustments[phaseIndex] || 0;
+                monthlyContribution = Math.max(0, baseContribution + adjustment);
+                if (typeof normalizedPhases[phaseIndex].annualReturn === 'number' && !Number.isNaN(normalizedPhases[phaseIndex].annualReturn)) {
+                    annualReturn = normalizedPhases[phaseIndex].annualReturn;
+                }
+            } else {
+                monthlyContribution = 0;
+            }
+        } else {
+            monthlyContribution = Math.max(0, currentMonthlyContribution);
+        }
+
+        lastMonthlyContribution = monthlyContribution;
+
+        const monthlyReturn = computeMonthlyRate(annualReturn);
+        if (monthlyReturn !== 0 && balance !== 0) {
+            balance *= (1 + monthlyReturn);
+        }
+
+        if (includeTax && distributionMonthlyRate > 0 && balance > 0 && effectiveEtfType === 'ausschüttend') {
+            const grossDistribution = balance * distributionMonthlyRate;
+            if (grossDistribution > 0) {
+                balance -= grossDistribution;
+                const taxable = grossDistribution * (1 - teilfreistellungRate);
+                const { tax } = applyCapitalGainsTax(taxable);
+                const netDistribution = grossDistribution - tax;
+                balance += netDistribution;
+                costBasis += netDistribution;
+                totalTaxesPaid += tax;
+                yearlyTaxPaid += tax;
+                if (costBasis > balance) {
+                    costBasis = balance;
+                }
+            }
+        }
+
+        if (monthlyContribution > 0) {
+            balance += monthlyContribution;
+            costBasis += monthlyContribution;
+            totalUserContributions += monthlyContribution;
+            yearlyDeposits += monthlyContribution;
+            cashFlows[monthIndex + 1] -= monthlyContribution;
+        }
+
+        if (costBasis > balance) {
+            costBasis = balance;
+        }
+        if (costBasis < 0) {
+            costBasis = 0;
+        }
+
+        const isYearEnd = (monthWithinYear === MONTHS_PER_YEAR - 1) || (monthIndex === totalMonths - 1);
+        if (isYearEnd) {
+            if (includeTax && effectiveEtfType === 'thesaurierend') {
+                const basisertrag = yearlyStartCapital * TAX_CONSTANTS.BASISZINS * 0.7;
+                const capitalGains = Math.max(0, balance - (yearlyStartCapital + yearlyDeposits));
+                const vorabpauschale = Math.max(0, Math.min(basisertrag, capitalGains));
+                if (vorabpauschale > 0) {
+                    const taxable = vorabpauschale * (1 - teilfreistellungRate);
+                    const { tax } = applyCapitalGainsTax(taxable);
+                    if (tax > 0) {
+                        balance -= tax;
+                        totalTaxesPaid += tax;
+                        yearlyTaxPaid += tax;
+                        if (balance < 0) {
+                            balance = 0;
+                        }
+                        if (costBasis > balance) {
+                            costBasis = balance;
+                        }
+                    }
+                }
+            }
+
+            const realCapital = (1 + inflationRate) > 0 ? balance / Math.pow(1 + inflationRate, yearNumber) : balance;
+            yearlyData.push({
+                year: yearNumber,
+                capital: balance,
+                realCapital,
+                totalInvested: totalUserContributions,
+                monthlySavings: lastMonthlyContribution,
+                yearlySalary: currentSalary,
+                netSalary: calculateGermanNetSalary(currentSalary),
+                taxesPaid: yearlyTaxPaid,
+                cumulativeTaxesPaid: totalTaxesPaid,
+                costBasis
+            });
+
+            yearlyStartCapital = balance;
+            yearlyDeposits = 0;
+            yearlyTaxPaid = 0;
+            resetETFTaxAllowance();
+
+            if (salaryGrowth > 0 && salaryToSavings > 0 && yearNumber < effectiveYears) {
+                const previousNetSalary = calculateGermanNetSalary(currentSalary);
+                currentSalary *= (1 + salaryGrowth);
+                const newNetSalary = calculateGermanNetSalary(currentSalary);
+                const netIncrease = newNetSalary - previousNetSalary;
+                const monthlyIncrease = (netIncrease / MONTHS_PER_YEAR) * salaryToSavings;
+                if (monthlyIncrease > 0) {
+                    if (normalizedPhases.length === 0) {
+                        currentMonthlyContribution += monthlyIncrease;
+                    } else {
+                        normalizedPhases.forEach((phase, index) => {
+                            if (phase.endYear >= yearNumber + 1) {
+                                phaseAdjustments[index] = (phaseAdjustments[index] || 0) + monthlyIncrease;
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    if (cashFlows.length > 0) {
+        cashFlows[cashFlows.length - 1] += balance;
+    }
+
+    const effectiveDurationYears = totalMonths / MONTHS_PER_YEAR;
+    const finalNominal = balance;
+    const finalReal = (1 + inflationRate) > 0
+        ? finalNominal / Math.pow(1 + inflationRate, effectiveDurationYears)
+        : finalNominal;
+    const totalReturn = finalNominal - totalUserContributions;
+    const annualizedReturn = computeAnnualizedReturn(cashFlows, MONTHS_PER_YEAR);
+
+    return {
+        finalNominal,
+        finalReal,
+        totalInvested: totalUserContributions,
+        totalReturn,
+        totalTaxesPaid,
+        yearlyData,
+        costBasis,
+        annualizedReturn,
+        phases: normalizedPhases,
+        durationYears: effectiveYears
+    };
+}
 
 /**
  * Main scenario calculation function
@@ -118,8 +427,14 @@ export function runScenario(scenario) {
         totalInvested: results.totalInvested,
         totalReturn: results.totalReturn,
         totalTaxesPaid: results.totalTaxesPaid,
+        costBasis: results.costBasis,
+        annualizedReturn: results.annualizedReturn,
+        durationYears: results.durationYears,
         endCapital: results.finalNominal  // Alias for backward compatibility
     };
+
+    scenario.costBasis = results.costBasis;
+    scenario.annualizedReturn = results.annualizedReturn;
 
     // Update salary increase analysis for this scenario
     updateScenarioSalaryAnalysis(scenarioId, baseSalary, salaryGrowth);
@@ -144,96 +459,20 @@ export function runScenario(scenario) {
  * @returns {Object} Calculation results
  */
 export function calculateWealthDevelopment(monthlySavings, initialCapital, annualReturn, inflationRate, salaryGrowth, duration, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
-    const monthlyReturn = annualReturn / 12;
-    
-    let capital = initialCapital;
-    let currentMonthlySavings = monthlySavings;
-    let currentSalary = baseSalary;
-    let totalInvested = initialCapital;
-    let cumulativeTaxesPaid = 0;
-    
-    const yearlyData = [{
-        year: 0,
-        capital: capital,
-        realCapital: capital,
-        totalInvested: totalInvested,
-        monthlySavings: currentMonthlySavings,
-        yearlySalary: currentSalary,
-        netSalary: calculateGermanNetSalary(currentSalary),
-        taxesPaid: 0,
-        cumulativeTaxesPaid: 0
-    }];
-
-    for (let year = 1; year <= duration; year++) {
-        const startOfYearCapital = capital;
-        let yearlyTaxesPaid = 0;
-        
-        for (let month = 1; month <= 12; month++) {
-            // Apply monthly return (no tax applied monthly)
-            const monthlyGain = capital * monthlyReturn;
-            capital += monthlyGain;
-            
-            // Add monthly savings
-            capital += currentMonthlySavings;
-            totalInvested += currentMonthlySavings;
-        }
-        
-        // Apply German ETF taxes annually (more realistic)
-        if (includeTax) {
-            const annualTax = calculateGermanETFTax(startOfYearCapital, capital, annualReturn, year, teilfreistellung, etfType);
-            capital -= annualTax;
-            yearlyTaxesPaid = annualTax;
-            cumulativeTaxesPaid += annualTax;
-        }
-        
-        // Annual salary increase affects savings rate (realistic calculation with progressive taxation)
-        if (year < duration) {
-            // Calculate previous net salary
-            const previousNetSalary = calculateGermanNetSalary(currentSalary);
-            
-            // Calculate new gross salary
-            const annualSalaryIncrease = currentSalary * salaryGrowth;
-            currentSalary += annualSalaryIncrease;
-            
-            // Calculate new net salary with progressive taxation
-            const newNetSalary = calculateGermanNetSalary(currentSalary);
-            
-            // Calculate actual net increase (accounts for higher tax rates)
-            const netSalaryIncrease = newNetSalary - previousNetSalary;
-            
-            // Apply percentage of NET salary increase to monthly savings
-            const monthlySalaryIncrease = (netSalaryIncrease / 12) * salaryToSavings;
-            currentMonthlySavings += monthlySalaryIncrease;
-        }
-        
-        // Calculate real value (inflation-adjusted)
-        const realCapital = capital / Math.pow(1 + inflationRate, year);
-        
-        yearlyData.push({
-            year: year,
-            capital: capital,
-            realCapital: realCapital,
-            totalInvested: totalInvested,
-            monthlySavings: currentMonthlySavings,
-            yearlySalary: currentSalary,
-            netSalary: calculateGermanNetSalary(currentSalary),
-            taxesPaid: yearlyTaxesPaid,
-            cumulativeTaxesPaid: cumulativeTaxesPaid
-        });
-    }
-
-    const finalNominal = capital;
-    const finalReal = capital / Math.pow(1 + inflationRate, duration);
-    const totalReturn = finalNominal - totalInvested;
-
-    return {
-        finalNominal,
-        finalReal,
-        totalInvested,
-        totalReturn,
-        totalTaxesPaid: cumulativeTaxesPaid,
-        yearlyData
-    };
+    return simulateAccumulationPhase({
+        initialCapital,
+        durationYears: duration,
+        defaultAnnualReturn: annualReturn,
+        inflationRate,
+        initialMonthlyContribution: monthlySavings,
+        salaryGrowth,
+        salaryToSavings,
+        includeTax,
+        baseSalary,
+        teilfreistellung,
+        etfType,
+        phases: []
+    });
 }
 
 /**
@@ -252,136 +491,20 @@ export function calculateWealthDevelopment(monthlySavings, initialCapital, annua
  * @returns {Object} Calculation results
  */
 function calculateMultiPhaseWealthDevelopment(phases, initialCapital, annualReturn, inflationRate, salaryGrowth, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
-    console.log('Starting multi-phase wealth calculation with phases:', phases);
-    
-    let capital = initialCapital;
-    let currentSalary = baseSalary;
-    let totalInvested = initialCapital;
-    let cumulativeTaxesPaid = 0;
-    
-    const yearlyData = [{
-        year: 0,
-        capital: capital,
-        realCapital: capital,
-        totalInvested: totalInvested,
-        monthlySavings: 0,
-        yearlySalary: currentSalary,
-        netSalary: calculateGermanNetSalary(currentSalary),
-        taxesPaid: 0,
-        cumulativeTaxesPaid: 0,
-        currentPhase: null
-    }];
-
-    // Determine the maximum duration from all phases
-    const maxDuration = Math.max(...phases.map(phase => phase.endYear));
-    
-    // Reset tax allowance tracking for new calculation
-    usedSparerpauschbetrag = 0;
-
-    for (let year = 1; year <= maxDuration; year++) {
-        const startOfYearCapital = capital;
-        let yearlyTaxesPaid = 0;
-        
-        // Find which phase applies for this year
-        const currentPhase = phases.find(phase => year >= phase.startYear && year <= phase.endYear);
-        let currentMonthlySavings = currentPhase ? currentPhase.monthlySavingsRate : 0;
-        // Determine effective annual return: per-phase value if provided, otherwise global slider value
-        const effectiveAnnualReturn = (currentPhase && typeof currentPhase.annualReturn === 'number' && !isNaN(currentPhase.annualReturn))
-            ? currentPhase.annualReturn
-            : annualReturn;
-        
-        console.log(`Year ${year}: Phase: ${currentPhase ? `${currentPhase.startYear}-${currentPhase.endYear}` : 'none'}, Monthly savings: €${currentMonthlySavings}`);
-        
-        for (let month = 1; month <= 12; month++) {
-            // Apply monthly return using the effective annual return for this year
-            const monthlyGain = capital * (effectiveAnnualReturn / 12);
-            capital += monthlyGain;
-            
-            // Add monthly savings if in an active phase
-            if (currentMonthlySavings > 0) {
-                capital += currentMonthlySavings;
-                totalInvested += currentMonthlySavings;
-            }
-        }
-        
-        // Apply German ETF taxes annually
-        if (includeTax && capital > startOfYearCapital) {
-            const annualTax = calculateGermanETFTax(startOfYearCapital, capital, effectiveAnnualReturn, year, teilfreistellung, etfType);
-            capital -= annualTax;
-            yearlyTaxesPaid = annualTax;
-            cumulativeTaxesPaid += annualTax;
-        }
-        
-        // Annual salary increase affects savings rate (apply to all active phases)
-        if (year < maxDuration) {
-            const previousNetSalary = calculateGermanNetSalary(currentSalary);
-            const annualSalaryIncrease = currentSalary * salaryGrowth;
-            currentSalary += annualSalaryIncrease;
-            const newNetSalary = calculateGermanNetSalary(currentSalary);
-            const netSalaryIncrease = newNetSalary - previousNetSalary;
-            
-            // Apply percentage of NET salary increase to monthly savings
-            const monthlySalaryIncrease = (netSalaryIncrease / 12) * salaryToSavings;
-            
-            // Update phase savings rates proportionally for the current year
-            if (monthlySalaryIncrease > 0) {
-                console.log(`Year ${year}: Salary increased by €${monthlySalaryIncrease.toFixed(2)}/month`);
-                
-                // Update the phases array to reflect the salary growth increase
-                for (let i = 0; i < phases.length; i++) {
-                    // Update phases that are active from current year onwards
-                    if (phases[i].endYear >= year) {
-                        phases[i].monthlySavingsRate += monthlySalaryIncrease;
-                        console.log(`Updated phase ${i+1} (${phases[i].startYear}-${phases[i].endYear}): €${phases[i].monthlySavingsRate.toFixed(2)}/month`);
-                    }
-                }
-                
-                // Update current monthly savings if we're in an active phase
-                if (currentPhase) {
-                    currentMonthlySavings += monthlySalaryIncrease;
-                    console.log(`Updated current monthly savings: €${currentMonthlySavings.toFixed(2)}/month`);
-                }
-            }
-        }
-        
-        // Calculate real value (inflation-adjusted)
-        const realCapital = capital / Math.pow(1 + inflationRate, year);
-        
-        yearlyData.push({
-            year: year,
-            capital: capital,
-            realCapital: realCapital,
-            totalInvested: totalInvested,
-            monthlySavings: currentMonthlySavings,
-            yearlySalary: currentSalary,
-            netSalary: calculateGermanNetSalary(currentSalary),
-            taxesPaid: yearlyTaxesPaid,
-            cumulativeTaxesPaid: cumulativeTaxesPaid,
-            currentPhase: currentPhase ? `Phase ${phases.indexOf(currentPhase) + 1}` : 'Keine Phase'
-        });
-    }
-
-    const finalNominal = capital;
-    const finalReal = capital / Math.pow(1 + inflationRate, maxDuration);
-    const totalReturn = finalNominal - totalInvested;
-
-    console.log('Multi-phase calculation completed:', {
-        finalNominal,
-        finalReal,
-        totalInvested,
-        totalReturn,
-        totalTaxesPaid: cumulativeTaxesPaid
+    return simulateAccumulationPhase({
+        initialCapital,
+        durationYears: 0,
+        defaultAnnualReturn: annualReturn,
+        inflationRate,
+        initialMonthlyContribution: 0,
+        salaryGrowth,
+        salaryToSavings,
+        includeTax,
+        baseSalary,
+        teilfreistellung,
+        etfType,
+        phases
     });
-
-    return {
-        finalNominal,
-        finalReal,
-        totalInvested,
-        totalReturn,
-        totalTaxesPaid: cumulativeTaxesPaid,
-        yearlyData,
-        phases: phases // Include phase information for chart visualization
-    };
 }
 
 // Tax functions are now imported from ./tax.js module

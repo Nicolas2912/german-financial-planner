@@ -11,6 +11,41 @@ import { parseGermanNumber, formatCurrency, formatGermanNumber } from '../utils.
 // Global variable to track used tax-free allowance for ETF taxes
 let usedSparerpauschbetrag = 0;
 
+export function normalizeEtfType(value) {
+    const normalized = (value ?? '').toString().toLowerCase();
+    if (normalized === 'distributing' || normalized === 'ausschüttend') {
+        return 'ausschüttend';
+    }
+    if (normalized === 'accumulating' || normalized === 'thesaurierend') {
+        return 'thesaurierend';
+    }
+    return 'thesaurierend';
+}
+
+/**
+ * Apply capital gains tax with consideration of the Sparerpauschbetrag.
+ * Returns the payable tax and bookkeeping details so callers can update totals.
+ *
+ * @param {number} taxableAmount - Amount subject to tax after Teilfreistellung
+ * @returns {{ tax: number, allowanceUsed: number, taxableAfterAllowance: number }}
+ */
+export function applyCapitalGainsTax(taxableAmount) {
+    const sanitizedAmount = Math.max(0, Number(taxableAmount) || 0);
+    if (sanitizedAmount <= 0) {
+        return { tax: 0, allowanceUsed: 0, taxableAfterAllowance: 0 };
+    }
+
+    const allowance = TAX_CONSTANTS.SPARERPAUSCHBETRAG;
+    const remainingAllowance = Math.max(0, allowance - usedSparerpauschbetrag);
+    const allowanceUsed = Math.min(remainingAllowance, sanitizedAmount);
+    usedSparerpauschbetrag += allowanceUsed;
+
+    const taxableAfterAllowance = Math.max(0, sanitizedAmount - allowanceUsed);
+    const tax = taxableAfterAllowance * TAX_CONSTANTS.ABGELTUNGSSTEUER_RATE;
+
+    return { tax, allowanceUsed, taxableAfterAllowance };
+}
+
 /**
  * Calculate German ETF tax (Abgeltungssteuer with Vorabpauschale)
  * 
@@ -23,11 +58,9 @@ let usedSparerpauschbetrag = 0;
  * @returns {number} Tax amount to be paid
  */
 export function calculateGermanETFTax(startCapital, endCapital, annualReturn, year, teilfreistellung = false, etfType = 'thesaurierend') {
-    // German tax constants for 2025
-    const ABGELTUNGSSTEUER_RATE = 0.25; // 25% Abgeltungssteuer
-    const SPARERPAUSCHBETRAG = 1000; // Annual tax-free allowance
-    const TEILFREISTELLUNG_EQUITY = 0.30; // 30% partial exemption for equity ETFs
-    const BASISZINS = 0.0253; // Base interest rate for Vorabpauschale (2.53% for 2025)
+    const normalizedEtfType = normalizeEtfType(etfType);
+    const TEILFREISTELLUNG_EQUITY = TAX_CONSTANTS.TEILFREISTELLUNG_EQUITY;
+    const BASISZINS = TAX_CONSTANTS.BASISZINS;
     
     // Reset allowance tracking at the beginning of calculation
     if (year === 1) {
@@ -39,7 +72,7 @@ export function calculateGermanETFTax(startCapital, endCapital, annualReturn, ye
     
     let taxableAmount = 0;
     
-    if (etfType === 'thesaurierend') {
+    if (normalizedEtfType === 'thesaurierend') {
         // For accumulating ETFs: Calculate Vorabpauschale according to German law
         // Basisertrag = Fondswert am Jahresanfang × Basiszins × 70%
         const basisertrag = startCapital * BASISZINS * 0.7;
@@ -73,19 +106,13 @@ export function calculateGermanETFTax(startCapital, endCapital, annualReturn, ye
     }
     
     // Apply Sparerpauschbetrag (tax-free allowance) - annual allowance
-    const remainingAllowance = Math.max(0, SPARERPAUSCHBETRAG - usedSparerpauschbetrag);
-    const allowanceUsedThisYear = Math.min(remainingAllowance, taxableAmount);
-    usedSparerpauschbetrag += allowanceUsedThisYear;
-    
-    const taxableAfterAllowance = Math.max(0, taxableAmount - allowanceUsedThisYear);
-    
-    // Calculate final tax
-    const tax = taxableAfterAllowance * ABGELTUNGSSTEUER_RATE;
-    
+    const { tax, allowanceUsed, taxableAfterAllowance } = applyCapitalGainsTax(taxableAmount);
+    const remainingAllowance = Math.max(0, TAX_CONSTANTS.SPARERPAUSCHBETRAG - usedSparerpauschbetrag);
+
     console.log(`Remaining Allowance: €${remainingAllowance.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-    console.log(`Allowance Used This Year: €${allowanceUsedThisYear.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    console.log(`Allowance Used This Year: €${allowanceUsed.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
     console.log(`Taxable After Allowance: €${taxableAfterAllowance.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-    console.log(`Final Tax (${ABGELTUNGSSTEUER_RATE * 100}%): €${tax.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+    console.log(`Final Tax (${TAX_CONSTANTS.ABGELTUNGSSTEUER_RATE * 100}%): €${tax.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
     console.log('---');
     
     return tax;

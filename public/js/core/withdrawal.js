@@ -395,29 +395,31 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
         
         // Step 4: Calculate German taxes using proportional cost basis method
         let taxesPaid = 0;
-        
-        if (includeTax && grossAnnualWithdrawal > 0) {
-            // Step 4.1: Calculate cost basis of shares being sold (proportional method)
-            const costBasisOut = remainingCostBasis * (grossAnnualWithdrawal / capitalAfterReturns);
-            
-            // Step 4.2: Calculate realized gain
-            const realizedGain = Math.max(0, grossAnnualWithdrawal - costBasisOut);
-            
-            // Step 4.3: Update remaining cost basis
+        let costBasisOut = 0;
+        let realizedGain = 0;
+
+        if (grossAnnualWithdrawal > 0) {
+            const saleRatio = capitalAfterReturns > 0
+                ? Math.min(1, Math.max(0, grossAnnualWithdrawal / capitalAfterReturns))
+                : 0;
+            costBasisOut = remainingCostBasis * saleRatio;
+            realizedGain = Math.max(0, grossAnnualWithdrawal - costBasisOut);
             remainingCostBasis = Math.max(0, remainingCostBasis - costBasisOut);
-            
+        }
+
+        if (includeTax && grossAnnualWithdrawal > 0) {
             // Step 4.4: Apply Teilfreistellung (30% of gains from equity ETFs are tax-free)
             const taxableGainBeforeAllowance = realizedGain * (1 - teilfreistellungRate);
-            
+
             // Step 4.5: Apply annual tax-free allowance (€1,000 per year)
             const remainingAllowance = Math.max(0, TAX_FREE_ALLOWANCE - annualTaxFreeAllowanceUsed);
             const taxableGainAfterAllowance = Math.max(0, taxableGainBeforeAllowance - remainingAllowance);
             const allowanceUsed = Math.min(remainingAllowance, taxableGainBeforeAllowance);
             annualTaxFreeAllowanceUsed += allowanceUsed;
-            
+
             // Step 4.6: Calculate final tax (25% Abgeltungssteuer)
             taxesPaid = taxableGainAfterAllowance * EFFECTIVE_TAX_RATE;
-            
+
             console.log(`📊 Year ${year} Tax Calculation (Proportional Cost Basis):`);
             console.log(`   Portfolio before withdrawal: €${capitalAfterReturns.toFixed(2)}`);
             console.log(`   Gross Withdrawal: €${grossAnnualWithdrawal.toFixed(2)}`);
@@ -555,37 +557,57 @@ export function calculateTotalContributionsFromAccumulation() {
     const selectedScenarioId = scenarioSelectorElement.value;
     let monthlyContribution = 0;
     let duration = 0;
+    let initialCapitalInput = 0;
     
     // This would need access to the global scenarios array
     // For modular use, it's better to pass these values directly
     if (typeof scenarios !== 'undefined' && selectedScenarioId) {
         const selectedScenario = scenarios.find(s => s.id === selectedScenarioId);
         if (selectedScenario) {
+            const scenarioCostBasis = Number(selectedScenario.results?.costBasis);
+            if (Number.isFinite(scenarioCostBasis) && scenarioCostBasis > 0) {
+                console.log(`📊 Using stored cost basis from accumulation: €${scenarioCostBasis.toFixed(2)}`);
+                return scenarioCostBasis;
+            }
+
+            const totalInvested = Number(selectedScenario.results?.totalInvested);
+            if (Number.isFinite(totalInvested) && totalInvested > 0) {
+                console.log(`📊 Using stored total invested amount: €${totalInvested.toFixed(2)}`);
+                return totalInvested;
+            }
+
             monthlyContribution = selectedScenario.monthlyContribution || 
                                 (selectedScenario.inputs && selectedScenario.inputs.monthlySavings) || 0;
             duration = selectedScenario.duration || 
                       (selectedScenario.inputs && selectedScenario.inputs.duration) || 0;
+            initialCapitalInput = Number(selectedScenario.inputs?.initialCapital || 0);
         }
     }
-    
+
     // If no scenario data, try to get from UI elements
     if (monthlyContribution === 0 || duration === 0) {
         const monthlyInput = document.getElementById('monthlySavings');
         const durationInput = document.getElementById('duration');
-        
+        const initialInput = document.getElementById('initialCapital');
+
         if (monthlyInput && durationInput) {
             monthlyContribution = parseGermanNumber(monthlyInput.value) || 0;
             duration = parseInt(durationInput.value) || 0;
         }
+        if (initialInput) {
+            initialCapitalInput = parseGermanNumber(initialInput.value) || 0;
+        }
     }
-    
+
     // Calculate total contributions
-    const totalContributions = monthlyContribution * 12 * duration;
-    
+    const yearlyDeposits = monthlyContribution * 12 * duration;
+    const totalContributions = yearlyDeposits + Math.max(0, initialCapitalInput || 0);
+
     console.log(`📊 Total contributions calculation:`);
     console.log(`   Monthly contribution: €${monthlyContribution.toFixed(2)}`);
     console.log(`   Duration: ${duration} years`);
+    console.log(`   Initial capital: €${(initialCapitalInput || 0).toFixed(2)}`);
     console.log(`   Total contributions: €${totalContributions.toFixed(2)}`);
-    
+
     return totalContributions;
 }

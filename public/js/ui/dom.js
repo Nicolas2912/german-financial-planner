@@ -34,6 +34,15 @@ export function updateScenarioResults() {
             return '';
         };
         
+        const percentFormatter = new Intl.NumberFormat('de-DE', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        const formatPercent = (value) => {
+            const percentage = (Number(value) || 0) * 100;
+            return `${percentFormatter.format(percentage)} %`;
+        };
+
         resultCard.innerHTML = `
             <div class="scenario-result-header">
                 <h3 class="scenario-result-title">📊 ${scenario.name}</h3>
@@ -52,8 +61,8 @@ export function updateScenarioResults() {
                     <div class="scenario-result-value" data-length="${getDataLength(scenario.results.totalInvested)}">${formatCurrency(scenario.results.totalInvested)}</div>
                 </div>
                 <div class="scenario-result-item">
-                    <div class="scenario-result-label">Gesamtrendite</div>
-                    <div class="scenario-result-value" data-length="${getDataLength(scenario.results.totalReturn)}">${formatCurrency(scenario.results.totalReturn)}</div>
+                    <div class="scenario-result-label">Gesamtrendite (brutto)</div>
+                    <div class="scenario-result-value" data-length="${getDataLength((scenario.results.totalReturn || 0) + (scenario.results.totalTaxesPaid || 0))}">${formatCurrency((scenario.results.totalReturn || 0) + (scenario.results.totalTaxesPaid || 0))}</div>
                 </div>
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Gezahlte Steuern</div>
@@ -61,7 +70,11 @@ export function updateScenarioResults() {
                 </div>
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Netto-Rendite</div>
-                    <div class="scenario-result-value" style="color: #27ae60;" data-length="${getDataLength((scenario.results.totalReturn || 0) - (scenario.results.totalTaxesPaid || 0))}">${formatCurrency((scenario.results.totalReturn || 0) - (scenario.results.totalTaxesPaid || 0))}</div>
+                    <div class="scenario-result-value" style="color: #27ae60;" data-length="${getDataLength(scenario.results.totalReturn || 0)}">${formatCurrency(scenario.results.totalReturn || 0)}</div>
+                </div>
+                <div class="scenario-result-item">
+                    <div class="scenario-result-label">Ø Jahresrendite</div>
+                    <div class="scenario-result-value" data-length="">${formatPercent(scenario.results.annualizedReturn)}</div>
                 </div>
             </div>
         `;

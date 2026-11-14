@@ -495,6 +495,10 @@ class ScenarioComparisonManager {
         sc.params.accumulation.years = parseInt(accP.duration ?? sc.params.accumulation.years) || sc.params.accumulation.years;
         sc.params.accumulation.initialCapital = num(accP.initialCapital, sc.params.accumulation.initialCapital || 0);
         sc.params.accumulation.monthlySavings = num(accP.monthlySavings, sc.params.accumulation.monthlySavings || 0);
+        if (accData) {
+            sc.params.accumulation.savingsMode = accP.savingsMode || 'simple';
+            sc.params.accumulation.phases = Array.isArray(accP.multiPhaseData) ? accP.multiPhaseData : [];
+        }
         sc.params.withdrawal.rate = num(wdP.withdrawalRate ?? wdP.rate, sc.params.withdrawal.rate);
         sc.params.withdrawal.years = parseInt(wdP.duration ?? wdP.withdrawalYears ?? wdP.withdrawalDuration ?? wdP.years ?? sc.params.withdrawal.years) || sc.params.withdrawal.years;
         sc.params.budget.inflation = num(budData?.budgetData?.inflationRate ?? budData?.inflation ?? sc.params.budget.inflation, sc.params.budget.inflation);

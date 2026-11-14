@@ -10,7 +10,7 @@ import { updateWithdrawalChart, createIntegratedTimeline } from '../withdrawalCh
 function getWithdrawalCostBasis(retirementCapital) {
   const source = state.findScenario(state.withdrawalSourceScenarioId) || state.getActiveScenario();
   const costBasis = Number(source?.results?.costBasis);
-  if (!Number.isFinite(costBasis) || costBasis <= 0) return undefined;
+  if (!Number.isFinite(costBasis) || costBasis < 0) return undefined;
   return Math.min(costBasis, retirementCapital);
 }
 

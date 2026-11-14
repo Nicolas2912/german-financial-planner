@@ -30,7 +30,16 @@ describe('ETF savings page (jsdom)', () => {
     // jsdom has no canvas: hand charts a context whose methods all do nothing
     const context = new Proxy({}, { get: (target, prop) => (prop in target ? target[prop] : () => context) });
     HTMLCanvasElement.prototype.getContext = () => context;
-    document.documentElement.innerHTML = html.replace(/<script[\s\S]*?<\/script>/gi, '');
+    globalThis.Chart = class {
+      constructor(_canvas, config = {}) {
+        this.data = config.data || { labels: [], datasets: [] };
+        this.options = config.options || {};
+      }
+      update() {}
+      destroy() {}
+    };
+    // Scripts inserted through innerHTML never run, so the page markup can be used as is
+    document.documentElement.innerHTML = html;
     await import('../../public/js/app.js');
     globalThis.__triggerDOMContentLoaded();
   });
@@ -54,6 +63,24 @@ describe('ETF savings page (jsdom)', () => {
     const saleRatio = firstYear.grossWithdrawal / firstYear.capitalAfterReturns;
     const usedCostBasis = firstYear.remainingCostBasis / (1 - saleRatio);
     expect(usedCostBasis).toBeCloseTo(Math.min(scenarioA.results.costBasis, retirementCapital), 0);
+  });
+
+  test('auto-sync recalculates the withdrawal when only the cost basis changes', () => {
+    document.getElementById('withdrawalTaxToggle').classList.add('active');
+    window.recalculateAll();
+    const scenarioA = state.findScenario('A');
+    const taxesBefore = state.withdrawalData.totalTaxesPaid;
+
+    scenarioA.results.costBasis = 0;
+    window.autoSyncWithdrawalCapital(false);
+    expect(state.withdrawalData.totalTaxesPaid).toBeGreaterThan(taxesBefore);
+
+    // An explicit cost basis of zero is used, not the 60% fallback
+    const firstYear = state.withdrawalData.yearlyData[0];
+    expect(firstYear.remainingCostBasis).toBe(0);
+
+    document.getElementById('withdrawalTaxToggle').classList.remove('active');
+    window.recalculateAll();
   });
 
   test('budget savings use the current remaining budget', () => {
@@ -160,6 +187,18 @@ describe('ETF savings page (jsdom)', () => {
     expect(document.querySelector(`.multi-phase-savings-container[data-scenario="${loaded.id}"]`).style.display).toBe('block');
     expect(loaded.results.endCapital).toBeCloseTo(120_000, 0);
     window.removeScenario(loaded.id);
+  });
+
+  test('refreshing a comparison card takes the saved multi-phase plan', () => {
+    const comparison = window.scenarioComparison;
+    const scenario = comparison.scenarioConfigs[0];
+    comparison.selectedAccumScenarioKey = 'ansparphaseScenario_Phasen';
+    comparison.updateScenarioFromSelection(scenario.id, document.querySelector('.summary-cards .summary-card'));
+
+    expect(scenario.params.accumulation.savingsMode).toBe('multi-phase');
+    expect(scenario.params.accumulation.phases).toEqual([{ startYear: 1, endYear: 10, monthlySavingsRate: 1000, annualReturn: 0 }]);
+    // The preset keeps its salary growth, so contributions are at least the 120.000 of the phase plan
+    expect(comparison.calculateAccumulationSeries(scenario.params.accumulation).finalNominal).toBeGreaterThanOrEqual(120_000);
   });
 
   test('comparison calculates saved multi-phase plans', () => {

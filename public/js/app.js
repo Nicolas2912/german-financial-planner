@@ -102,6 +102,9 @@ export function recalculateAll() {
 // Debounced version of recalculateAll
 export const debouncedRecalculateAll = debounce(recalculateAll, 100);
 
+// Cost basis of the last auto-synced scenario
+let lastSyncedCostBasis = null;
+
 // Auto-sync withdrawal capital with active scenario
 export function autoSyncWithdrawalCapital(notify = true) {
     if (state.isSyncing) return; // Prevent recursive calls
@@ -117,7 +120,10 @@ export function autoSyncWithdrawalCapital(notify = true) {
     if (withdrawalCapitalInput) {
         state.setIsSyncing(true);
         try {
+            const costBasis = activeScenario.results.costBasis;
+            const sourceChanged = state.withdrawalSourceScenarioId !== activeScenario.id || lastSyncedCostBasis !== costBasis;
             state.setWithdrawalSourceScenarioId(activeScenario.id);
+            lastSyncedCostBasis = costBasis;
         
             // Only sync if the value has changed significantly (avoid rounding noise)
             const currentValue = parseFloat(withdrawalCapitalInput.value.replace(/\./g, '').replace(',', '.')) || 0;
@@ -144,6 +150,8 @@ export function autoSyncWithdrawalCapital(notify = true) {
                     );
                     state.setLastSyncValue(endCapital);
                 }
+            } else if (sourceChanged) {
+                calculateWithdrawal();
             }
         } finally {
             state.setIsSyncing(false);

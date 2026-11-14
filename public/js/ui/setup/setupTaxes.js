@@ -10,7 +10,7 @@ export function calculateTaxes() {
   const age = parseInt(document.getElementById('age')?.value || '30');
   const children = parseInt(document.getElementById('children')?.value || '0');
   const churchTax = document.getElementById('churchTaxToggle')?.classList.contains('active') || false;
-  const publicHealthInsurance = document.getElementById('publicHealthInsuranceToggle')?.classList.contains('active') || true;
+  const publicHealthInsurance = document.getElementById('publicHealthInsuranceToggle')?.classList.contains('active') ?? true;
   const healthInsuranceRate = parseFloat(document.getElementById('healthInsuranceRate')?.value || '2.5');
 
   try {

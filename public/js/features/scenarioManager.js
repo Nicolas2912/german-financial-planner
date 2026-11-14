@@ -6,12 +6,22 @@
  */
 
 import { formatGermanNumber, parseGermanNumber } from "../utils.js";
-import { setupScenarioInputListeners } from '../ui/setup/setupScenarios.js';
+import { setupScenarioInputListeners, applySavingsConfiguration } from '../ui/setup/setupScenarios.js';
 import * as state from '../state.js';
 
 // ===================================
 // SCENARIO CREATION AND MANAGEMENT
 // ===================================
+
+/**
+ * Pick the first scenario letter (A-D) that is not in use yet
+ * @param {Array} scenarios - Existing scenarios
+ * @returns {string} Unused scenario ID
+ */
+function getNextScenarioId(scenarios) {
+    const usedIds = new Set(scenarios.map(s => s.id));
+    return ['A', 'B', 'C', 'D'].find(id => !usedIds.has(id));
+}
 
 /**
  * Add a new scenario to the system
@@ -23,7 +33,7 @@ export function addNewScenario() {
     const scenarioColors = window.scenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
     const selectedScenariosForChart = window.selectedScenariosForChart || new Set(['A']);
     const { setupSavingsModeForScenario, updateScenarioCheckboxes, updateContributionsScenarioDropdown, 
-            saveIndividualAnsparphaseScenario, showNotification } = window;
+            showNotification } = window;
     
     if (scenarios.length >= 4) {
         if (showNotification) {
@@ -34,7 +44,7 @@ export function addNewScenario() {
         return null;
     }
 
-    const newScenarioId = String.fromCharCode(65 + scenarios.length); // A, B, C, D
+    const newScenarioId = getNextScenarioId(scenarios);
     const newScenario = {
         id: newScenarioId,
         name: 'Szenario ' + newScenarioId,
@@ -70,9 +80,6 @@ export function addNewScenario() {
         window.recalculateAll();
     }
     
-    // Auto-save the new scenario
-    setTimeout(() => saveIndividualAnsparphaseScenario(newScenarioId), 2000);
-    
     return newScenario;
 }
 
@@ -88,7 +95,7 @@ export function createNewScenarioWithoutSwitching() {
         return null;
     }
 
-    const newScenarioId = String.fromCharCode(65 + scenarios.length); // A, B, C, D
+    const newScenarioId = getNextScenarioId(scenarios);
     const newScenario = {
         id: newScenarioId,
         name: 'Szenario ' + newScenarioId,
@@ -275,7 +282,7 @@ export function createScenarioPanel(scenario) {
                                 <div class="time-range-inputs">
                                     <div class="input-group time-input">
                                         <label>Von Jahr</label>
-                                        <input type="number" class="phase-start-year" value="0" min="0" readonly data-phase="1" data-scenario="${scenario.id}">
+                                        <input type="number" class="phase-start-year" value="1" min="1" readonly data-phase="1" data-scenario="${scenario.id}">
                                     </div>
                                     <div class="input-group time-input">
                                         <label>Bis Jahr</label>
@@ -417,7 +424,7 @@ export function createScenarioPanel(scenario) {
         <!-- Tax Toggle -->
         <div class="toggle-container" style="margin-bottom: 30px;">
             <label>Deutsche Abgeltungssteuer einbeziehen (25% mit Vorabpauschale)</label>
-            <div class="toggle scenario-toggle" id="taxToggle_${scenario.id}" data-scenario="${scenario.id}"></div>
+            <div class="toggle scenario-toggle active" id="taxToggle_${scenario.id}" data-scenario="${scenario.id}"></div>
         </div>
 
         <!-- ETF Type Selection -->
@@ -567,10 +574,9 @@ export function createScenarioPanel(scenario) {
 export function copyScenario(scenarioId) {
     const { updateScenarioSliderValue } = window;
     
-    addNewScenario();
-    
-    // Get the newly created scenario ID
-    const newScenarioId = window.scenarios[window.scenarios.length - 1].id;
+    const newScenario = addNewScenario();
+    if (!newScenario) return;
+    const newScenarioId = newScenario.id;
     
     // Copy all values from source scenario
     const inputIds = ['monthlySavings', 'initialCapital', 'annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'baseSalary', 'salaryToSavings'];
@@ -592,9 +598,7 @@ export function copyScenario(scenarioId) {
     const targetTaxToggle = document.getElementById(`taxToggle_${newScenarioId}`);
     
     if (sourceTaxToggle && targetTaxToggle) {
-        if (sourceTaxToggle.classList.contains('active')) {
-            targetTaxToggle.classList.add('active');
-        }
+        targetTaxToggle.classList.toggle('active', sourceTaxToggle.classList.contains('active'));
     }
     
     // Copy ETF type selection
@@ -612,14 +616,26 @@ export function copyScenario(scenarioId) {
     const targetTeilfreistellungToggle = document.getElementById(`teilfreistellungToggle_${newScenarioId}`);
     
     if (sourceTeilfreistellungToggle && targetTeilfreistellungToggle) {
-        if (sourceTeilfreistellungToggle.classList.contains('active')) {
-            targetTeilfreistellungToggle.classList.add('active');
-        }
+        targetTeilfreistellungToggle.classList.toggle('active', sourceTeilfreistellungToggle.classList.contains('active'));
     }
     
-    // Trigger recalculation
-    const { recalculateAll } = window;
-    recalculateAll();
+    // Copy savings mode and phases (also triggers recalculation)
+    const sourceMode = document.querySelector(`.savings-mode-btn.active[data-scenario="${scenarioId}"]`)?.dataset.mode || 'simple';
+    const phases = [];
+    for (let phase = 1; phase <= 3; phase++) {
+        const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+        if (!phaseElement || !phaseElement.classList.contains('active')) continue;
+        const valueOf = (cls) => document.querySelector(`.${cls}[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value || '';
+        const returnPct = parseFloat(valueOf('phase-return-rate').replace(/\s+/g, '').replace(',', '.'));
+        phases.push({
+            phase,
+            startYear: parseInt(valueOf('phase-start-year'), 10),
+            endYear: parseInt(valueOf('phase-end-year'), 10),
+            monthlySavingsRate: parseGermanNumber(valueOf('phase-savings-rate')),
+            annualReturn: Number.isNaN(returnPct) ? null : returnPct / 100
+        });
+    }
+    applySavingsConfiguration(newScenarioId, sourceMode, phases);
 }
 
 /**

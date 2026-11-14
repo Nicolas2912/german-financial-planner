@@ -8,6 +8,7 @@
 import { formatGermanNumber, parseGermanNumber } from '../utils.js';
 import * as state from '../state.js';
 import { showNotification } from '../ui/dom.js';
+import { applySavingsConfiguration } from '../ui/setup/setupScenarios.js';
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -137,7 +138,7 @@ export function confirmSaveAnsparphaseScenario() {
       const savingsRate = parseGermanNumber(document.querySelector(`.phase-savings-rate[data-phase="${p}"][data-scenario="${current.id}"]`)?.value || '0') || 0;
       const rrRaw = (document.querySelector(`.phase-return-rate[data-phase="${p}"][data-scenario="${current.id}"]`)?.value || '').toString();
       const rrPct = rrRaw ? parseFloat(rrRaw.replace(/\s+/g, '').replace(',', '.')) : NaN;
-      phases.push({ startYear, endYear, monthlySavingsRate: savingsRate, annualReturn: isNaN(rrPct) ? null : rrPct / 100 });
+      phases.push({ phase: p, startYear, endYear, monthlySavingsRate: savingsRate, annualReturn: isNaN(rrPct) ? null : rrPct / 100 });
     }
   }
   params.multiPhaseData = phases;
@@ -271,8 +272,8 @@ export function loadAnsparphaseScenarioFromManager(scenarioName) {
   // Create new scenarios and populate values
   selected.forEach(saved => {
     // Create a new scenario panel via existing utility
-    if (window.addNewScenario) window.addNewScenario();
-    const newScenario = state.scenarios[state.scenarios.length - 1];
+    const newScenario = window.addNewScenario ? window.addNewScenario() : null;
+    if (!newScenario) return;
     newScenario.name = saved.name;
 
     // Update tab and panel titles immediately
@@ -314,35 +315,11 @@ export function loadAnsparphaseScenarioFromManager(scenarioName) {
       radios.forEach(r => { r.checked = (r.value === p.etfType); });
     }
 
-    // Savings mode buttons
-    const simpleBtn = document.querySelector(`.savings-mode-btn[data-mode="simple"][data-scenario="${newScenario.id}"]`);
-    const multiBtn  = document.querySelector(`.savings-mode-btn[data-mode="multi-phase"][data-scenario="${newScenario.id}"]`);
-    if (simpleBtn && multiBtn) {
-      simpleBtn.classList.toggle('active', (p.savingsMode !== 'multi-phase'));
-      multiBtn.classList.toggle('active', (p.savingsMode === 'multi-phase'));
-    }
-
-    // Restore multi-phase fields if present
-    if (Array.isArray(p.multiPhaseData) && p.savingsMode === 'multi-phase') {
-      p.multiPhaseData.forEach((phase, idx) => {
-        const phaseNum = (idx + 1);
-        const phaseEl = document.querySelector(`.savings-phase[data-phase="${phaseNum}"][data-scenario="${newScenario.id}"]`);
-        if (phaseEl) {
-          phaseEl.classList.add('active');
-          const startInput = document.querySelector(`.phase-start-year[data-phase="${phaseNum}"][data-scenario="${newScenario.id}"]`);
-          const endInput = document.querySelector(`.phase-end-year[data-phase="${phaseNum}"][data-scenario="${newScenario.id}"]`);
-          const savingsInput = document.querySelector(`.phase-savings-rate[data-phase="${phaseNum}"][data-scenario="${newScenario.id}"]`);
-          const returnInput = document.querySelector(`.phase-return-rate[data-phase="${phaseNum}"][data-scenario="${newScenario.id}"]`);
-          if (startInput) startInput.value = (phase.startYear ?? 0);
-          if (endInput) endInput.value = (phase.endYear ?? 0);
-          if (savingsInput) savingsInput.value = formatGermanNumber(phase.monthlySavingsRate || 0, 0);
-          if (returnInput) {
-            const pct = (typeof phase.annualReturn === 'number' && !isNaN(phase.annualReturn)) ? (phase.annualReturn * 100) : '';
-            returnInput.value = pct === '' ? '' : String(pct).replace('.', ',');
-          }
-        }
-      });
-    }
+    // Savings mode and phases (older saves have no phase number: use the list position)
+    const savedPhases = Array.isArray(p.multiPhaseData)
+      ? p.multiPhaseData.map((phase, idx) => ({ ...phase, phase: phase.phase ?? (idx + 1) }))
+      : [];
+    applySavingsConfiguration(newScenario.id, p.savingsMode, savedPhases);
 
     // Update slider displays
     ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings'].forEach(sliderId => {

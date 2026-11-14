@@ -241,6 +241,8 @@ function simulateAccumulationPhase({
                 const capitalGains = Math.max(0, balance - (yearlyStartCapital + yearlyDeposits));
                 const vorabpauschale = Math.max(0, Math.min(basisertrag, capitalGains));
                 if (vorabpauschale > 0) {
+                    // Already-taxed Vorabpauschale is deducted from the gain on sale (§19 InvStG)
+                    costBasis += vorabpauschale;
                     const taxable = vorabpauschale * (1 - teilfreistellungRate);
                     const { tax } = applyCapitalGainsTax(taxable);
                     if (tax > 0) {
@@ -365,7 +367,7 @@ export function runScenario(scenario) {
             let totalContributions = 0;
             let totalMonths = 0;
             phases.forEach(phase => {
-                const phaseDuration = phase.endYear - phase.startYear + 1;
+                const phaseDuration = Math.max(0, phase.endYear - Math.max(1, phase.startYear) + 1);
                 const phaseMonths = phaseDuration * 12;
                 totalContributions += phaseMonths * phase.monthlySavingsRate;
                 totalMonths += phaseMonths;
@@ -490,7 +492,7 @@ export function calculateWealthDevelopment(monthlySavings, initialCapital, annua
  * @param {string} etfType - ETF type ('thesaurierend' or 'ausschüttend')
  * @returns {Object} Calculation results
  */
-function calculateMultiPhaseWealthDevelopment(phases, initialCapital, annualReturn, inflationRate, salaryGrowth, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
+export function calculateMultiPhaseWealthDevelopment(phases, initialCapital, annualReturn, inflationRate, salaryGrowth, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
     return simulateAccumulationPhase({
         initialCapital,
         durationYears: 0,

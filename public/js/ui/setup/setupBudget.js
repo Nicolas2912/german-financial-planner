@@ -79,14 +79,14 @@ export function calculateBudget() {
     window.budgetData.totalExpenses = results.totalExpenses;
     window.budgetData.remainingBudget = results.remainingBudget;
 
-    updateSavingsDisplay();
-
     state.setBudgetData({
       totalIncome: results.totalIncome,
       totalExpenses: results.totalExpenses,
       remainingBudget: results.remainingBudget,
       results: results
     });
+
+    updateSavingsDisplay();
   } catch (error) {
     console.error('Error calculating budget:', error);
   }
@@ -152,7 +152,7 @@ function setupPeriodToggle(toggleId, category) {
   });
 }
 
-function setSavingsMode(mode) {
+export function setSavingsMode(mode) {
   if (!window.budgetData) {
     window.budgetData = { savings: { mode: 'fixed', amount: 500, percentage: 50 } };
   }

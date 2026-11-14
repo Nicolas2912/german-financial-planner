@@ -6,6 +6,14 @@ import { calculateWithdrawalPlan as calculateWithdrawalCore } from '../../core/w
 import { updateWithdrawalResults, updateWithdrawalTable, showNotification } from '../dom.js';
 import { updateWithdrawalChart, createIntegratedTimeline } from '../withdrawalChart.js';
 
+// Cost basis of the withdrawal capital, taken from the scenario the capital came from
+function getWithdrawalCostBasis(retirementCapital) {
+  const source = state.findScenario(state.withdrawalSourceScenarioId) || state.getActiveScenario();
+  const costBasis = Number(source?.results?.costBasis);
+  if (!Number.isFinite(costBasis) || costBasis <= 0) return undefined;
+  return Math.min(costBasis, retirementCapital);
+}
+
 export function calculateWithdrawal() {
   const retirementCapital = parseGermanNumber(document.getElementById('retirementCapital')?.value || '1000000');
   const duration = parseInt(document.getElementById('withdrawalDuration')?.value || '25');
@@ -14,7 +22,7 @@ export function calculateWithdrawal() {
   const includeTax = document.getElementById('withdrawalTaxToggle')?.classList.contains('active') || false;
 
   try {
-    const results = calculateWithdrawalCore(retirementCapital, duration, annualReturn, inflationRate, includeTax, 0);
+    const results = calculateWithdrawalCore(retirementCapital, duration, annualReturn, inflationRate, includeTax, getWithdrawalCostBasis(retirementCapital));
     updateWithdrawalResults(results);
     if (results.yearlyData && results.yearlyData.length > 0) {
       updateWithdrawalChart(results.yearlyData);
@@ -108,6 +116,7 @@ export function setupWithdrawalListeners() {
         const finalValue = selectedScenario.yearlyData[selectedScenario.yearlyData.length - 1].capital;
         const capitalEl = document.getElementById('retirementCapital');
         if (capitalEl) capitalEl.value = Math.round(finalValue).toLocaleString('de-DE');
+        state.setWithdrawalSourceScenarioId(selectedScenarioId);
         calculateWithdrawal();
         const totalContributions = (selectedScenario.monthlyContribution || 0) * 12 * (selectedScenario.duration || 0);
         const unrealizedGains = finalValue - totalContributions;

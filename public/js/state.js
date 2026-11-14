@@ -15,6 +15,7 @@ export let metricsRadarChart = null;
 export let currentPhase = 'accumulation';
 export let activeScenario = 'A';
 export let withdrawalData = [];
+export let withdrawalSourceScenarioId = null; // Scenario whose end capital feeds the withdrawal phase
 
 // Budget data structure
 export let budgetData = {
@@ -72,6 +73,7 @@ export function setMetricsRadarChart(newChart) { metricsRadarChart = newChart; }
 export function setCurrentPhase(phase) { currentPhase = phase; }
 export function setActiveScenario(id) { activeScenario = id; }
 export function setWithdrawalData(data) { withdrawalData = data; }
+export function setWithdrawalSourceScenarioId(id) { withdrawalSourceScenarioId = id; }
 export function setBudgetData(data) { budgetData = data; }
 export function setScenarios(newScenarios) { scenarios = newScenarios; }
 export function setCurrentChartMode(mode) { currentChartMode = mode; }

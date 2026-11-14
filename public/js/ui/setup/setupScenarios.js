@@ -1,6 +1,7 @@
 // UI setup: Scenarios and cross-feature wiring
 
 import * as state from '../../state.js';
+import { formatGermanNumber } from '../../utils.js';
 import { updateMainChart, updateContributionsGainsChart } from '../mainChart.js';
 import { updateWithdrawalChart, createIntegratedTimeline } from '../withdrawalChart.js';
 import { 
@@ -372,11 +373,6 @@ export function setupGermanNumberInputs() {
   const numberInputs = document.querySelectorAll('input[type="number"], input[type="text"]');
   numberInputs.forEach(input => {
     if (['profileName', 'profileDescription', 'ansparphaseScenarioName', 'ansparphaseScenarioDescription', 'entnahmephaseScenarioName', 'entnahmephaseScenarioDescription'].includes(input.id)) return;
-    input.addEventListener('blur', function() {
-      // keep display formatting simple: leave as-is but normalize comma
-      const v = this.value;
-      if (v !== '') this.value = v.toString().replace('.', ',');
-    });
     input.addEventListener('keypress', function(e) {
       if (e.key === ',' && this.value.includes(',')) e.preventDefault();
     });
@@ -612,6 +608,48 @@ function togglePhase(scenarioId, phase) {
   }
 }
 
+function setPhaseActiveState(phaseElement, active) {
+  phaseElement.classList.toggle('active', active);
+  const phaseContent = phaseElement.querySelector('.phase-content');
+  const toggleText = phaseElement.querySelector('.phase-toggle-btn .toggle-text');
+  const statusIndicator = phaseElement.querySelector('.phase-status-indicator');
+  if (phaseContent) phaseContent.style.display = active ? 'block' : 'none';
+  if (toggleText) toggleText.textContent = active ? 'Deaktivieren' : 'Aktivieren';
+  if (statusIndicator) statusIndicator.classList.toggle('active', active);
+}
+
+/**
+ * Apply a savings mode and its phases to a scenario panel and recalculate.
+ * @param {string} scenarioId - Target scenario ID
+ * @param {string} mode - 'simple' or 'multi-phase'
+ * @param {Array} phases - Active phases: { phase, startYear, endYear, monthlySavingsRate, annualReturn }
+ */
+export function applySavingsConfiguration(scenarioId, mode, phases = []) {
+  for (let phase = 1; phase <= 3; phase++) {
+    const phaseElement = document.querySelector(`.savings-phase[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    if (!phaseElement) continue;
+    const data = phases.find(p => p.phase === phase);
+    setPhaseActiveState(phaseElement, phase === 1 || !!data);
+    if (!data) continue;
+
+    const startInput = document.querySelector(`.phase-start-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    const endInput = document.querySelector(`.phase-end-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    const savingsInput = document.querySelector(`.phase-savings-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    const returnInput = document.querySelector(`.phase-return-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`);
+    if (startInput && Number.isFinite(data.startYear)) startInput.value = data.startYear;
+    if (endInput && Number.isFinite(data.endYear)) endInput.value = data.endYear;
+    if (savingsInput) savingsInput.value = formatGermanNumber(data.monthlySavingsRate || 0, 0);
+    if (returnInput) {
+      const hasReturn = typeof data.annualReturn === 'number' && !Number.isNaN(data.annualReturn);
+      returnInput.value = hasReturn ? String(data.annualReturn * 100).replace('.', ',') : '';
+    }
+  }
+
+  updateMultiPhaseSummary(scenarioId);
+  updatePhaseSummaries(scenarioId);
+  switchSavingsMode(scenarioId, mode === 'multi-phase' ? 'multi-phase' : 'simple');
+}
+
 // Implement functions for phase summaries
 function updatePhaseSummaries(scenarioId) {
   // Update individual phase summaries
@@ -624,8 +662,9 @@ function updatePhaseSummaries(scenarioId) {
     const savingsRate = parseFloat(document.querySelector(`.phase-savings-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value?.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
     const returnPct = parseFloat((document.querySelector(`.phase-return-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value || '').toString().replace(',', '.')) || 0;
     
-    const duration = endYear - startYear + 1;
-    const months = Math.max(0, duration * 12);
+    // Same convention as the simulation: inclusive years, starting at year 1
+    const duration = Math.max(0, endYear - Math.max(1, startYear) + 1);
+    const months = duration * 12;
     const r = (returnPct / 100) / 12;
     // Future value of monthly contributions at monthly rate r over n months
     const totalWithReturns = r > 0 ? (savingsRate * ((Math.pow(1 + r, months) - 1) / r)) : (savingsRate * months);
@@ -660,7 +699,7 @@ function updateMultiPhaseSummary(scenarioId) {
     const endYear = parseInt(document.querySelector(`.phase-end-year[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value) || 0;
     const savingsRate = parseFloat(document.querySelector(`.phase-savings-rate[data-phase="${phase}"][data-scenario="${scenarioId}"]`)?.value?.replace(/[^\d,-]/g, '').replace(',', '.')) || 0;
     
-    const phaseDuration = endYear - startYear + 1;
+    const phaseDuration = Math.max(0, endYear - Math.max(1, startYear) + 1);
     const phaseMonths = phaseDuration * 12;
     
     totalDuration = Math.max(totalDuration, endYear);

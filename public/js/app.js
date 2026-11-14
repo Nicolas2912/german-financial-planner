@@ -103,7 +103,7 @@ export function recalculateAll() {
 export const debouncedRecalculateAll = debounce(recalculateAll, 100);
 
 // Auto-sync withdrawal capital with active scenario
-export function autoSyncWithdrawalCapital(showNotification = true) {
+export function autoSyncWithdrawalCapital(notify = true) {
     if (state.isSyncing) return; // Prevent recursive calls
     
     const activeScenario = state.getActiveScenario();
@@ -112,39 +112,42 @@ export function autoSyncWithdrawalCapital(showNotification = true) {
     }
     
     const endCapital = activeScenario.results.endCapital;
-    const withdrawalCapitalInput = document.getElementById('withdrawalCapital');
+    const withdrawalCapitalInput = document.getElementById('retirementCapital');
     
     if (withdrawalCapitalInput) {
         state.setIsSyncing(true);
+        try {
+            state.setWithdrawalSourceScenarioId(activeScenario.id);
         
-        // Only sync if the value has changed significantly (avoid rounding noise)
-        const currentValue = parseFloat(withdrawalCapitalInput.value.replace(/\./g, '').replace(',', '.')) || 0;
-        const difference = Math.abs(currentValue - endCapital);
+            // Only sync if the value has changed significantly (avoid rounding noise)
+            const currentValue = parseFloat(withdrawalCapitalInput.value.replace(/\./g, '').replace(',', '.')) || 0;
+            const difference = Math.abs(currentValue - endCapital);
         
-        if (difference > 1) { // Only sync if difference > 1€
-            withdrawalCapitalInput.value = endCapital.toLocaleString('de-DE', {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            });
+            if (difference > 1) { // Only sync if difference > 1€
+                withdrawalCapitalInput.value = endCapital.toLocaleString('de-DE', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                });
             
-            // Update withdrawal calculations
-            calculateWithdrawal();
+                // Update withdrawal calculations
+                calculateWithdrawal();
             
-            // Show notification only if requested and user isn't typing
-            if (showNotification && !state.userIsTyping && endCapital !== state.lastSyncValue) {
-                showNotification(
-                    'Kapital synchronisiert',
-                    `Startkapital für Entnahme wurde auf ${endCapital.toLocaleString('de-DE', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    })}€ aktualisiert.`,
-                    'success'
-                );
-                state.setLastSyncValue(endCapital);
+                // Show notification only if requested and user isn't typing
+                if (notify && !state.userIsTyping && endCapital !== state.lastSyncValue) {
+                    showNotification(
+                        'Kapital synchronisiert',
+                        `Startkapital für Entnahme wurde auf ${endCapital.toLocaleString('de-DE', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        })}€ aktualisiert.`,
+                        'success'
+                    );
+                    state.setLastSyncValue(endCapital);
+                }
             }
+        } finally {
+            state.setIsSyncing(false);
         }
-        
-        state.setIsSyncing(false);
     }
 }
 

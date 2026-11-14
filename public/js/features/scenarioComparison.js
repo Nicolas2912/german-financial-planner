@@ -1,6 +1,6 @@
 // scenarioComparison.js - Basic Scenario Comparison Module
 import { scenarioColors as baseScenarioColors } from '../state.js';
-import { calculateWealthDevelopment } from '../core/accumulation.js';
+import { calculateWealthDevelopment, calculateMultiPhaseWealthDevelopment } from '../core/accumulation.js';
 import { calculateDirectAnnuityPayment, calculateRealInterestRate } from '../core/withdrawal.js';
 class ScenarioComparisonManager {
     constructor() {
@@ -169,7 +169,9 @@ class ScenarioComparisonManager {
             includeTax: !!accP.includeTax,
             baseSalary: num(accP.baseSalary, 60000),
             teilfreistellung: !!accP.teilfreistellung,
-            etfType: accP.etfType || 'thesaurierend'
+            etfType: accP.etfType || 'thesaurierend',
+            savingsMode: accP.savingsMode || 'simple',
+            phases: Array.isArray(accP.multiPhaseData) ? accP.multiPhaseData : []
         };
         const incomeTotal = typeof budParams.totalIncome === 'number'
             ? budParams.totalIncome
@@ -1448,8 +1450,22 @@ class ScenarioComparisonManager {
         const teilfreistellung = !!accumulation.teilfreistellung;
         const etfType = accumulation.etfType || 'thesaurierend';
 
+        const phases = Array.isArray(accumulation.phases) ? accumulation.phases : [];
+        const useMultiPhase = accumulation.savingsMode === 'multi-phase' && phases.length > 0;
+
         try {
-            const result = calculateWealthDevelopment(
+            const result = useMultiPhase ? calculateMultiPhaseWealthDevelopment(
+                phases,
+                initialCapital,
+                returnRate,
+                inflationRate,
+                salaryGrowth,
+                salaryToSavings,
+                includeTax,
+                baseSalary,
+                teilfreistellung,
+                etfType
+            ) : calculateWealthDevelopment(
                 monthlySavings,
                 initialCapital,
                 returnRate,

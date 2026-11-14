@@ -1,4 +1,5 @@
 import { describe, test, expect } from 'vitest';
+import { formatAxisEuro } from '../../public/js/utils.js';
 import {
   calculateBudget,
   calculateProfileTotalIncome,
@@ -83,5 +84,14 @@ describe('budget calculations', () => {
 
     const remaining = calculateRemainingAfterSavings(5_000, 2_500, savingsPercent.finalSavingsAmount);
     expect(remaining).toBeCloseTo(1_600, 3);
+  });
+});
+
+describe('chart axis labels', () => {
+  test('adjacent ticks stay distinguishable', () => {
+    expect([1000, 1200, 1400].map(formatAxisEuro)).toEqual(['1 Tsd. €', '1,2 Tsd. €', '1,4 Tsd. €']);
+    expect(formatAxisEuro(750000)).toBe('750 Tsd. €');
+    expect(formatAxisEuro(1250000)).toBe('1,25 Mio. €');
+    expect(formatAxisEuro(0)).toBe('0 €');
   });
 });

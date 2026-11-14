@@ -64,11 +64,11 @@ export function calculateBudget() {
     const remainingDisplay = document.querySelector('.remaining-display');
     if (remainingDisplay) {
       if (results.remainingBudget < 0) {
-        remainingDisplay.style.background = 'linear-gradient(135deg, #A65A3A, #8C4A2E)';
+        remainingDisplay.dataset.state = 'deficit';
       } else if (results.remainingBudget < 200) {
-        remainingDisplay.style.background = 'linear-gradient(135deg, #B8862B, #A8742A)';
+        remainingDisplay.dataset.state = 'low';
       } else {
-        remainingDisplay.style.background = 'linear-gradient(135deg, #53623D, #6B7A50)';
+        remainingDisplay.dataset.state = 'ok';
       }
     }
 
@@ -119,11 +119,11 @@ export function updateSavingsDisplay() {
   const savingsResult = document.querySelector('.savings-result');
   if (savingsResult) {
     if (finalSavingsAmount > (budgetData.remainingBudget || 0)) {
-      savingsResult.style.background = '#A65A3A';
+      savingsResult.dataset.state = 'over';
     } else if (finalSavingsAmount === 0) {
-      savingsResult.style.background = '#8C8A7C';
+      savingsResult.dataset.state = 'zero';
     } else {
-      savingsResult.style.background = '#53623D';
+      savingsResult.dataset.state = 'ok';
     }
   }
 

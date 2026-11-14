@@ -139,7 +139,7 @@ export function mergeObjects(target, source) {
 export function formatAxisEuro(value) {
     const number = Number(value) || 0;
     const abs = Math.abs(number);
-    if (abs >= 1e6) return `${(number / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 1 })} Mio. €`;
-    if (abs >= 1e3) return `${(number / 1e3).toLocaleString('de-DE', { maximumFractionDigits: 0 })} Tsd. €`;
+    if (abs >= 1e6) return `${(number / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Mio. €`;
+    if (abs >= 1e3) return `${(number / 1e3).toLocaleString('de-DE', { maximumFractionDigits: abs < 1e5 ? 1 : 0 })} Tsd. €`;
     return `${number.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €`;
 }

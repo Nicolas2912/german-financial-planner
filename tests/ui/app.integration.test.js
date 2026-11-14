@@ -258,4 +258,22 @@ describe('ETF savings page (jsdom)', () => {
     toggle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     expect(toggle.classList.contains('active')).toBe(before);
   });
+
+  test('budget deficit is flagged on the remaining budget', () => {
+    document.getElementById('budgetPhase').click();
+    const salary = document.getElementById('salary');
+    salary.value = '100';
+    window.calculateBudget();
+    expect(document.querySelector('.remaining-display').dataset.state).toBe('deficit');
+    expect(document.querySelector('.savings-result').dataset.state).toBe('over');
+
+    salary.value = '3.500';
+    window.calculateBudget();
+    expect(document.querySelector('.remaining-display').dataset.state).toBe('ok');
+  });
+
+  test('comparison cards show labelled actions', () => {
+    const labels = [...document.querySelectorAll('.summary-card .card-action-btn')].slice(0, 3).map(b => b.textContent);
+    expect(labels).toEqual(['Umbenennen', 'Aktualisieren', 'Entfernen']);
+  });
 });

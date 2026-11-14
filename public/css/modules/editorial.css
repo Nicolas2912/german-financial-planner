@@ -2942,3 +2942,63 @@ select.input-field {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
+
+/* Budget status, set by setupBudget via data-state */
+.remaining-display[data-state="low"] span {
+    color: var(--warn);
+}
+
+.remaining-display[data-state="deficit"] span {
+    color: var(--tax);
+}
+
+.savings-result[data-state="zero"] {
+    background: var(--surface-2) !important;
+}
+
+.savings-result[data-state="zero"] span {
+    color: var(--muted);
+}
+
+.savings-result[data-state="over"] {
+    background: #F4E6DE !important;
+    border-color: #E3C3B3;
+}
+
+.savings-result[data-state="over"] span {
+    color: var(--tax);
+}
+
+/* Comparison card actions */
+.summary-card .top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+}
+
+.summary-card .card-actions {
+    display: flex;
+    flex-basis: 100%;
+    gap: 4px;
+    margin: 2px 0 0 -8px;
+}
+
+.card-action-btn {
+    padding: 3px 8px;
+    border: 0;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--ink-2);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.card-action-btn:hover {
+    background: var(--surface-2);
+    color: var(--ink);
+}
+
+.card-action-btn.is-danger {
+    color: var(--tax);
+}

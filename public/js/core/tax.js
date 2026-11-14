@@ -119,6 +119,47 @@ export function calculateGermanETFTax(startCapital, endCapital, annualReturn, ye
 }
 
 /**
+ * Approximate the zu versteuerndes Einkommen (zvE) of an employee:
+ * gross salary minus Arbeitnehmer-Pauschbetrag, deductible social
+ * contributions (pension, health, care) and Kinderfreibetrag.
+ *
+ * @param {number} grossSalary - Gross annual salary
+ * @param {number} children - Number of children
+ * @param {number} deductibleContributions - Deductible social contributions
+ * @returns {number} Taxable income (zvE)
+ */
+export function calculateTaxableIncome(grossSalary, children = 0, deductibleContributions = 0) {
+    const childAllowance = children * TAX_CONSTANTS.KINDERFREIBETRAG;
+    return Math.max(0, grossSalary - TAX_CONSTANTS.ARBEITNEHMER_PAUSCHBETRAG - deductibleContributions - childAllowance);
+}
+
+/**
+ * German income tax according to the 2025 tariff (§32a EStG).
+ * The Grundfreibetrag is part of the tariff, so zvE must not be reduced by it beforehand.
+ *
+ * @param {number} zvE - Taxable income (zu versteuerndes Einkommen)
+ * @returns {number} Annual income tax
+ */
+export function calculateIncomeTax(zvE) {
+    const income = Math.floor(Math.max(0, Number(zvE) || 0));
+    if (income <= TAX_CONSTANTS.GRUNDFREIBETRAG) {
+        return 0;
+    }
+    if (income <= 17443) {
+        const y = (income - TAX_CONSTANTS.GRUNDFREIBETRAG) / 10000;
+        return (932.30 * y + 1400) * y;
+    }
+    if (income <= 68480) {
+        const z = (income - 17443) / 10000;
+        return (176.64 * z + 2397) * z + 1015.13;
+    }
+    if (income <= 277825) {
+        return 0.42 * income - 10911.92;
+    }
+    return 0.45 * income - 19246.67;
+}
+
+/**
  * Calculate German net salary from gross salary
  * 
  * @param {number} grossSalary - Gross annual salary
@@ -131,36 +172,6 @@ export function calculateGermanETFTax(startCapital, endCapital, annualReturn, ye
  * @returns {number} Net annual salary
  */
 export function calculateGermanNetSalary(grossSalary, taxClass = 1, children = 0, age = 30, churchTax = false, publicHealthInsurance = true, additionalHealthRate = 2.5) {
-    // 2025 tax brackets (official data from web sources)
-    const basicAllowance = 12096; // Grundfreibetrag 2025
-    const childAllowance = children * 9600; // Kinderfreibetrag per child
-    
-    // Calculate taxable income
-    let taxableIncome = Math.max(0, grossSalary - basicAllowance - childAllowance);
-    
-    // Progressive tax calculation (2025 official formula)
-    let incomeTax = 0;
-    if (taxableIncome > 0) {
-        if (taxableIncome <= 17005) {
-            // First progression zone: 14% to 24%
-            const y = taxableIncome / 10000;
-            incomeTax = (922.98 * y + 1400) * y;
-        } else if (taxableIncome <= 68429) {
-            // Second progression zone: 24% to 42%
-            const z = (taxableIncome - 17005) / 10000;
-            incomeTax = (181.19 * z + 2397) * z + 1025.38;
-        } else if (taxableIncome <= 277825) {
-            // Third zone: constant 42%
-            incomeTax = 0.42 * taxableIncome - 10602.13;
-        } else {
-            // Top tax rate: 45%
-            incomeTax = 0.45 * taxableIncome - 18936.88;
-        }
-    }
-
-    // Church tax (8% or 9% depending on state)
-    const churchTaxAmount = churchTax ? incomeTax * 0.09 : 0;
-
     // Social security contributions (2025 rates from web sources)
     const maxPensionBase = 96600;  // 2025 contribution ceiling
     const maxHealthBase = 66150;   // 2025 health insurance ceiling
@@ -197,6 +208,12 @@ export function calculateGermanNetSalary(grossSalary, taxClass = 1, children = 0
         careInsurance = healthBase * careRate;
     }
 
+    const taxableIncome = calculateTaxableIncome(grossSalary, children, pensionInsurance + healthInsurance + careInsurance);
+    const incomeTax = calculateIncomeTax(taxableIncome);
+
+    // Church tax (8% or 9% depending on state)
+    const churchTaxAmount = churchTax ? incomeTax * 0.09 : 0;
+
     // Calculate total deductions
     const totalTaxes = incomeTax + churchTaxAmount;
     const totalSocialInsurance = pensionInsurance + unemploymentInsurance + healthInsurance + careInsurance;
@@ -222,41 +239,6 @@ export function calculateGermanNetSalary(grossSalary, taxClass = 1, children = 0
  * @returns {object} Detailed tax calculation results
  */
 export function calculateTaxes(grossSalary, taxClass, federalState, age, children, churchTax, publicHealthInsurance, healthInsuranceRate) {
-    // Official 2025 German tax calculation
-    const basicAllowance = 12096; // Grundfreibetrag 2025 (official)
-    const childAllowance = children * 9600; // Kinderfreibetrag 2025: €9,600 per child (official)
-    
-    // Calculate taxable income
-    let taxableIncome = Math.max(0, grossSalary - basicAllowance - childAllowance);
-    
-    // Official German progressive tax formula for 2025
-    let incomeTax = 0;
-    if (taxableIncome > 0) {
-        if (taxableIncome <= 17005) {
-            // First progression zone: 14% to 24%
-            const y = taxableIncome / 10000;
-            incomeTax = (922.98 * y + 1400) * y;
-        } else if (taxableIncome <= 68430) {
-            // Second progression zone: 24% to 42%
-            const z = (taxableIncome - 17005) / 10000;
-            incomeTax = (181.19 * z + 2397) * z + 1025.38;
-        } else if (taxableIncome <= 277825) {
-            // Third zone: constant 42%
-            incomeTax = 0.42 * taxableIncome - 10602.13;
-        } else {
-            // Top tax rate: 45%
-            incomeTax = 0.45 * taxableIncome - 18936.88;
-        }
-    }
-
-    // Church tax (8% or 9% of income tax depending on state)
-    const churchTaxRates = {
-        'bw': 0.08, 'by': 0.08, 'be': 0.09, 'bb': 0.09, 'hb': 0.09, 'hh': 0.09,
-        'he': 0.09, 'mv': 0.09, 'ni': 0.09, 'nw': 0.09, 'rp': 0.09, 'sl': 0.09,
-        'sn': 0.09, 'st': 0.09, 'sh': 0.09, 'th': 0.09
-    };
-    const churchTaxAmount = churchTax ? incomeTax * (churchTaxRates[federalState] || 0.09) : 0;
-
     // Social insurance contributions (official 2025 rates)
     const maxPensionBase = 96600;  // Unified for all of Germany in 2025
     const maxHealthBase = 66150;   // Updated for 2025
@@ -300,6 +282,17 @@ export function calculateTaxes(grossSalary, taxClass, federalState, age, childre
         }
         careInsuranceAmount = healthBase * careRate;
     }
+
+    const taxableIncome = calculateTaxableIncome(grossSalary, children, pensionInsuranceAmount + healthInsuranceAmount + careInsuranceAmount);
+    const incomeTax = calculateIncomeTax(taxableIncome);
+
+    // Church tax (8% or 9% of income tax depending on state)
+    const churchTaxRates = {
+        'bw': 0.08, 'by': 0.08, 'be': 0.09, 'bb': 0.09, 'hb': 0.09, 'hh': 0.09,
+        'he': 0.09, 'mv': 0.09, 'ni': 0.09, 'nw': 0.09, 'rp': 0.09, 'sl': 0.09,
+        'sn': 0.09, 'st': 0.09, 'sh': 0.09, 'th': 0.09
+    };
+    const churchTaxAmount = churchTax ? incomeTax * (churchTaxRates[federalState] || 0.09) : 0;
 
     // Calculate total deductions
     const totalTaxes = incomeTax + churchTaxAmount;
@@ -368,6 +361,7 @@ export const TAX_CONSTANTS = {
     BASISZINS: 0.0253,
     GRUNDFREIBETRAG: 12096,
     KINDERFREIBETRAG: 9600,
+    ARBEITNEHMER_PAUSCHBETRAG: 1230,
     MAX_PENSION_BASE: 96600,
     MAX_HEALTH_BASE: 66150,
     PENSION_RATE_EMPLOYEE: 0.093,

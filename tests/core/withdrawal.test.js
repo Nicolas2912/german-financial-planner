@@ -76,4 +76,14 @@ describe('withdrawal phase calculations', () => {
     expect(plan.totalTaxesPaid).toBeGreaterThan(0);
     expect(plan.monthlyNetWithdrawal).toBeLessThan(plan.monthlyGrossWithdrawal);
   });
+
+  test('simulateWithdrawal keeps an explicit cost basis of zero', () => {
+    const allGains = simulateWithdrawal(100_000, 1, 0, 0, true, 100_000, 0);
+    const unknownBasis = simulateWithdrawal(100_000, 1, 0, 0, true, 100_000);
+
+    // Whole withdrawal is gain: (100.000 * 70% - 1.000) * 25%
+    expect(allGains.yearlyData[0].taxesPaid).toBeCloseTo(17_250, 2);
+    // Unknown basis falls back to 60% of capital: (40.000 * 70% - 1.000) * 25%
+    expect(unknownBasis.yearlyData[0].taxesPaid).toBeCloseTo(6_750, 2);
+  });
 });

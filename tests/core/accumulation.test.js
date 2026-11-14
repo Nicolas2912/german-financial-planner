@@ -111,4 +111,13 @@ describe('accumulation calculations', () => {
     expect(updatedScenario.results.totalTaxesPaid).toBeGreaterThanOrEqual(0);
     expect(document.querySelector('#salaryIncreaseAnalysis_A .net-increase').textContent).not.toBe('');
   });
+
+  test('Vorabpauschale is added to the cost basis', () => {
+    const withoutTax = calculateWealthDevelopment(0, 100_000, 0.1, 0, 0, 1, 0, false, 60_000, true, 'thesaurierend');
+    const withTax = calculateWealthDevelopment(0, 100_000, 0.1, 0, 0, 1, 0, true, 60_000, true, 'thesaurierend');
+
+    expect(withoutTax.costBasis).toBe(100_000);
+    // Basisertrag = 100.000 * 2,53% * 70% = 1.771 (below the 10% gain)
+    expect(withTax.costBasis).toBeCloseTo(101_771, 0);
+  });
 });

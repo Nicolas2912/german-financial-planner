@@ -22,7 +22,7 @@ export {
 } from './setupScenarios.js';
 
 // Back-compat: bind actual calculation wrappers to window for code paths that call window.*
-import { calculateBudget } from './setupBudget.js';
+import { calculateBudget, setSavingsMode } from './setupBudget.js';
 import { calculateTaxes } from './setupTaxes.js';
 import { calculateWithdrawal } from './setupWithdrawal.js';
 
@@ -39,6 +39,7 @@ try {
       };
     }
     window.calculateBudget = calculateBudget;
+    window.setSavingsMode = setSavingsMode;
     window.calculateTaxes = calculateTaxes;
     window.calculateWithdrawal = calculateWithdrawal;
   }

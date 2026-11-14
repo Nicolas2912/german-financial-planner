@@ -1,6 +1,6 @@
 // scenarioComparison.js - Basic Scenario Comparison Module
 import { scenarioColors as baseScenarioColors } from '../state.js';
-import { calculateWealthDevelopment } from '../core/accumulation.js';
+import { calculateWealthDevelopment, calculateMultiPhaseWealthDevelopment } from '../core/accumulation.js';
 import { calculateDirectAnnuityPayment, calculateRealInterestRate } from '../core/withdrawal.js';
 class ScenarioComparisonManager {
     constructor() {
@@ -169,7 +169,9 @@ class ScenarioComparisonManager {
             includeTax: !!accP.includeTax,
             baseSalary: num(accP.baseSalary, 60000),
             teilfreistellung: !!accP.teilfreistellung,
-            etfType: accP.etfType || 'thesaurierend'
+            etfType: accP.etfType || 'thesaurierend',
+            savingsMode: accP.savingsMode || 'simple',
+            phases: Array.isArray(accP.multiPhaseData) ? accP.multiPhaseData : []
         };
         const incomeTotal = typeof budParams.totalIncome === 'number'
             ? budParams.totalIncome
@@ -493,6 +495,10 @@ class ScenarioComparisonManager {
         sc.params.accumulation.years = parseInt(accP.duration ?? sc.params.accumulation.years) || sc.params.accumulation.years;
         sc.params.accumulation.initialCapital = num(accP.initialCapital, sc.params.accumulation.initialCapital || 0);
         sc.params.accumulation.monthlySavings = num(accP.monthlySavings, sc.params.accumulation.monthlySavings || 0);
+        if (accData) {
+            sc.params.accumulation.savingsMode = accP.savingsMode || 'simple';
+            sc.params.accumulation.phases = Array.isArray(accP.multiPhaseData) ? accP.multiPhaseData : [];
+        }
         sc.params.withdrawal.rate = num(wdP.withdrawalRate ?? wdP.rate, sc.params.withdrawal.rate);
         sc.params.withdrawal.years = parseInt(wdP.duration ?? wdP.withdrawalYears ?? wdP.withdrawalDuration ?? wdP.years ?? sc.params.withdrawal.years) || sc.params.withdrawal.years;
         sc.params.budget.inflation = num(budData?.budgetData?.inflationRate ?? budData?.inflation ?? sc.params.budget.inflation, sc.params.budget.inflation);
@@ -1448,8 +1454,22 @@ class ScenarioComparisonManager {
         const teilfreistellung = !!accumulation.teilfreistellung;
         const etfType = accumulation.etfType || 'thesaurierend';
 
+        const phases = Array.isArray(accumulation.phases) ? accumulation.phases : [];
+        const useMultiPhase = accumulation.savingsMode === 'multi-phase' && phases.length > 0;
+
         try {
-            const result = calculateWealthDevelopment(
+            const result = useMultiPhase ? calculateMultiPhaseWealthDevelopment(
+                phases,
+                initialCapital,
+                returnRate,
+                inflationRate,
+                salaryGrowth,
+                salaryToSavings,
+                includeTax,
+                baseSalary,
+                teilfreistellung,
+                etfType
+            ) : calculateWealthDevelopment(
                 monthlySavings,
                 initialCapital,
                 returnRate,

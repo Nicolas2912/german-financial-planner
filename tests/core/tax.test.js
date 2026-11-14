@@ -2,6 +2,7 @@ import { describe, test, expect, beforeEach } from 'vitest';
 import {
   calculateGermanETFTax,
   calculateGermanNetSalary,
+  calculateIncomeTax,
   calculateTaxes,
   resetETFTaxAllowance
 } from '../../public/js/core/tax.js';
@@ -25,12 +26,32 @@ describe('tax calculations', () => {
   });
 
   test('net salary reflects progressive taxation and social deductions', () => {
-    const netWithoutChurch = calculateGermanNetSalary(65_000, 1, 'bw', 35, 0, false, true, 1.6);
-    const netWithChurch = calculateGermanNetSalary(65_000, 1, 'bw', 35, 0, true, true, 1.6);
+    const netWithoutChurch = calculateGermanNetSalary(65_000, 1, 0, 35, false, true, 1.6);
+    const netWithChurch = calculateGermanNetSalary(65_000, 1, 0, 35, true, true, 1.6);
 
     expect(netWithoutChurch).toBeLessThan(65_000);
     expect(netWithChurch).toBeLessThan(netWithoutChurch);
     expect(netWithoutChurch).toBeGreaterThan(40_000);
+  });
+
+  test('income tax follows the 2025 tariff (§32a EStG)', () => {
+    expect(calculateIncomeTax(12_096)).toBe(0);
+    expect(calculateIncomeTax(17_443)).toBeCloseTo(1_015.13, 1);
+    expect(calculateIncomeTax(68_480)).toBeCloseTo(17_849.77, 1);
+    expect(calculateIncomeTax(277_825)).toBeCloseTo(105_774.58, 1);
+  });
+
+  test('income tax and net salary have no jumps at zone boundaries', () => {
+    [12_096, 17_443, 68_480, 277_825].forEach(boundary => {
+      expect(Math.abs(calculateIncomeTax(boundary + 1) - calculateIncomeTax(boundary))).toBeLessThan(1);
+    });
+
+    let previousNet = calculateGermanNetSalary(0);
+    for (let gross = 100; gross <= 300_000; gross += 100) {
+      const net = calculateGermanNetSalary(gross);
+      expect(net - previousNet).toBeLessThan(100);
+      previousNet = net;
+    }
   });
 
   test('detailed tax calculation matches core expectations', () => {

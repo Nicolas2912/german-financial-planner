@@ -290,6 +290,8 @@ export function printCalculationSummary(initialCapital, duration, annualReturn, 
  */
 export function calculateWithdrawalPlan(initialCapital, duration, annualReturn, inflationRate, includeTax, userDefinedTotalContributions) {
     const TAX_FREE_ALLOWANCE = 1000; // Sparerpauschbetrag
+    // Unknown cost basis: assume 60% of the capital was paid in
+    userDefinedTotalContributions = Number.isFinite(userDefinedTotalContributions) ? userDefinedTotalContributions : initialCapital * 0.6;
     const TAX_RATE = 0.25; // Abgeltungssteuer
     
     console.log(`🧮 Starting direct mathematical calculation...`);
@@ -335,7 +337,7 @@ export function calculateWithdrawalPlan(initialCapital, duration, annualReturn, 
  * @param {number} userDefinedTotalContributions - Total contributions (cost basis)
  * @returns {Object} Simulation results with yearly data
  */
-export function simulateWithdrawal(initialCapital, duration, annualReturn, inflationRate, includeTax, baseAnnualWithdrawal, userDefinedTotalContributions = 0) {
+export function simulateWithdrawal(initialCapital, duration, annualReturn, inflationRate, includeTax, baseAnnualWithdrawal, userDefinedTotalContributions) {
     const TAX_FREE_ALLOWANCE = 1000; // Annual tax-free allowance for capital gains
     const BASE_TAX_RATE = 0.25; // 25% Abgeltungssteuer
     const EFFECTIVE_TAX_RATE = BASE_TAX_RATE; // 25%
@@ -348,7 +350,7 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
     if (isNaN(baseAnnualWithdrawal) || baseAnnualWithdrawal <= 0) throw new Error('Base annual withdrawal must be positive');
     
     let capital = initialCapital;
-    let remainingCostBasis = userDefinedTotalContributions || initialCapital * 0.6; // Track remaining cost basis
+    let remainingCostBasis = Number.isFinite(userDefinedTotalContributions) ? userDefinedTotalContributions : initialCapital * 0.6; // Track remaining cost basis
     let totalTaxesPaid = 0;
     let totalNetWithdrawals = 0;
     let annualTaxFreeAllowanceUsed = 0; // Track annual tax-free allowance usage (resets each year)

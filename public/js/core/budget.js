@@ -195,11 +195,11 @@ export function calculateRemainingAfterSavings(totalIncome, totalExpenses, savin
  */
 export function getBudgetStatusColor(remainingBudget) {
     if (remainingBudget < 0) {
-        return 'linear-gradient(135deg, #e74c3c, #c0392b)';
+        return 'linear-gradient(135deg, #A65A3A, #8C4A2E)';
     } else if (remainingBudget < 200) {
-        return 'linear-gradient(135deg, #f39c12, #e67e22)';
+        return 'linear-gradient(135deg, #B8862B, #A8742A)';
     } else {
-        return 'linear-gradient(135deg, #27ae60, #2ecc71)';
+        return 'linear-gradient(135deg, #53623D, #6B7A50)';
     }
 }
 
@@ -212,11 +212,11 @@ export function getBudgetStatusColor(remainingBudget) {
  */
 export function getSavingsStatusColor(savingsResult, remainingBudget) {
     if (savingsResult.finalSavingsAmount > (remainingBudget || 0)) {
-        return '#e74c3c';
+        return '#A65A3A';
     } else if (savingsResult.finalSavingsAmount === 0) {
-        return '#95a5a6';
+        return '#8C8A7C';
     } else {
-        return '#27ae60';
+        return '#53623D';
     }
 }
 

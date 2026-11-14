@@ -228,4 +228,52 @@ describe('ETF savings page (jsdom)', () => {
     window.recalculateAll();
     expect(parseGermanNumber(input.value)).toBeCloseTo(state.findScenario('A').results.endCapital, -1);
   });
+
+  test('navigation updates the page heading and the journey stepper', () => {
+    document.getElementById('budgetPhase').click();
+    expect(document.getElementById('pageTitle').textContent).toBe('Budgetplanung');
+    expect(document.getElementById('budgetPhase').getAttribute('aria-current')).toBe('page');
+    expect(document.querySelector('.journey-step.is-active').dataset.phaseTarget).toBe('budgetPhase');
+
+    document.querySelector('.journey-step[data-phase-target="withdrawalPhase"]').click();
+    expect(document.getElementById('pageTitle').textContent).toBe('Entnahmephase');
+    expect(document.getElementById('withdrawalSection').style.display).toBe('block');
+
+    document.getElementById('taxCalculatorPhase').click();
+    expect(document.getElementById('journeySteps').hidden).toBe(true);
+
+    document.getElementById('accumulationPhase').click();
+    expect(document.getElementById('journeySteps').hidden).toBe(false);
+  });
+
+  test('toggles are keyboard-operable switches', () => {
+    const toggle = document.getElementById('taxToggle_A');
+    const before = toggle.classList.contains('active');
+    expect(toggle.getAttribute('role')).toBe('switch');
+    expect(toggle.getAttribute('tabindex')).toBe('0');
+
+    toggle.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    expect(toggle.classList.contains('active')).toBe(!before);
+
+    toggle.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(toggle.classList.contains('active')).toBe(before);
+  });
+
+  test('budget deficit is flagged on the remaining budget', () => {
+    document.getElementById('budgetPhase').click();
+    const salary = document.getElementById('salary');
+    salary.value = '100';
+    window.calculateBudget();
+    expect(document.querySelector('.remaining-display').dataset.state).toBe('deficit');
+    expect(document.querySelector('.savings-result').dataset.state).toBe('over');
+
+    salary.value = '3.500';
+    window.calculateBudget();
+    expect(document.querySelector('.remaining-display').dataset.state).toBe('ok');
+  });
+
+  test('comparison cards show labelled actions', () => {
+    const labels = [...document.querySelectorAll('.summary-card .card-action-btn')].slice(0, 3).map(b => b.textContent);
+    expect(labels).toEqual(['Umbenennen', 'Aktualisieren', 'Entfernen']);
+  });
 });

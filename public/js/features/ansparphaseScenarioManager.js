@@ -63,31 +63,31 @@ export function updateAnsparphaseScenarioPreview() {
 
   previewContainer.innerHTML = `
     <div class="preview-item">
-      <span class="preview-label">📊 Aktives Szenario</span>
+      <span class="preview-label">Aktives Szenario</span>
       <span class="preview-value">${escapeHtml(current.name)}</span>
     </div>
     <div class="preview-item">
-      <span class="preview-label">💰 Monatliche Sparrate</span>
-      <span class="preview-value">€${formatGermanNumber(monthlySavings, 0)}</span>
+      <span class="preview-label">Monatliche Sparrate</span>
+      <span class="preview-value">${formatGermanNumber(monthlySavings, 0)} €</span>
     </div>
     <div class="preview-item">
-      <span class="preview-label">🏦 Startkapital</span>
-      <span class="preview-value">€${formatGermanNumber(initialCapital, 0)}</span>
+      <span class="preview-label">Startkapital</span>
+      <span class="preview-value">${formatGermanNumber(initialCapital, 0)} €</span>
     </div>
     <div class="preview-item">
-      <span class="preview-label">📈 Jährliche Rendite</span>
+      <span class="preview-label">Jährliche Rendite</span>
       <span class="preview-value">${annualReturn}%</span>
     </div>
     <div class="preview-item">
-      <span class="preview-label">⏱️ Anlagedauer</span>
+      <span class="preview-label">Anlagedauer</span>
       <span class="preview-value">${duration} Jahre</span>
     </div>
     <div class="preview-item">
-      <span class="preview-label">🎯 Sparmodus</span>
+      <span class="preview-label">Sparmodus</span>
       <span class="preview-value">${savingsMode}</span>
     </div>
     <div class="preview-item">
-      <span class="preview-label">📅 Erstellt</span>
+      <span class="preview-label">Erstellt</span>
       <span class="preview-value">${new Date().toLocaleDateString('de-DE')}</span>
     </div>
   `;
@@ -101,13 +101,13 @@ export function confirmSaveAnsparphaseScenario() {
   const scenarioName = document.getElementById('ansparphaseScenarioName')?.value.trim();
   const scenarioDescription = document.getElementById('ansparphaseScenarioDescription')?.value.trim() || '';
   if (!scenarioName) {
-    showNotification('❌ Fehler', 'Bitte geben Sie einen Szenario-Namen ein.', 'error');
+    showNotification('Fehler', 'Bitte geben Sie einen Szenario-Namen ein.', 'error');
     return;
   }
 
   const current = getActiveScenarioSafe();
   if (!current) {
-    showNotification('❌ Fehler', 'Kein aktives Szenario gefunden.', 'error');
+    showNotification('Fehler', 'Kein aktives Szenario gefunden.', 'error');
     return;
   }
 
@@ -162,7 +162,7 @@ export function confirmSaveAnsparphaseScenario() {
   localStorage.setItem(key, JSON.stringify(data));
 
   closeSaveAnsparphaseScenarioModal();
-  showNotification(existed ? '⚠️ Überschrieben' : '✅ Gespeichert', `Ansparphase-Szenario "${scenarioName}" ${existed ? 'überschrieben' : 'gespeichert'}.`, existed ? 'warning' : 'success');
+  showNotification(existed ? 'Überschrieben' : 'Gespeichert', `Ansparphase-Szenario "${scenarioName}" ${existed ? 'überschrieben' : 'gespeichert'}.`, existed ? 'warning' : 'success');
 }
 
 // =============== Manage Modal ===============
@@ -196,7 +196,7 @@ export function loadManageAnsparphaseScenarioList() {
   if (scenarios.length === 0) {
     list.innerHTML = `
       <div class="no-profiles">
-        <div class="no-profiles-icon">📁</div>
+        <div class="no-profiles-icon"></div>
         <p>Keine gespeicherten Szenarien gefunden.</p>
         <p>Erstellen Sie Ihr erstes Szenario mit "Szenario speichern".</p>
       </div>
@@ -226,12 +226,12 @@ export function loadManageAnsparphaseScenarioList() {
         <div class="profile-info">
           <div class="profile-name">${name}</div>
           <div class="profile-details">
-            Sparrate: €${formatGermanNumber(monthlySavings, 0)} | Dauer: ${duration} Jahre | Rendite: ${annualReturn}%
+            Sparrate: ${formatGermanNumber(monthlySavings, 0)} € | Dauer: ${duration} Jahre | Rendite: ${annualReturn}%
           </div>
         </div>
         <div class="profile-actions">
-          <button class="profile-action-btn profile-load-btn" onclick="loadAnsparphaseScenarioFromManager('${name}')">📂 Laden</button>
-          <button class="profile-action-btn profile-delete-btn" onclick="deleteAnsparphaseScenario('${name}')">🗑️ Löschen</button>
+          <button class="profile-action-btn profile-load-btn" onclick="loadAnsparphaseScenarioFromManager('${name}')">Laden</button>
+          <button class="profile-action-btn profile-delete-btn" onclick="deleteAnsparphaseScenario('${name}')">Löschen</button>
         </div>
       </div>
     `;
@@ -254,7 +254,7 @@ export function loadAnsparphaseScenarioFromManager(scenarioName) {
     }
   }
   if (!found) {
-    showNotification('❌ Fehler', 'Szenario konnte nicht geladen werden.', 'error');
+    showNotification('Fehler', 'Szenario konnte nicht geladen werden.', 'error');
     return;
   }
 
@@ -265,7 +265,7 @@ export function loadAnsparphaseScenarioFromManager(scenarioName) {
   // Capacity check (max 4 scenarios total)
   const existing = state.scenarios.length;
   if (existing + selected.length > 4) {
-    showNotification('⚠️ Zu viele Szenarien', `Das Laden würde ${existing + selected.length} Szenarien ergeben (max. 4).`, 'warning');
+    showNotification('Zu viele Szenarien', `Das Laden würde ${existing + selected.length} Szenarien ergeben (max. 4).`, 'warning');
     return;
   }
 
@@ -278,9 +278,9 @@ export function loadAnsparphaseScenarioFromManager(scenarioName) {
 
     // Update tab and panel titles immediately
     const tab = document.querySelector(`.scenario-tab[data-scenario="${newScenario.id}"]`);
-    if (tab) tab.innerHTML = `📈 ${escapeHtml(saved.name)}`;
+    if (tab) tab.innerHTML = `${escapeHtml(saved.name)}`;
     const panelTitle = document.querySelector(`.scenario-panel[data-scenario="${newScenario.id}"] .scenario-panel-title`);
-    if (panelTitle) panelTitle.textContent = `📊 ${escapeHtml(saved.name)}`;
+    if (panelTitle) panelTitle.textContent = `${escapeHtml(saved.name)}`;
 
     const p = saved.parameters || {};
     const setVal = (id, val) => {
@@ -329,11 +329,11 @@ export function loadAnsparphaseScenarioFromManager(scenarioName) {
 
   if (window.recalculateAll) window.recalculateAll();
   closeManageAnsparphaseScenarioModal();
-  showNotification('✅ Geladen', `Ansparphase-Szenario "${scenarioName}" geladen.`, 'success');
+  showNotification('Geladen', `Ansparphase-Szenario "${scenarioName}" geladen.`, 'success');
 }
 
 export function deleteAnsparphaseScenario(scenarioName) {
-  if (!confirm(`❓ Szenario "${scenarioName}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) return;
+  if (!confirm(`Szenario "${scenarioName}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) return;
 
   const keysToDelete = [];
   for (let i = 0; i < localStorage.length; i++) {
@@ -350,7 +350,7 @@ export function deleteAnsparphaseScenario(scenarioName) {
 
   keysToDelete.forEach(k => localStorage.removeItem(k));
   loadManageAnsparphaseScenarioList();
-  showNotification('🗑️ Gelöscht', `Szenario "${scenarioName}" entfernt.`, 'success');
+  showNotification('Gelöscht', `Szenario "${scenarioName}" entfernt.`, 'success');
 }
 
 // Back-compat: expose to window for inline onclick usage in generated HTML

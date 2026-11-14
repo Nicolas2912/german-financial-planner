@@ -8,7 +8,7 @@
    ------------------------- */
 :root {
     /* Premium background colors */
-    --bg-start: #ffffff;
+    --bg-start: #FCFAF5;
     --bg-end: #0284c7;
     
     /* Glass effect variables */
@@ -33,7 +33,7 @@
    Premium UI Body Overrides for Scenario Comparison
    ------------------------- */
 body.scenario-comparison {
-    background-color: #f8f9fa !important;
+    background-color: #F3EEE3 !important;
     overflow-x: hidden;
     background-image: none !important;
 }
@@ -92,7 +92,7 @@ body.scenario-comparison .container:hover {
     justify-content: space-between;
     align-items: center;
     padding: 12px;
-    background-color: #ffffff;
+    background-color: #FCFAF5;
     border-radius: var(--radius);
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     margin-bottom: 28px;
@@ -131,7 +131,7 @@ body.scenario-comparison .container:hover {
 
 
 .btn-action {
-    background-color: #ffffff;
+    background-color: #FCFAF5;
 }
 
 .btn-action.btn-load {
@@ -140,7 +140,7 @@ body.scenario-comparison .container:hover {
 }
 
 .btn-action.btn-load:hover {
-    background-color: rgba(52, 152, 219, 0.07);
+    background-color: rgba(83, 98, 61, 0.07);
 }
 
 .btn-action.btn-save {
@@ -149,7 +149,7 @@ body.scenario-comparison .container:hover {
 }
 
 .btn-action.btn-save:hover {
-    background-color: rgba(39, 174, 96, 0.07);
+    background-color: rgba(83, 98, 61, 0.07);
 }
 
 .btn-action.btn-export {
@@ -158,7 +158,7 @@ body.scenario-comparison .container:hover {
 }
 
 .btn-action.btn-export:hover {
-    background-color: rgba(243, 156, 18, 0.07);
+    background-color: rgba(184, 134, 43, 0.07);
 }
 
 /* -------------------------
@@ -180,8 +180,8 @@ body.scenario-comparison .container:hover {
    Premium Panels
    ------------------------- */
 .panel {
-    background-color: #ffffff;
-    border: 1px solid #eef2f7;
+    background-color: #FCFAF5;
+    border: 1px solid #F3EEE3;
     border-radius: var(--radius);
     box-shadow: 0 6px 20px rgba(0,0,0,0.07);
     padding: 18px;
@@ -205,10 +205,10 @@ body.scenario-comparison .container:hover {
 /* Scenario chooser button – neutral base with colored border via --scenario-accent */
 .btn-scenario {
     padding: 10px 18px;
-    border: 2px solid var(--scenario-accent, #e3f2fd);
+    border: 2px solid var(--scenario-accent, #EDEEE2);
     border-radius: 8px;
-    background: #ffffff;
-    color: #34495e;
+    background: #FCFAF5;
+    color: #4A5040;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9rem;
@@ -244,8 +244,8 @@ body.scenario-comparison .container:hover {
 
 /* Hover: emphasize border, no fill */
 .btn-scenario:hover {
-    background: #ffffff;
-    border-color: var(--scenario-accent, #3498db);
+    background: #FCFAF5;
+    border-color: var(--scenario-accent, #53623D);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
@@ -255,7 +255,7 @@ body.scenario-comparison .container:hover {
 /* Active: light fill using provided --scenario-accent-light; fallback to subtle blue */
 .btn-scenario.active {
     background: var(--scenario-accent-light, #e7f3fe);
-    border-color: var(--scenario-accent, #2980b9);
+    border-color: var(--scenario-accent, #434F31);
     color: #1f2d3a;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     transform: translateY(-1px);
@@ -270,13 +270,13 @@ body.scenario-comparison .container:hover {
 /* New scenario button – neutral */
 .btn-scenario.btn-new {
     border: 2px dashed var(--success);
-    background: #ffffff;
+    background: #FCFAF5;
     color: var(--success);
 }
 
 .btn-scenario.btn-new:hover {
-    background: rgba(39, 174, 96, 0.07);
-    border-color: #229954;
+    background: rgba(83, 98, 61, 0.07);
+    border-color: #434F31;
     color: #1e8449;
 }
 
@@ -294,7 +294,7 @@ body.scenario-comparison .container:hover {
     border-radius: 999px;
     border: 1px solid var(--muted-2);
     padding: 8px 14px;
-    background: white;
+    background: #FCFAF5;
     color: var(--text-2);
     font-weight: 600;
     cursor: pointer;
@@ -305,7 +305,7 @@ body.scenario-comparison .container:hover {
     background: var(--primary);
     color: white;
     border-color: transparent;
-    box-shadow: 0 8px 20px rgba(52, 152, 219, 0.25);
+    box-shadow: 0 8px 20px rgba(83, 98, 61, 0.25);
 }
 
 .pill:hover {
@@ -316,7 +316,7 @@ body.scenario-comparison .container:hover {
    Collapsible Parameter Sections
    ------------------------- */
 .param-section {
-    border: 1px solid #eef2f7;
+    border: 1px solid #F3EEE3;
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 12px;
@@ -329,7 +329,7 @@ body.scenario-comparison .container:hover {
     justify-content: space-between;
     gap: 12px;
     padding: 12px 14px;
-    background: #fcfdfe;
+    background: #F3EEE3;
     cursor: pointer;
     user-select: none;
     transition: background-color 0.2s ease;
@@ -353,7 +353,7 @@ body.scenario-comparison .container:hover {
 
 .btn-import {
     background: #f0f3f5;
-    border: 1px solid #e1e5e9;
+    border: 1px solid #E2DACA;
     color: var(--text-2);
     padding: 4px 10px;
     border-radius: 8px;
@@ -364,7 +364,7 @@ body.scenario-comparison .container:hover {
 }
 
 .btn-import:hover {
-    background: #e1e5e9;
+    background: #E2DACA;
     border-color: #d1d6db;
 }
 
@@ -435,7 +435,7 @@ body.scenario-comparison .container:hover {
     border: 1px solid var(--muted-2);
     border-radius: 10px;
     padding: 10px 12px;
-    background: #ffffff;
+    background: #FCFAF5;
     transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
 }
 
@@ -443,7 +443,7 @@ body.scenario-comparison .container:hover {
 .select:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.25);
+    box-shadow: 0 6px 20px rgba(83, 98, 61, 0.25);
     transform: scale(1.02);
 }
 
@@ -464,8 +464,8 @@ body.scenario-comparison .container:hover {
 }
 
 .card {
-    background: #ffffff;
-    border: 1px solid #eef2f7;
+    background: #FCFAF5;
+    border: 1px solid #F3EEE3;
     border-radius: 16px;
     padding: 18px 20px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.07);
@@ -545,7 +545,7 @@ body.scenario-comparison .container:hover {
     align-items: center;
     justify-content: space-between;
     border-radius: 14px;
-    border: 1px solid #eef2f7;
+    border: 1px solid #F3EEE3;
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -564,7 +564,7 @@ body.scenario-comparison .container:hover {
     border-radius: 999px;
     border: 1px solid var(--muted-2);
     padding: 8px 14px;
-    background: white;
+    background: #FCFAF5;
     color: var(--text-2);
     font-weight: 700;
     cursor: pointer;
@@ -575,7 +575,7 @@ body.scenario-comparison .container:hover {
     background: var(--primary);
     color: white;
     border-color: transparent;
-    box-shadow: 0 8px 20px rgba(52, 152, 219, 0.25);
+    box-shadow: 0 8px 20px rgba(83, 98, 61, 0.25);
 }
 
 .view-btn:hover {
@@ -597,7 +597,7 @@ body.scenario-comparison .container:hover {
     padding: 6px 10px;
     border-radius: 999px;
     border: 1px solid var(--muted-2);
-    background: white;
+    background: #FCFAF5;
 }
 
 .visibility input {
@@ -625,9 +625,9 @@ body.scenario-comparison .container:hover {
    ------------------------- */
 .table-wrap {
     margin-top: 18px;
-    background: #ffffff;
+    background: #FCFAF5;
     border-radius: 14px;
-    border: 1px solid #eef2f7;
+    border: 1px solid #F3EEE3;
     overflow: hidden;
     box-shadow: 0 6px 20px rgba(0,0,0,0.07);
 }
@@ -637,15 +637,15 @@ body.scenario-comparison .container:hover {
     gap: 8px;
     flex-wrap: wrap;
     padding: 10px;
-    background: #fcfdfe;
-    border-bottom: 1px solid #eef2f7;
+    background: #F3EEE3;
+    border-bottom: 1px solid #F3EEE3;
 }
 
 .filter-btn {
     border-radius: 999px;
     border: 1px solid var(--muted-2);
     padding: 8px 14px;
-    background: white;
+    background: #FCFAF5;
     color: var(--text-2);
     font-weight: 700;
     cursor: pointer;
@@ -656,7 +656,7 @@ body.scenario-comparison .container:hover {
     background: var(--primary);
     color: white;
     border-color: transparent;
-    box-shadow: 0 8px 20px rgba(52, 152, 219, 0.25);
+    box-shadow: 0 8px 20px rgba(83, 98, 61, 0.25);
 }
 
 .filter-btn:hover {
@@ -667,20 +667,20 @@ body.scenario-comparison .container:hover {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.94rem;
-    background: white;
+    background: #FCFAF5;
 }
 
 .table-wrap thead th {
     text-align: left;
     padding: 12px;
-    background: #fcfdfe;
+    background: #F3EEE3;
     color: var(--text-2);
-    border-bottom: 1px solid #eef2f7;
+    border-bottom: 1px solid #F3EEE3;
 }
 
 .table-wrap tbody td {
     padding: 12px;
-    border-bottom: 1px solid #eef2f7;
+    border-bottom: 1px solid #F3EEE3;
 }
 
 .table-wrap tbody tr:nth-child(even):not(.group-header) {
@@ -697,8 +697,8 @@ body.scenario-comparison .container:hover {
     text-align: left;
     font-size: 0.9rem;
     color: var(--text-2);
-    border-bottom: 1px solid #e1e5e9;
-    border-top: 1px solid #e1e5e9;
+    border-bottom: 1px solid #E2DACA;
+    border-top: 1px solid #E2DACA;
 }
 
 /* -------------------------
@@ -708,8 +708,8 @@ body.scenario-comparison .container:hover {
     margin-top: 28px;
     padding: 18px;
     border-radius: 16px;
-    background: #ffffff;
-    border: 1px solid #eef2f7;
+    background: #FCFAF5;
+    border: 1px solid #F3EEE3;
     box-shadow: 0 6px 20px rgba(0,0,0,0.07);
 }
 
@@ -726,19 +726,19 @@ body.scenario-comparison .container:hover {
     gap: 1px;
     margin-bottom: 0;
     padding: 4px;
-    background: rgba(52, 152, 219, 0.1);
+    background: rgba(83, 98, 61, 0.1);
     border-radius: 6px;
-    border: 2px solid rgba(52, 152, 219, 0.2);
+    border: 2px solid rgba(83, 98, 61, 0.2);
     flex-wrap: wrap;
     min-height: 44px;
 }
 
 .scenario-tab {
     padding: 8px 16px;
-    border: 2px solid #bdc3c7;
+    border: 2px solid #CFC7B4;
     border-radius: 6px;
-    background: white;
-    color: #2c3e50;
+    background: #FCFAF5;
+    color: #343A2E;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.85rem;
@@ -771,29 +771,29 @@ body.scenario-comparison .container:hover {
 .scenario-tab:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border-color: #95a5a6;
+    border-color: #8C8A7C;
 }
 
 .scenario-tab.active {
-    background: var(--scenario-color, #3498db);
+    background: var(--scenario-color, #53623D);
     color: white;
-    border-color: var(--scenario-color, #3498db);
+    border-color: var(--scenario-color, #53623D);
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.3);
 }
 
 .scenario-tab.active:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+    box-shadow: 0 6px 20px rgba(83, 98, 61, 0.4);
 }
 
 /* Add Scenario Button */
 .add-scenario-btn {
     padding: 8px 12px;
-    border: 2px dashed #27ae60;
+    border: 2px dashed #53623D;
     border-radius: 6px;
-    background: rgba(39, 174, 96, 0.1);
-    color: #27ae60;
+    background: rgba(83, 98, 61, 0.1);
+    color: #53623D;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.85rem;
@@ -806,9 +806,9 @@ body.scenario-comparison .container:hover {
 }
 
 .add-scenario-btn:hover {
-    background: rgba(39, 174, 96, 0.2);
+    background: rgba(83, 98, 61, 0.2);
     transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 .add-scenario-btn:active {
@@ -833,7 +833,7 @@ body.scenario-comparison .container:hover {
     align-items: center;
     margin-bottom: 20px;
     padding: 15px 20px;
-    background: var(--scenario-color, #3498db);
+    background: var(--scenario-color, #53623D);
     color: white;
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -895,12 +895,12 @@ body.scenario-comparison .container:hover {
 }
 
 .scenario-action-btn.danger {
-    border-color: rgba(231, 76, 60, 0.5);
-    background: rgba(231, 76, 60, 0.2);
+    border-color: rgba(166, 90, 58, 0.5);
+    background: rgba(166, 90, 58, 0.2);
 }
 
 .scenario-action-btn.danger:hover {
-    background: rgba(231, 76, 60, 0.3);
+    background: rgba(166, 90, 58, 0.3);
 }
 
 /* -------------------------
@@ -949,7 +949,7 @@ body.scenario-comparison .container:hover {
     top: -30px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(52, 152, 219, 0.9);
+    background: rgba(83, 98, 61, 0.9);
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
@@ -969,7 +969,7 @@ body.scenario-comparison .container:hover {
     padding: 15px;
     margin: -15px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    border: 1px solid rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(83, 98, 61, 0.1);
     transition: all 0.3s ease;
 }
 
@@ -983,7 +983,7 @@ body.scenario-comparison .container:hover {
     top: -30px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(52, 152, 219, 0.9);
+    background: rgba(83, 98, 61, 0.9);
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
@@ -996,10 +996,10 @@ body.scenario-comparison .container:hover {
 }
 
 .scenario-result-card {
-    background: white;
+    background: #FCFAF5;
     padding: 20px;
     border-radius: 12px;
-    border-left: 5px solid var(--scenario-color, #3498db);
+    border-left: 5px solid var(--scenario-color, #53623D);
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     margin-bottom: 15px;
 }
@@ -1014,7 +1014,7 @@ body.scenario-comparison .container:hover {
 .scenario-result-title {
     font-size: 1.1rem;
     font-weight: 700;
-    color: var(--scenario-color, #3498db);
+    color: var(--scenario-color, #53623D);
     margin: 0;
 }
 
@@ -1030,7 +1030,7 @@ body.scenario-comparison .container:hover {
 
 .scenario-result-label {
     font-size: 0.85rem;
-    color: #7f8c8d;
+    color: #6F6E62;
     margin-bottom: 5px;
     font-weight: 600;
 }
@@ -1038,7 +1038,7 @@ body.scenario-comparison .container:hover {
 .scenario-result-value {
     font-size: 1.2rem;
     font-weight: bold;
-    color: #2c3e50;
+    color: #343A2E;
 }
 
 /* Dynamic font sizing based on content length - only for scenario result cards */
@@ -1054,8 +1054,8 @@ body.scenario-comparison .container:hover {
    Scenario Chart Selector
    ------------------------- */
 .scenario-chart-selector {
-    background: rgba(52, 152, 219, 0.05);
-    border: 1px solid rgba(52, 152, 219, 0.2);
+    background: rgba(83, 98, 61, 0.05);
+    border: 1px solid rgba(83, 98, 61, 0.2);
     border-radius: 12px;
     padding: 20px;
 }
@@ -1068,10 +1068,10 @@ body.scenario-comparison .container:hover {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: white;
+    background: #FCFAF5;
     padding: 10px 15px;
     border-radius: 8px;
-    border: 2px solid #e9ecef;
+    border: 2px solid #E2DACA;
     cursor: pointer;
     transition: all 0.3s ease;
     user-select: none;
@@ -1082,7 +1082,7 @@ body.scenario-comparison .container:hover {
 .scenario-checkbox-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    border-color: #bdc3c7;
+    border-color: #CFC7B4;
 }
 
 .scenario-checkbox-item.checked {
@@ -1238,7 +1238,7 @@ body.scenario-comparison .container:hover {
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    background: #ffffff;
+    background: #FCFAF5;
     border-radius: var(--radius);
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     margin-bottom: 28px;
@@ -1266,33 +1266,33 @@ body.scenario-comparison .container:hover {
 }
 
 .comparison-btn.btn-load {
-    background: #ffffff;
+    background: #FCFAF5;
     border-color: var(--primary);
     color: var(--primary);
 }
 
 .comparison-btn.btn-load:hover {
-    background: rgba(52, 152, 219, 0.07);
+    background: rgba(83, 98, 61, 0.07);
 }
 
 .comparison-btn.btn-save {
-    background: #ffffff;
+    background: #FCFAF5;
     border-color: var(--success);
     color: var(--success);
 }
 
 .comparison-btn.btn-save:hover {
-    background: rgba(39, 174, 96, 0.07);
+    background: rgba(83, 98, 61, 0.07);
 }
 
 .comparison-btn.btn-export {
-    background: #ffffff;
+    background: #FCFAF5;
     border-color: var(--warning);
     color: var(--warning);
 }
 
 .comparison-btn.btn-export:hover {
-    background: rgba(243, 156, 18, 0.07);
+    background: rgba(184, 134, 43, 0.07);
 }
 
 /* Main Comparison Layout */
@@ -1306,8 +1306,8 @@ body.scenario-comparison .container:hover {
     padding: 20px;
     transition: border-color 0.3s ease;
     /* Accent variables (set via JS on selection); defaults to Optimistisch */
-    --accent-color: #3498db;
-    --accent-light: rgba(52, 152, 219, 0.12);
+    --accent-color: #53623D;
+    --accent-light: rgba(83, 98, 61, 0.12);
 }
 
 .comparison-layout .comparison-params-panel {
@@ -1324,8 +1324,8 @@ body.scenario-comparison .container:hover {
 
 /* Parameters Panel */
 .comparison-params-panel {
-    background: #ffffff;
-    border: 1px solid #eef2f7;
+    background: #FCFAF5;
+    border: 1px solid #F3EEE3;
     border-radius: var(--radius);
     box-shadow: 0 6px 20px rgba(0,0,0,0.07);
     padding: 24px;
@@ -1341,8 +1341,8 @@ body.scenario-comparison .container:hover {
 
 /* Results Panel */
 .comparison-results-panel {
-    background: #ffffff;
-    border: 1px solid #eef2f7;
+    background: #FCFAF5;
+    border: 1px solid #F3EEE3;
     border-radius: var(--radius);
     box-shadow: 0 6px 20px rgba(0,0,0,0.07);
     padding: 20px;
@@ -1356,7 +1356,7 @@ body.scenario-comparison .container:hover {
 .comparison-layout .phase-pills .pill {
     border-color: var(--accent-color) !important;
     color: var(--accent-color) !important;
-    background: #ffffff;
+    background: #FCFAF5;
 }
 
 .comparison-layout .phase-pills .pill.active {
@@ -1385,12 +1385,12 @@ body.scenario-comparison .container:hover {
   margin-left: 8px;
   padding: 2px 6px;
   border-radius: 999px;
-  background: #ffffff; /* distinct pill background */
-  color: #27ae60;      /* green check on white */
+  background: #FCFAF5; /* distinct pill background */
+  color: #53623D;      /* green check on white */
   font-weight: 800;
   font-size: 0.85rem;
   line-height: 1.1;
-  border: 1px solid rgba(39, 174, 96, 0.25);
+  border: 1px solid rgba(83, 98, 61, 0.25);
 }
 
 /* Apply the same selected checkmark style for Ansparphase and Entnahmephase import lists */
@@ -1412,12 +1412,12 @@ body.scenario-comparison .container:hover {
   margin-left: 8px;
   padding: 2px 6px;
   border-radius: 999px;
-  background: #ffffff;
-  color: #27ae60;
+  background: #FCFAF5;
+  color: #53623D;
   font-weight: 800;
   font-size: 0.85rem;
   line-height: 1.1;
-  border: 1px solid rgba(39, 174, 96, 0.25);
+  border: 1px solid rgba(83, 98, 61, 0.25);
 }
 
 /* Make profile items wrap across columns to use available width */
@@ -1435,7 +1435,7 @@ body.scenario-comparison .container:hover {
     align-items: center;
     justify-content: space-between;
     border-radius: 14px;
-    border: 1px solid #eef2f7;
+    border: 1px solid #F3EEE3;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     padding: 16px;
@@ -1459,14 +1459,14 @@ body.scenario-comparison .container:hover {
     padding: 8px 12px;
     border-radius: 8px;
     border: 1px solid var(--muted-2);
-    background: white;
+    background: #FCFAF5;
     cursor: pointer;
     transition: var(--transition);
 }
 
 .scenario-visibility label:hover {
-    background: #f8f9fa;
-    border-color: #bdc3c7;
+    background: #F3EEE3;
+    border-color: #CFC7B4;
 }
 
 .scenario-visibility input[type="checkbox"] {
@@ -1495,8 +1495,8 @@ body.scenario-comparison .container:hover {
 }
 
 .summary-card {
-    background: #ffffff;
-    border: 1px solid #eef2f7;
+    background: #FCFAF5;
+    border: 1px solid #F3EEE3;
     border-radius: 14px;
     padding: 16px; /* increase inner spacing */
     box-shadow: 0 6px 18px rgba(0,0,0,0.06);
@@ -1557,7 +1557,7 @@ body.scenario-comparison .container:hover {
   font-weight: 600;
   border: 1px solid #e6ebf2;
   color: var(--text);
-  background: #f7fafc;
+  background: #F3EEE3;
   max-width: 100%;
 }
 .summary-compact .sources .chip-budget { border-color: #d6e4ff; background: #f3f7ff; }
@@ -1570,9 +1570,9 @@ body.scenario-comparison .container:hover {
 .risk-badge { font-size: 0.75rem; font-weight: 700; padding: 3px 8px; border-radius: 8px; }
 /* Risk badge color themes */
 .summary-card.primary .risk-badge { background: #fff3e6; color: #b14a00; }
-.summary-card.success .risk-badge { background: #eaf8ee; color: #1e7e34; }
+.summary-card.success .risk-badge { background: #eaf8ee; color: #434F31; }
 .risk-badge.risk-high { background: #fff3e6; color: #b14a00; }
-.risk-badge.risk-low { background: #eaf8ee; color: #1e7e34; }
+.risk-badge.risk-low { background: #eaf8ee; color: #434F31; }
 .risk-badge.risk-medium { background: #eef5ff; color: #1d5fa7; }
 
 /* Headline amount */
@@ -1615,8 +1615,8 @@ body.scenario-comparison .container:hover {
     font-size: 0.75rem;
     letter-spacing: 0.3px;
     color: var(--muted);
-    background: #f7fafc;
-    border: 1px solid #eef2f7;
+    background: #F3EEE3;
+    border: 1px solid #F3EEE3;
     padding: 2px 8px;
     border-radius: 999px;
 }
@@ -1676,7 +1676,7 @@ body.scenario-comparison .container:hover {
     border-radius: 10px;
 }
 /* Neutral highlight for featured metric so all cards look coherent */
-.summary-card .kv .v:nth-child(2) { background: #f7fafc; }
+.summary-card .kv .v:nth-child(2) { background: #F3EEE3; }
 
 /* Mobile tweaks: stacked columns shouldn’t show column divider */
 @media (max-width: 680px) {
@@ -1719,7 +1719,7 @@ body.scenario-comparison .budget-grid {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: #e8f4fd;
+  background: #EDEEE2;
   color: #1c4980;
   border: 1px solid #cfe6fb;
   border-radius: 10px;
@@ -1733,9 +1733,9 @@ body.scenario-comparison .budget-grid {
 }
 
 .budget-card {
-  border: 1px solid #eef2f7;
+  border: 1px solid #F3EEE3;
   border-radius: 12px;
-  background: #ffffff;
+  background: #FCFAF5;
   box-shadow: 0 4px 14px rgba(0,0,0,0.04);
   padding: 10px 12px;
 }
@@ -1744,15 +1744,15 @@ body.scenario-comparison .budget-grid {
 .budget-card.summary { padding: 14px 16px; }
 .budget-card.summary .kvv-k { font-size: 0.86rem; }
 .budget-card.summary .kvv-v { font-size: 1rem; }
-.budget-card.income { border-left: 4px solid var(--success); background: linear-gradient(0deg, rgba(39,174,96,0.04), rgba(39,174,96,0.02)); }
-.budget-card.expenses { border-left: 4px solid var(--danger); background: linear-gradient(0deg, rgba(231,76,60,0.04), rgba(231,76,60,0.02)); }
-.budget-card.income .kvv-v { color: #1e7e34; }
+.budget-card.income { border-left: 4px solid var(--success); background: linear-gradient(0deg, rgba(83, 98, 61,0.04), rgba(83, 98, 61,0.02)); }
+.budget-card.expenses { border-left: 4px solid var(--danger); background: linear-gradient(0deg, rgba(166, 90, 58,0.04), rgba(166, 90, 58,0.02)); }
+.budget-card.income .kvv-v { color: #434F31; }
 .budget-card.expenses .kvv-v { color: #a83232; }
 
 .budget-card .kv { margin-bottom: 8px; }
 .budget-card .kv:last-child { margin-bottom: 0; }
 
-.kv .v.strong { color: #2c3e50; font-weight: 800; }
+.kv .v.strong { color: #343A2E; font-weight: 800; }
 
 /* Tighter, smaller typography in budget cards */
 .budget-card .kv { font-size: 0.84rem; grid-template-columns: minmax(160px, 1fr) auto; }
@@ -1780,8 +1780,8 @@ body.scenario-comparison .budget-grid {
   font-size: 0.72rem;
   letter-spacing: 0.2px;
   color: var(--muted);
-  background: #f7fafc;
-  border: 1px solid #eef2f7;
+  background: #F3EEE3;
+  border: 1px solid #F3EEE3;
   padding: 2px 8px;
   border-radius: 999px;
   margin-bottom: 8px;
@@ -1811,9 +1811,9 @@ body.scenario-comparison .budget-grid {
 /* Comparison Table Wrapper */
 .comparison-table-wrapper {
     margin-top: 30px;
-    background: #ffffff;
+    background: #FCFAF5;
     border-radius: 14px;
-    border: 1px solid #eef2f7;
+    border: 1px solid #F3EEE3;
     overflow: hidden;
     box-shadow: 0 6px 20px rgba(0,0,0,0.07);
 }
@@ -1826,22 +1826,22 @@ body.scenario-comparison .budget-grid {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.94rem;
-    background: white;
+    background: #FCFAF5;
 }
 
 .comparison-table-wrapper thead th {
     text-align: left;
     padding: 16px 20px;
-    background: #fcfdfe;
+    background: #F3EEE3;
     color: var(--text-2);
-    border-bottom: 2px solid #eef2f7;
+    border-bottom: 2px solid #F3EEE3;
     font-weight: 700;
     font-size: 0.9rem;
 }
 
 .comparison-table-wrapper tbody td {
     padding: 14px 20px;
-    border-bottom: 1px solid #eef2f7;
+    border-bottom: 1px solid #F3EEE3;
     vertical-align: middle;
 }
 
@@ -1860,8 +1860,8 @@ body.scenario-comparison .budget-grid {
     font-size: 0.95rem;
     color: var(--text-2);
     font-weight: 700;
-    border-bottom: 2px solid #e1e5e9;
-    border-top: 2px solid #e1e5e9;
+    border-bottom: 2px solid #E2DACA;
+    border-top: 2px solid #E2DACA;
 }
 
 /* Full Summary */
@@ -1869,8 +1869,8 @@ body.scenario-comparison .budget-grid {
     margin-top: 40px;
     padding: 30px;
     border-radius: 16px;
-    background: #ffffff;
-    border: 1px solid #eef2f7;
+    background: #FCFAF5;
+    border: 1px solid #F3EEE3;
     box-shadow: 0 6px 20px rgba(0,0,0,0.07);
 }
 
@@ -1906,12 +1906,12 @@ body.scenario-comparison .budget-grid {
 
 .comparison-scenario-tab {
     padding: 10px 18px;
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #F3EEE3;
+    border: 2px solid #E2DACA;
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    color: #2c3e50;
+    color: #343A2E;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     white-space: nowrap;
     position: relative;
@@ -1927,7 +1927,7 @@ body.scenario-comparison .budget-grid {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(83, 98, 61, 0.1), transparent);
     transition: left 0.5s;
 }
 
@@ -1936,23 +1936,23 @@ body.scenario-comparison .budget-grid {
 }
 
 .comparison-scenario-tab:hover {
-    background: #e8f4fd;
-    border-color: #3498db;
+    background: #EDEEE2;
+    border-color: #53623D;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.3);
 }
 
 .comparison-scenario-tab.active {
-    background: #3498db;
+    background: #53623D;
     color: white;
-    border-color: #2980b9;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    border-color: #434F31;
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.4);
 }
 
 .comparison-scenario-tab.active:hover {
-    background: #2980b9;
+    background: #434F31;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+    box-shadow: 0 6px 20px rgba(83, 98, 61, 0.5);
 }
 
 /* Chart View Controls */
@@ -1968,15 +1968,15 @@ body.scenario-comparison .budget-grid {
     align-items: center;
     gap: 6px;
     padding: 12px 16px;
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #F3EEE3;
+    border: 2px solid #E2DACA;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     min-width: 120px;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #2c3e50;
+    color: #343A2E;
     position: relative;
     overflow: hidden;
 }
@@ -1988,7 +1988,7 @@ body.scenario-comparison .budget-grid {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(83, 98, 61, 0.1), transparent);
     transition: left 0.5s;
 }
 
@@ -1997,23 +1997,23 @@ body.scenario-comparison .budget-grid {
 }
 
 .chart-view-btn:hover {
-    background: #e8f4fd;
-    border-color: #3498db;
+    background: #EDEEE2;
+    border-color: #53623D;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.3);
 }
 
 .chart-view-btn.active {
-    background: #3498db;
+    background: #53623D;
     color: white;
-    border-color: #2980b9;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    border-color: #434F31;
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.4);
 }
 
 .chart-view-btn.active:hover {
-    background: #2980b9;
+    background: #434F31;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+    box-shadow: 0 6px 20px rgba(83, 98, 61, 0.5);
 }
 
 .chart-btn-emoji {
@@ -2038,20 +2038,20 @@ body.scenario-comparison .budget-grid {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #F3EEE3;
+    border: 2px solid #E2DACA;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.85rem;
     font-weight: 600;
-    color: #2c3e50;
+    color: #343A2E;
     user-select: none;
 }
 
 .scenario-visibility-item:hover {
-    background: #e9ecef;
-    border-color: #bdc3c7;
+    background: #E2DACA;
+    border-color: #CFC7B4;
     transform: translateY(-1px);
 }
 
@@ -2061,22 +2061,22 @@ body.scenario-comparison .budget-grid {
     margin: 0;
     cursor: pointer;
     appearance: none;
-    border: 2px solid #bdc3c7;
+    border: 2px solid #CFC7B4;
     border-radius: 4px;
-    background: white;
+    background: #FCFAF5;
     position: relative;
     transition: all 0.3s ease;
     flex-shrink: 0;
 }
 
 .scenario-visibility-checkbox:hover {
-    border-color: var(--scenario-color, #3498db);
+    border-color: var(--scenario-color, #53623D);
     transform: scale(1.05);
 }
 
 .scenario-visibility-checkbox:checked {
-    background: var(--scenario-color, #3498db);
-    border-color: var(--scenario-color, #3498db);
+    background: var(--scenario-color, #53623D);
+    border-color: var(--scenario-color, #53623D);
 }
 
 .scenario-visibility-checkbox:checked::after {
@@ -2091,13 +2091,13 @@ body.scenario-comparison .budget-grid {
 }
 
 .scenario-visibility-checkbox:checked + span {
-    color: #2c3e50;
+    color: #343A2E;
     font-weight: 700;
 }
 
 .scenario-visibility-item:has(.scenario-visibility-checkbox:checked) {
-    background: white;
-    border-color: var(--scenario-color, #3498db);
+    background: #FCFAF5;
+    border-color: var(--scenario-color, #53623D);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
@@ -2106,7 +2106,7 @@ body.scenario-comparison .budget-grid {
     height: 12px;
     border-radius: 50%;
     display: inline-block;
-    border: 2px solid #fff;
+    border: 2px solid #FCFAF5;
     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 
@@ -2120,7 +2120,7 @@ body.scenario-comparison .budget-grid {
     position: relative;
     width: 100%;
     padding: 16px 20px 28px;
-    background: #ffffff;
+    background: #FCFAF5;
     border-radius: 18px;
     box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.06);
     min-height: 360px;
@@ -2168,7 +2168,7 @@ body.scenario-comparison .budget-grid {
 }
 
 .chart-title {
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 15px;
     font-size: 1.1rem;
     font-weight: 700;
@@ -2177,11 +2177,11 @@ body.scenario-comparison .budget-grid {
 
 /* Comparison Table */
 .comparison-table-container {
-    background: white;
+    background: #FCFAF5;
     border-radius: 15px;
     padding: 25px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 2px solid #e9ecef;
+    border: 2px solid #E2DACA;
     margin-bottom: 30px;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
 }
@@ -2189,11 +2189,11 @@ body.scenario-comparison .budget-grid {
 .comparison-table-container:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    border-color: #3498db;
+    border-color: #53623D;
 }
 
 .table-title {
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 20px;
     font-size: 1.2rem;
     font-weight: 700;
@@ -2211,10 +2211,10 @@ body.scenario-comparison .budget-grid {
 
 .table-control-btn {
     padding: 8px 16px;
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #F3EEE3;
+    border: 2px solid #E2DACA;
     border-radius: 20px;
-    color: #2c3e50;
+    color: #343A2E;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
@@ -2231,7 +2231,7 @@ body.scenario-comparison .budget-grid {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(83, 98, 61, 0.1), transparent);
     transition: left 0.5s;
 }
 
@@ -2240,23 +2240,23 @@ body.scenario-comparison .budget-grid {
 }
 
 .table-control-btn:hover {
-    background: #e8f4fd;
-    border-color: #3498db;
+    background: #EDEEE2;
+    border-color: #53623D;
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.3);
 }
 
 .table-control-btn.active {
-    background: #3498db;
+    background: #53623D;
     color: white;
-    border-color: #2980b9;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    border-color: #434F31;
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.4);
 }
 
 .table-control-btn.active:hover {
-    background: #2980b9;
+    background: #434F31;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+    box-shadow: 0 6px 20px rgba(83, 98, 61, 0.5);
 }
 
 /* Parameter Grid and Management */
@@ -2272,17 +2272,17 @@ body.scenario-comparison .budget-grid {
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     align-items: start;
-    background: white;
+    background: #FCFAF5;
     padding: 20px;
     border-radius: 12px;
-    border: 2px solid #e9ecef;
+    border: 2px solid #E2DACA;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     transition: all 0.3s ease;
 }
 
 .parameter-row:hover {
-    border-color: #3498db;
-    box-shadow: 0 4px 20px rgba(52, 152, 219, 0.1);
+    border-color: #53623D;
+    box-shadow: 0 4px 20px rgba(83, 98, 61, 0.1);
     transform: translateY(-2px);
 }
 
@@ -2294,7 +2294,7 @@ body.scenario-comparison .budget-grid {
 
 .input-group label {
     font-weight: 600;
-    color: #2c3e50 !important;
+    color: #343A2E !important;
     font-size: 0.9rem;
     margin: 0;
     line-height: 1.3;
@@ -2319,47 +2319,47 @@ body.scenario-comparison .budget-grid {
     gap: 6px;
     padding: 4px 8px;
     border-radius: 6px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: #F3EEE3;
+    border: 1px solid #E2DACA;
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: 0.85rem;
     font-weight: 500;
-    color: #2c3e50 !important;
+    color: #343A2E !important;
     min-height: 28px;
     width: 100%;
     max-width: 180px;
 }
 
 .parameter-row .radio-option:hover {
-    background: #e9ecef;
-    border-color: #bdc3c7;
+    background: #E2DACA;
+    border-color: #CFC7B4;
 }
 
 .parameter-row .radio-option:has(input:checked) {
-    background: #e8f4fd;
-    border-color: #3498db;
-    color: #2c3e50 !important;
+    background: #EDEEE2;
+    border-color: #53623D;
+    color: #343A2E !important;
 }
 
 .parameter-row .radio-custom {
     width: 16px;
     height: 16px;
-    border: 2px solid #bdc3c7;
+    border: 2px solid #CFC7B4;
     border-radius: 50%;
-    background: white;
+    background: #FCFAF5;
     position: relative;
     transition: all 0.2s ease;
     flex-shrink: 0;
 }
 
 .parameter-row .radio-option:hover .radio-custom {
-    border-color: #95a5a6;
+    border-color: #8C8A7C;
 }
 
 .parameter-row .radio-option input[type="radio"]:checked + .radio-custom {
-    border-color: #3498db;
-    background: #3498db;
+    border-color: #53623D;
+    background: #53623D;
 }
 
 .parameter-row .radio-option input[type="radio"]:checked + .radio-custom::after {
@@ -2371,7 +2371,7 @@ body.scenario-comparison .budget-grid {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: white;
+    background: #FCFAF5;
 }
 
 /* Toggle group alignment improvements */
@@ -2387,21 +2387,21 @@ body.scenario-comparison .budget-grid {
     justify-content: space-between;
     align-items: center;
     padding: 4px 8px;
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: #F3EEE3;
+    border: 1px solid #E2DACA;
     border-radius: 8px;
     transition: all 0.2s ease;
     min-height: 36px;
 }
 
 .toggle-group .toggle-container:hover {
-    background: #e9ecef;
-    border-color: #bdc3c7;
+    background: #E2DACA;
+    border-color: #CFC7B4;
 }
 
 .toggle-group .toggle-container label {
     font-weight: 600;
-    color: #2c3e50 !important;
+    color: #343A2E !important;
     font-size: 0.9rem;
     margin: 0;
     flex: 1;
@@ -2440,13 +2440,13 @@ body.scenario-comparison .budget-grid {
     flex: 1;
     height: 6px;
     border-radius: 3px;
-    background: #e9ecef;
+    background: #E2DACA;
     outline: none;
     -webkit-appearance: none;
 }
 
 .parameter-row .slider-value {
-    background: #3498db;
+    background: #53623D;
     color: white !important;
     padding: 6px 10px;
     border-radius: 6px;
@@ -2461,35 +2461,35 @@ body.scenario-comparison .budget-grid {
 .parameter-row .input-field {
     margin-top: 4px;
     padding: 8px;
-    border: 2px solid #ddd;
+    border: 2px solid #E2DACA;
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    background: white;
+    background: #FCFAF5;
 }
 
 .parameter-row .input-field:focus {
     outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    border-color: #53623D;
+    box-shadow: 0 0 0 3px rgba(83, 98, 61, 0.1);
     transform: scale(1.02);
 }
 
 .parameter-row .input-field:hover:not(:focus) {
-    border-color: #bdc3c7;
+    border-color: #CFC7B4;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 /* Sync indicator styling */
 .sync-indicator {
     font-size: 0.75rem;
-    color: #3498db;
-    background: rgba(52, 152, 219, 0.1);
+    color: #53623D;
+    background: rgba(83, 98, 61, 0.1);
     padding: 4px 8px;
     border-radius: 4px;
     margin-top: 6px;
     text-align: center;
-    border: 1px solid rgba(52, 152, 219, 0.2);
+    border: 1px solid rgba(83, 98, 61, 0.2);
 }
 
 /* -------------------------
@@ -2499,7 +2499,7 @@ body.scenario-comparison .budget-grid {
 
 /* Results Visualization Section */
 .results-visualization-section {
-    background: #f8f9fa !important;
+    background: #F3EEE3 !important;
     padding: 30px;
     border-radius: 15px;
     margin-bottom: 30px;
@@ -2514,7 +2514,7 @@ body.scenario-comparison .budget-grid {
 }
 
 .results-visualization-section .section-header {
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 25px;
     font-size: 1.3rem;
     font-weight: 700;
@@ -2541,7 +2541,7 @@ body.scenario-comparison .budget-grid {
     border-radius: 12px;
     padding: 15px;
     margin: -15px;
-    border: 1px solid rgba(52, 152, 219, 0.1);
+    border: 1px solid rgba(83, 98, 61, 0.1);
 }
 
 .scenario-results-grid.sticky .scenario-result-card {
@@ -2554,7 +2554,7 @@ body.scenario-comparison .budget-grid {
     top: -30px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(52, 152, 219, 0.9);
+    background: rgba(83, 98, 61, 0.9);
     color: white;
     padding: 4px 12px;
     border-radius: 20px;
@@ -2568,11 +2568,11 @@ body.scenario-comparison .budget-grid {
 
 /* Enhanced Scenario Result Cards */
 .scenario-result-card {
-    background: white;
+    background: #FCFAF5;
     border-radius: 12px;
     padding: 18px;
     box-shadow: 0 3px 12px rgba(0,0,0,0.1);
-    border: 2px solid #e9ecef;
+    border: 2px solid #E2DACA;
     transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     position: relative;
     overflow: hidden;
@@ -2586,7 +2586,7 @@ body.scenario-comparison .budget-grid {
     left: 0;
     right: 0;
     height: 4px;
-    background: var(--scenario-color, #3498db);
+    background: var(--scenario-color, #53623D);
     transition: all 0.3s ease;
 }
 
@@ -2597,14 +2597,14 @@ body.scenario-comparison .budget-grid {
     align-items: center;
     margin-bottom: 15px;
     padding-bottom: 12px;
-    border-bottom: 2px solid #f8f9fa;
+    border-bottom: 2px solid #F3EEE3;
 }
 
 .scenario-card-header h4 {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #2c3e50;
+    color: #343A2E;
     font-size: 1.1rem;
     font-weight: 700;
     margin: 0;
@@ -2628,15 +2628,15 @@ body.scenario-comparison .budget-grid {
 }
 
 .scenario-performance-badge.positive {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #53623D, #6B7A50);
 }
 
 .scenario-performance-badge.moderate {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
+    background: linear-gradient(135deg, #B8862B, #A8742A);
 }
 
 .scenario-performance-badge.negative {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    background: linear-gradient(135deg, #A65A3A, #8C4A2E);
 }
 
 /* Key Metrics */
@@ -2649,23 +2649,23 @@ body.scenario-comparison .budget-grid {
 }
 
 .metric {
-    background: #f8f9fa;
+    background: #F3EEE3;
     padding: 12px;
     border-radius: 8px;
     text-align: center;
-    border: 1px solid #e9ecef;
+    border: 1px solid #E2DACA;
     transition: all 0.3s ease;
 }
 
 .metric:hover {
-    background: #e9ecef;
+    background: #E2DACA;
     transform: scale(1.02);
 }
 
 .metric-label {
     display: block;
     font-size: 0.85rem;
-    color: #7f8c8d;
+    color: #6F6E62;
     margin-bottom: 6px;
     font-weight: 600;
     text-transform: uppercase;
@@ -2676,7 +2676,7 @@ body.scenario-comparison .budget-grid {
     display: block;
     font-size: 1.15rem;
     font-weight: 700;
-    color: #2c3e50;
+    color: #343A2E;
 }
 
 /* Scenario Details */
@@ -2691,28 +2691,28 @@ body.scenario-comparison .budget-grid {
     justify-content: space-between;
     align-items: center;
     padding: 6px 10px;
-    background: #f8f9fa;
+    background: #F3EEE3;
     border-radius: 5px;
     font-size: 0.85rem;
-    border: 1px solid #e9ecef;
+    border: 1px solid #E2DACA;
 }
 
 .detail-item span:first-child {
-    color: #7f8c8d;
+    color: #6F6E62;
     font-weight: 500;
 }
 
 .detail-item span:last-child {
     font-weight: 700;
-    color: #2c3e50;
+    color: #343A2E;
 }
 
 .detail-item .positive {
-    color: #27ae60;
+    color: #53623D;
 }
 
 .detail-item .negative {
-    color: #e74c3c;
+    color: #A65A3A;
 }
 
 /* Chart Controls */
@@ -2722,9 +2722,9 @@ body.scenario-comparison .budget-grid {
     align-items: center;
     margin-bottom: 25px;
     padding: 20px;
-    background: white;
+    background: #FCFAF5;
     border-radius: 12px;
-    border: 2px solid #e9ecef;
+    border: 2px solid #E2DACA;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     flex-wrap: wrap;
     gap: 20px;
@@ -2739,7 +2739,7 @@ body.scenario-comparison .budget-grid {
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(39, 174, 96, 0.15);
+    border: 1px solid rgba(83, 98, 61, 0.15);
     border-radius: 12px;
     padding: 20px;
     margin-top: 16px;
@@ -2751,11 +2751,11 @@ body.scenario-comparison .budget-grid {
     background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    border: 1px solid rgba(39, 174, 96, 0.2);
+    border: 1px solid rgba(83, 98, 61, 0.2);
     border-radius: 12px;
     margin-bottom: 12px;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.08);
+    box-shadow: 0 2px 8px rgba(83, 98, 61, 0.08);
 }
 
 .parameters-configuration-section .savings-rate-selector {
@@ -2775,21 +2775,21 @@ body.scenario-comparison .budget-grid {
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
-    background: rgba(39, 174, 96, 0.03);
+    background: rgba(83, 98, 61, 0.03);
     border-radius: 8px;
-    border: 1px solid rgba(39, 174, 96, 0.08);
+    border: 1px solid rgba(83, 98, 61, 0.08);
     font-size: 0.9rem;
     transition: all 0.2s ease;
 }
 
 .budget-line:hover {
-    background: rgba(39, 174, 96, 0.06);
-    border-color: rgba(39, 174, 96, 0.15);
+    background: rgba(83, 98, 61, 0.06);
+    border-color: rgba(83, 98, 61, 0.15);
 }
 
 .budget-line .budget-label,
 .budget-line .budget-value {
-    color: #3498db !important;
+    color: #53623D !important;
     font-weight: 500;
 }
 
@@ -2798,8 +2798,8 @@ body.scenario-comparison .budget-grid {
 }
 
 .budget-line.savings-line {
-    background: rgba(39, 174, 96, 0.08);
-    border: 1px solid rgba(39, 174, 96, 0.2);
+    background: rgba(83, 98, 61, 0.08);
+    border: 1px solid rgba(83, 98, 61, 0.2);
     padding: 12px 16px;
     margin-top: 12px;
     border-radius: 8px;
@@ -2814,12 +2814,12 @@ body.scenario-comparison .budget-grid {
     top: 0;
     bottom: 0;
     width: 4px;
-    background: #27ae60;
+    background: #53623D;
     border-radius: 4px 0 0 4px;
 }
 
 .budget-line.savings-line .budget-label {
-    color: #2c3e50 !important;
+    color: #343A2E !important;
     font-weight: 600;
     background: transparent;
     padding: 0;
@@ -2829,47 +2829,47 @@ body.scenario-comparison .budget-grid {
 }
 
 .budget-line.savings-line .budget-value {
-    background: #27ae60 !important;
-    color: #ffffff !important;
+    background: #53623D !important;
+    color: #FCFAF5 !important;
     font-size: 1.1rem;
     font-weight: 700;
     padding: 8px 16px;
     border-radius: 6px;
     display: inline-block;
-    box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 2px 6px rgba(83, 98, 61, 0.3);
     transition: all 0.2s ease;
 }
 
 .budget-line.savings-line .budget-value:hover {
-    background: #229954 !important;
+    background: #434F31 !important;
     transform: translateY(-1px);
-    box-shadow: 0 3px 8px rgba(39, 174, 96, 0.4);
+    box-shadow: 0 3px 8px rgba(83, 98, 61, 0.4);
 }
 
 /* Deficit styling */
 .budget-line.savings-line.deficit {
-    background: rgba(231, 76, 60, 0.08);
-    border-color: rgba(231, 76, 60, 0.2);
+    background: rgba(166, 90, 58, 0.08);
+    border-color: rgba(166, 90, 58, 0.2);
 }
 
 .budget-line.savings-line.deficit::before {
-    background: #e74c3c;
+    background: #A65A3A;
 }
 
 .budget-line.savings-line.deficit .budget-value {
-    background: #e74c3c !important;
-    color: #ffffff !important;
+    background: #A65A3A !important;
+    color: #FCFAF5 !important;
 }
 
 .budget-line.savings-line.deficit .budget-value:hover {
-    background: #c0392b !important;
+    background: #8C4A2E !important;
 }
 
 /* Status text with emoji positioning */
 .budget-status-text {
     font-size: 0.85rem;
     font-weight: 500;
-    color: #7f8c8d;
+    color: #6F6E62;
     margin-top: 8px;
     display: flex;
     align-items: center;
@@ -2881,38 +2881,38 @@ body.scenario-comparison .budget-grid {
 }
 
 .budget-status-text.deficit {
-    color: #e74c3c;
-    background: rgba(231, 76, 60, 0.1);
-    border-color: rgba(231, 76, 60, 0.2);
+    color: #A65A3A;
+    background: rgba(166, 90, 58, 0.1);
+    border-color: rgba(166, 90, 58, 0.2);
 }
 
 .budget-status-text.surplus {
-    color: #27ae60;
-    background: rgba(39, 174, 96, 0.1);
-    border-color: rgba(39, 174, 96, 0.2);
+    color: #53623D;
+    background: rgba(83, 98, 61, 0.1);
+    border-color: rgba(83, 98, 61, 0.2);
 }
 
 /* Savings Rate Selector */
 .savings-rate-selector {
-    background: white;
-    border: 1px solid rgba(39, 174, 96, 0.2);
+    background: #FCFAF5;
+    border: 1px solid rgba(83, 98, 61, 0.2);
     border-radius: 12px;
     padding: 20px;
     margin-top: 8px;
-    box-shadow: 0 2px 8px rgba(39, 174, 96, 0.08);
+    box-shadow: 0 2px 8px rgba(83, 98, 61, 0.08);
     transition: all 0.3s ease;
 }
 
 .savings-rate-selector:hover {
-    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.12);
-    border-color: rgba(39, 174, 96, 0.25);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.12);
+    border-color: rgba(83, 98, 61, 0.25);
 }
 
 .savings-rate-selector .savings-rate-label {
     margin: 0 0 12px 0;
     display: block;
     background: transparent;
-    color: #2c3e50 !important;
+    color: #343A2E !important;
     font-weight: 600;
     font-size: 0.95rem;
 }
@@ -2931,7 +2931,7 @@ body.scenario-comparison .budget-grid {
     flex: 1;
     height: 6px;
     border-radius: 3px;
-    background: rgba(39, 174, 96, 0.15) !important;
+    background: rgba(83, 98, 61, 0.15) !important;
     -webkit-appearance: none;
     appearance: none;
     border: none !important;
@@ -2939,7 +2939,7 @@ body.scenario-comparison .budget-grid {
 }
 
 .savings-rate-selector .slider::-webkit-slider-track {
-    background: rgba(39, 174, 96, 0.15);
+    background: rgba(83, 98, 61, 0.15);
     height: 6px;
     border-radius: 3px;
 }
@@ -2950,19 +2950,19 @@ body.scenario-comparison .budget-grid {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #27ae60;
+    background: #53623D;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 2px 6px rgba(83, 98, 61, 0.3);
     transition: all 0.2s ease;
 }
 
 .savings-rate-selector .slider::-webkit-slider-thumb:hover {
     transform: scale(1.1);
-    box-shadow: 0 3px 8px rgba(39, 174, 96, 0.4);
+    box-shadow: 0 3px 8px rgba(83, 98, 61, 0.4);
 }
 
 .savings-rate-selector .slider::-moz-range-track {
-    background: rgba(39, 174, 96, 0.15);
+    background: rgba(83, 98, 61, 0.15);
     height: 6px;
     border-radius: 3px;
     border: none;
@@ -2972,25 +2972,25 @@ body.scenario-comparison .budget-grid {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #27ae60;
+    background: #53623D;
     cursor: pointer;
     border: none;
-    box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 2px 6px rgba(83, 98, 61, 0.3);
     transition: all 0.2s ease;
 }
 
 .savings-rate-selector .slider::-moz-range-thumb:hover {
     transform: scale(1.1);
-    box-shadow: 0 3px 8px rgba(39, 174, 96, 0.4);
+    box-shadow: 0 3px 8px rgba(83, 98, 61, 0.4);
 }
 
 .savings-rate-selector .slider-value {
-    background: rgba(39, 174, 96, 0.08) !important;
-    border: 1px solid rgba(39, 174, 96, 0.15) !important;
+    background: rgba(83, 98, 61, 0.08) !important;
+    border: 1px solid rgba(83, 98, 61, 0.15) !important;
     box-shadow: none !important;
     padding: 6px 10px;
     border-radius: 6px;
-    color: #2c3e50 !important;
+    color: #343A2E !important;
     font-weight: 600;
     font-size: 0.85rem;
     min-width: 55px;
@@ -2998,12 +2998,12 @@ body.scenario-comparison .budget-grid {
 }
 
 .savings-rate-selector .savings-rate-amount {
-    background: #27ae60 !important;
+    background: #53623D !important;
     border: none !important;
-    box-shadow: 0 2px 6px rgba(39, 174, 96, 0.3) !important;
+    box-shadow: 0 2px 6px rgba(83, 98, 61, 0.3) !important;
     padding: 12px 16px;
     border-radius: 8px;
-    color: #ffffff !important;
+    color: #FCFAF5 !important;
     font-weight: 700;
     font-size: 1rem;
     min-width: auto;
@@ -3015,12 +3015,12 @@ body.scenario-comparison .budget-grid {
 }
 
 .savings-rate-amount {
-    color: #ffffff !important;
+    color: #FCFAF5 !important;
 }
 
 .savings-rate-selector .savings-rate-amount:hover {
-    background: #229954 !important;
-    box-shadow: 0 3px 8px rgba(39, 174, 96, 0.4) !important;
+    background: #434F31 !important;
+    box-shadow: 0 3px 8px rgba(83, 98, 61, 0.4) !important;
     transform: translateY(-1px);
 }
 

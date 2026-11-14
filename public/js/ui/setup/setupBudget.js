@@ -64,11 +64,11 @@ export function calculateBudget() {
     const remainingDisplay = document.querySelector('.remaining-display');
     if (remainingDisplay) {
       if (results.remainingBudget < 0) {
-        remainingDisplay.style.background = 'linear-gradient(135deg, #e74c3c, #c0392b)';
+        remainingDisplay.dataset.state = 'deficit';
       } else if (results.remainingBudget < 200) {
-        remainingDisplay.style.background = 'linear-gradient(135deg, #f39c12, #e67e22)';
+        remainingDisplay.dataset.state = 'low';
       } else {
-        remainingDisplay.style.background = 'linear-gradient(135deg, #27ae60, #2ecc71)';
+        remainingDisplay.dataset.state = 'ok';
       }
     }
 
@@ -119,11 +119,11 @@ export function updateSavingsDisplay() {
   const savingsResult = document.querySelector('.savings-result');
   if (savingsResult) {
     if (finalSavingsAmount > (budgetData.remainingBudget || 0)) {
-      savingsResult.style.background = '#e74c3c';
+      savingsResult.dataset.state = 'over';
     } else if (finalSavingsAmount === 0) {
-      savingsResult.style.background = '#95a5a6';
+      savingsResult.dataset.state = 'zero';
     } else {
-      savingsResult.style.background = '#27ae60';
+      savingsResult.dataset.state = 'ok';
     }
   }
 
@@ -179,7 +179,7 @@ export function setSavingsMode(mode) {
 }
 
 function resetBudget() {
-  if (confirm('🔄 Möchten Sie wirklich alle Budget-Einstellungen zurücksetzen?')) {
+  if (confirm('Möchten Sie wirklich alle Budget-Einstellungen zurücksetzen?')) {
     document.getElementById('salary').value = '3000';
     document.getElementById('sideIncome').value = '0';
     document.getElementById('otherIncome').value = '0';
@@ -220,7 +220,7 @@ function resetBudget() {
     };
 
     calculateBudget();
-    showNotification('🔄 Budget zurückgesetzt', 'Alle Budget-Einstellungen wurden auf Standardwerte zurückgesetzt.', 'success');
+    showNotification('Budget zurückgesetzt', 'Alle Budget-Einstellungen wurden auf Standardwerte zurückgesetzt.', 'success');
   }
 }
 
@@ -309,6 +309,6 @@ export function setupBudgetListeners() {
     const accumulationPhaseBtn = document.getElementById('accumulationPhase');
     if (accumulationPhaseBtn) accumulationPhaseBtn.click();
     if (window.recalculateAll) window.recalculateAll();
-    showNotification('✅ Übernommen', 'Die Sparrate wurde in die Ansparphase übertragen.', 'success');
+    showNotification('Übernommen', 'Die Sparrate wurde in die Ansparphase übertragen.', 'success');
   });
 }

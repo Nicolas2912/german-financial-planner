@@ -9,18 +9,18 @@
  * Format a number as currency with German locale
  * 
  * @param {number} amount - The amount to format
- * @returns {string} Formatted currency string (e.g., "€1.234,56")
+ * @returns {string} Formatted currency string (e.g., "1.234,56 €")
  */
 export function formatCurrency(amount) {
     // Handle null, undefined, or invalid values
     if (amount === null || amount === undefined || typeof amount !== 'number' || isNaN(amount)) {
-        return '€0,00';
+        return '0,00 €';
     }
     
-    return '€' + amount.toLocaleString('de-DE', { 
+    return amount.toLocaleString('de-DE', { 
         minimumFractionDigits: 2, 
         maximumFractionDigits: 2 
-    });
+    }) + ' €';
 }
 
 /**
@@ -128,4 +128,18 @@ export function deepClone(obj) {
 
 export function mergeObjects(target, source) {
     return Object.assign({}, target, source);
+}
+
+/**
+ * Compact euro label for chart axes, e.g. "750 Tsd. €" or "1,2 Mio. €"
+ *
+ * @param {number} value - Axis value
+ * @returns {string} Short label
+ */
+export function formatAxisEuro(value) {
+    const number = Number(value) || 0;
+    const abs = Math.abs(number);
+    if (abs >= 1e6) return `${(number / 1e6).toLocaleString('de-DE', { maximumFractionDigits: 2 })} Mio. €`;
+    if (abs >= 1e3) return `${(number / 1e3).toLocaleString('de-DE', { maximumFractionDigits: abs < 1e5 ? 1 : 0 })} Tsd. €`;
+    return `${number.toLocaleString('de-DE', { maximumFractionDigits: 0 })} €`;
 }

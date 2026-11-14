@@ -74,7 +74,7 @@
    Charts and Data Visualization
    ------------------------- */
 .chart-container {
-    background: white;
+    background: #FCFAF5;
     padding: 30px;
     border-radius: 15px;
     box-shadow: 0 2px 20px rgba(0,0,0,0.1);
@@ -98,13 +98,13 @@
 }
 
 .timeline-info {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background: #F3EEE3;
+    border: 1px solid #E2DACA;
     border-radius: 8px;
     padding: 12px 15px;
     margin-top: 10px;
     font-size: 0.85rem;
-    color: #2c3e50;
+    color: #343A2E;
     max-width: 100%;
     box-sizing: border-box;
 }
@@ -121,7 +121,7 @@
    Tables
    ------------------------- */
 .withdrawal-table {
-    background: white;
+    background: #FCFAF5;
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -134,7 +134,7 @@
 }
 
 .withdrawal-table th {
-    background: #3498db;
+    background: #53623D;
     color: white;
     padding: 15px 10px;
     text-align: center;
@@ -144,12 +144,12 @@
 .withdrawal-table td {
     padding: 12px 10px;
     text-align: center;
-    border-bottom: 1px solid #ecf0f1;
+    border-bottom: 1px solid #E2DACA;
     font-size: 0.85rem;
 }
 
 .withdrawal-table tr:nth-child(even) {
-    background: #f8f9fa;
+    background: #F3EEE3;
 }
 
 .highlight-row {
@@ -173,7 +173,7 @@
 }
 
 .profile-modal-content {
-    background: white;
+    background: #FCFAF5;
     margin: 5% auto;
     padding: 30px;
     border-radius: 15px;
@@ -191,11 +191,11 @@
     align-items: center;
     margin-bottom: 25px;
     padding-bottom: 15px;
-    border-bottom: 2px solid #ecf0f1;
+    border-bottom: 2px solid #E2DACA;
 }
 
 .profile-modal-title {
-    color: #2c3e50;
+    color: #343A2E;
     font-size: 1.5rem;
     font-weight: bold;
     margin: 0;
@@ -205,7 +205,7 @@
     background: none;
     border: none;
     font-size: 1.8rem;
-    color: #7f8c8d;
+    color: #6F6E62;
     cursor: pointer;
     width: 40px;
     height: 40px;
@@ -217,8 +217,8 @@
 }
 
 .profile-close:hover {
-    background: #ecf0f1;
-    color: #2c3e50;
+    background: #E2DACA;
+    color: #343A2E;
     transform: scale(1.1);
 }
 
@@ -228,7 +228,7 @@
     gap: 15px;
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 2px solid #ecf0f1;
+    border-top: 2px solid #E2DACA;
 }
 
 /* -------------------------
@@ -241,8 +241,8 @@
 }
 
 .profile-item {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #F3EEE3;
+    border: 2px solid #E2DACA;
     border-radius: 10px;
     padding: 20px;
     display: flex;
@@ -252,7 +252,7 @@
 }
 
 .profile-item:hover {
-    border-color: #3498db;
+    border-color: #53623D;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
@@ -264,13 +264,13 @@
 .profile-name {
     font-size: 1.1rem;
     font-weight: bold;
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 5px;
 }
 
 .profile-details {
     font-size: 0.9rem;
-    color: #7f8c8d;
+    color: #6F6E62;
 }
 
 .profile-actions {
@@ -285,8 +285,8 @@
 }
 
 .load-profile-item {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #F3EEE3;
+    border: 2px solid #E2DACA;
     border-radius: 10px;
     padding: 20px;
     cursor: pointer;
@@ -295,13 +295,13 @@
 }
 
 .load-profile-item:hover {
-    border-color: #3498db;
+    border-color: #53623D;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .load-profile-item.selected {
-    border-color: #27ae60;
+    border-color: #53623D;
     background: #d5f4e6;
 }
 
@@ -310,7 +310,7 @@
     position: absolute;
     top: 15px;
     right: 15px;
-    color: #27ae60;
+    color: #53623D;
     font-size: 1.2rem;
     font-weight: bold;
 }
@@ -318,7 +318,7 @@
 .no-profiles {
     text-align: center;
     padding: 40px 20px;
-    color: #7f8c8d;
+    color: #6F6E62;
     font-style: italic;
 }
 
@@ -330,14 +330,14 @@
 
 /* Profile Preview */
 .profile-preview {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #F3EEE3;
+    border: 2px solid #E2DACA;
     border-radius: 10px;
     padding: 20px;
 }
 
 .preview-title {
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 15px;
     font-size: 1.1rem;
 }
@@ -353,18 +353,18 @@
     display: flex;
     justify-content: space-between;
     padding: 8px 12px;
-    background: white;
+    background: #FCFAF5;
     border-radius: 6px;
-    border: 1px solid #dee2e6;
+    border: 1px solid #E2DACA;
 }
 
 .preview-label {
-    color: #6c757d;
+    color: #6F6E62;
     font-weight: 500;
 }
 
 .preview-value {
-    color: #2c3e50;
+    color: #343A2E;
     font-weight: 600;
 }
 
@@ -379,7 +379,7 @@
 }
 
 .category-title {
-    color: #2c3e50;
+    color: #343A2E;
     font-size: 1.1rem;
     margin: 0;
 }
@@ -387,17 +387,17 @@
 .category-total {
     margin-top: 15px;
     padding: 10px;
-    background: #f8f9fa;
+    background: #F3EEE3;
     border-radius: 6px;
     text-align: center;
     font-weight: bold;
-    color: #2c3e50;
-    border-left: 4px solid #27ae60;
+    color: #343A2E;
+    border-left: 4px solid #53623D;
 }
 
 .category-total .amount {
     font-size: 1.1rem;
-    color: #27ae60;
+    color: #53623D;
 }
 
 .expense-item {
@@ -406,7 +406,7 @@
     align-items: center;
     margin-bottom: 6px;
     padding: 4px 0;
-    border-bottom: 1px solid #ecf0f1;
+    border-bottom: 1px solid #E2DACA;
 }
 
 .expense-item:last-child {
@@ -416,12 +416,12 @@
 
 .expense-label {
     font-size: 0.9rem;
-    color: #2c3e50;
+    color: #343A2E;
     flex: 1;
 }
 
 .budget-summary {
-    background: white;
+    background: #FCFAF5;
     padding: 25px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -429,21 +429,21 @@
 }
 
 .budget-summary h3 {
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 20px;
     font-size: 1.3rem;
 }
 
 .income-display {
     font-size: 1.5rem;
-    color: #27ae60;
+    color: #53623D;
     font-weight: bold;
     margin-bottom: 10px;
 }
 
 .expenses-display {
     font-size: 1.2rem;
-    color: #e74c3c;
+    color: #A65A3A;
     margin-bottom: 10px;
 }
 
@@ -453,14 +453,14 @@
     margin: 20px 0;
     padding: 20px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #53623D, #6B7A50);
     color: white;
 }
 
 .savings-allocation {
     margin-top: 25px;
     padding: 20px;
-    background: #f8f9fa;
+    background: #F3EEE3;
     border-radius: 8px;
 }
 
@@ -472,7 +472,7 @@
 }
 
 .savings-result {
-    background: #27ae60;
+    background: #53623D;
     color: white;
     padding: 15px;
     border-radius: 8px;
@@ -493,12 +493,12 @@
 }
 
 .tax-info h4 {
-    color: #856404;
+    color: #7A5A1E;
     margin-bottom: 10px;
 }
 
 .tax-info p {
-    color: #856404;
+    color: #7A5A1E;
     margin-bottom: 8px;
     font-size: 0.9rem;
 }
@@ -506,28 +506,28 @@
 .warning {
     background: #fff3cd;
     border: 1px solid #ffeaa7;
-    color: #856404;
+    color: #7A5A1E;
     padding: 15px;
     border-radius: 8px;
     margin-top: 20px;
 }
 
 .info-box {
-    background: #e8f4fd;
-    border: 2px solid #3498db;
+    background: #EDEEE2;
+    border: 2px solid #53623D;
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;
 }
 
 .info-box h4 {
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 10px;
     font-size: 1.1rem;
 }
 
 .info-box p {
-    color: #34495e;
+    color: #4A5040;
     margin: 0;
     line-height: 1.5;
 }
@@ -618,8 +618,8 @@
 .disclaimer-footer {
     margin-top: 40px;
     padding: 15px 0;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-top: 1px solid #dee2e6;
+    background: linear-gradient(135deg, #F3EEE3 0%, #E2DACA 100%);
+    border-top: 1px solid #E2DACA;
     position: relative;
 }
 
@@ -630,7 +630,7 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, #bdc3c7, transparent);
+    background: linear-gradient(90deg, transparent, #CFC7B4, transparent);
 }
 
 .kleingedrucktes {
@@ -639,7 +639,7 @@
     padding: 0 20px;
     font-size: 0.65rem;
     line-height: 1.4;
-    color: #6c757d;
+    color: #6F6E62;
     text-align: center;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -673,7 +673,7 @@
    Accessibility and Focus States
    ------------------------- */
 *:focus {
-    outline: 2px solid #3498db;
+    outline: 2px solid #53623D;
     outline-offset: 2px;
 }
 

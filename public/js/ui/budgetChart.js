@@ -32,7 +32,7 @@ export function updateBudgetPieChart(fixedExpenses, variableExpenses, remainingB
     if (totalBudget <= 0) {
         const canvas = document.getElementById('budgetPieChart');
         displayChartErrorMessage(canvas, ctx, 'no-data', {
-            icon: '💰',
+            icon: '',
             title: 'Keine Budgetdaten verfügbar',
             subtitle: 'Es wurden noch keine Einnahmen oder Ausgaben eingegeben.',
             action: 'Bitte geben Sie Ihre Einnahmen und Ausgaben ein.'
@@ -47,21 +47,21 @@ export function updateBudgetPieChart(fixedExpenses, variableExpenses, remainingB
 
     // Add fixed expenses as individual categories
     const fixedCategories = {
-        'Miete/Hypothek': { value: fixedExpenses.rent || 0, color: '#e74c3c' },
-        'Nebenkosten': { value: fixedExpenses.utilities || 0, color: '#e67e22' },
-        'Versicherungen': { value: fixedExpenses.insurance || 0, color: '#f1c40f' },
-        'Internet/Telefon': { value: fixedExpenses.internet || 0, color: '#9b59b6' },
-        'GEZ': { value: fixedExpenses.gez || 0, color: '#8e44ad' }
+        'Miete/Hypothek': { value: fixedExpenses.rent || 0, color: '#A65A3A' },
+        'Nebenkosten': { value: fixedExpenses.utilities || 0, color: '#C27A52' },
+        'Versicherungen': { value: fixedExpenses.insurance || 0, color: '#B8862B' },
+        'Internet/Telefon': { value: fixedExpenses.internet || 0, color: '#D2A866' },
+        'GEZ': { value: fixedExpenses.gez || 0, color: '#8C4A2E' }
     };
 
     // Add variable expenses as individual categories
     const variableCategories = {
-        'Lebensmittel': { value: variableExpenses.food || 0, color: '#27ae60' },
-        'Transport/Auto': { value: variableExpenses.transport || 0, color: '#2ecc71' },
-        'Freizeit': { value: variableExpenses.leisure || 0, color: '#16a085' },
-        'Kleidung': { value: variableExpenses.clothing || 0, color: '#1abc9c' },
-        'Abonnements': { value: variableExpenses.subscriptions || 0, color: '#3498db' },
-        'Sonstiges': { value: variableExpenses.miscellaneous || 0, color: '#2980b9' }
+        'Lebensmittel': { value: variableExpenses.food || 0, color: '#53623D' },
+        'Transport/Auto': { value: variableExpenses.transport || 0, color: '#6B7A50' },
+        'Freizeit': { value: variableExpenses.leisure || 0, color: '#8A9A6B' },
+        'Kleidung': { value: variableExpenses.clothing || 0, color: '#3F6E8C' },
+        'Abonnements': { value: variableExpenses.subscriptions || 0, color: '#6E8FA8' },
+        'Sonstiges': { value: variableExpenses.miscellaneous || 0, color: '#8C8A7C' }
     };
 
     // Add all categories with values > 0
@@ -77,7 +77,7 @@ export function updateBudgetPieChart(fixedExpenses, variableExpenses, remainingB
     if (remainingBudget > 0) {
         chartLabels.push('Verfügbar');
         chartData.push(remainingBudget);
-        chartColors.push('#95a5a6');
+        chartColors.push('#8C8A7C');
     }
 
     budgetPieChart = new Chart(ctx, {
@@ -87,7 +87,7 @@ export function updateBudgetPieChart(fixedExpenses, variableExpenses, remainingB
             datasets: [{
                 data: chartData,
                 backgroundColor: chartColors,
-                borderColor: '#ffffff',
+                borderColor: '#FCFAF5',
                 borderWidth: 2,
                 hoverBorderWidth: 3
             }]
@@ -106,7 +106,7 @@ export function updateBudgetPieChart(fixedExpenses, variableExpenses, remainingB
                             size: 11,
                             family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                         },
-                        color: '#2c3e50',
+                        color: '#343A2E',
                         padding: 15,
                         boxWidth: 10,
                         boxHeight: 10,
@@ -130,9 +130,9 @@ export function updateBudgetPieChart(fixedExpenses, variableExpenses, remainingB
                 },
                 tooltip: {
                     backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                    titleColor: '#2c3e50',
-                    bodyColor: '#2c3e50',
-                    borderColor: '#3498db',
+                    titleColor: '#343A2E',
+                    bodyColor: '#343A2E',
+                    borderColor: '#53623D',
                     borderWidth: 2,
                     cornerRadius: 8,
                     titleFont: {
@@ -228,13 +228,13 @@ export function displayChartErrorMessage(canvas, ctx, errorType = 'no-scenarios'
     ctx.font = `bold ${titleSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#e74c3c'; // Red color
+    ctx.fillStyle = '#A65A3A'; // Red color
     ctx.fillText(message.title, centerX, centerY - 15);
     
     // Draw subtitle in lighter red
     const subtitleSize = Math.max(14, Math.min(16, canvas.width * 0.025));
     ctx.font = `${subtitleSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
-    ctx.fillStyle = '#c0392b'; // Darker red
+    ctx.fillStyle = '#8C4A2E'; // Darker red
     ctx.fillText(message.subtitle, centerX, centerY + 15);
     
     ctx.restore();

@@ -30,16 +30,16 @@ function getNextScenarioId(scenarios) {
 export function addNewScenario() {
     // Get global variables from window object with fallbacks
     const scenarios = window.scenarios || [];
-    const scenarioColors = window.scenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
+    const scenarioColors = window.scenarioColors || { 'A': '#53623D', 'B': '#A65A3A', 'C': '#3F6E8C', 'D': '#B8862B' };
     const selectedScenariosForChart = window.selectedScenariosForChart || new Set(['A']);
     const { setupSavingsModeForScenario, updateScenarioCheckboxes, updateContributionsScenarioDropdown, 
             showNotification } = window;
     
     if (scenarios.length >= 4) {
         if (showNotification) {
-            showNotification('⚠️ Maximale Anzahl erreicht', 'Maximal 4 Szenarien sind möglich.', 'warning');
+            showNotification('Maximale Anzahl erreicht', 'Maximal 4 Szenarien sind möglich.', 'warning');
         } else {
-            alert('⚠️ Maximale Anzahl erreicht: Maximal 4 Szenarien sind möglich.');
+            alert('Maximale Anzahl erreicht: Maximal 4 Szenarien sind möglich.');
         }
         return null;
     }
@@ -89,7 +89,7 @@ export function addNewScenario() {
  */
 export function createNewScenarioWithoutSwitching() {
     const scenarios = window.scenarios || [];
-    const scenarioColors = window.scenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
+    const scenarioColors = window.scenarioColors || { 'A': '#53623D', 'B': '#A65A3A', 'C': '#3F6E8C', 'D': '#B8862B' };
     
     if (scenarios.length >= 4) {
         return null;
@@ -131,7 +131,7 @@ export function createScenarioTab(scenario) {
     tab.className = 'scenario-tab';
     tab.dataset.scenario = scenario.id;
     tab.style.setProperty('--scenario-color', scenario.color);
-    tab.innerHTML = `📈 ${scenario.name}`;
+    tab.innerHTML = `${scenario.name}`;
     
     // Insert before the add button
     tabsContainer.insertBefore(tab, addBtn);
@@ -208,7 +208,7 @@ export function createScenarioPanel(scenario) {
     
     panel.innerHTML = `
         <div class="scenario-panel-header" style="--scenario-color: ${scenario.color};">
-            <h3 class="scenario-panel-title">📊 ${scenario.name}</h3>
+            <h3 class="scenario-panel-title">${scenario.name}</h3>
             <div class="scenario-actions">
                 <button class="scenario-action-btn" onclick="window.renameScenario('${scenario.id}')" title="Szenario umbenennen">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -235,15 +235,15 @@ export function createScenarioPanel(scenario) {
 
         <!-- Savings Rate Configuration -->
         <div class="savings-configuration">
-            <div class="savings-mode-toggle" style="margin-bottom: 20px;">
-                <label style="font-weight: 600; margin-bottom: 10px; display: block;">💰 Sparraten-Konfiguration</label>
+            <div class="savings-mode-toggle">
+                <label style="display: block;">Sparraten-Konfiguration</label>
                 <div class="savings-mode-buttons">
                     <button type="button" class="savings-mode-btn active" data-mode="simple" data-scenario="${scenario.id}">
-                        <span class="mode-icon">📈</span>
+                        <span class="mode-icon"></span>
                         <span class="mode-text">Einfache Sparrate</span>
                     </button>
                     <button type="button" class="savings-mode-btn" data-mode="multi-phase" data-scenario="${scenario.id}">
-                        <span class="mode-icon">🎯</span>
+                        <span class="mode-icon"></span>
                         <span class="mode-text">Mehrphasig</span>
                     </button>
                 </div>
@@ -260,8 +260,8 @@ export function createScenarioPanel(scenario) {
             <!-- Multi-Phase Savings Configuration -->
             <div class="multi-phase-savings-container" data-scenario="${scenario.id}" style="display: none;">
                 <div class="multi-phase-header">
-                    <h4 style="color: #2c3e50; margin-bottom: 15px;">🎯 Mehrphasige Sparplanung</h4>
-                    <p style="color: #7f8c8d; font-size: 0.9rem; margin-bottom: 20px; line-height: 1.4;">
+                    <h4>Mehrphasige Sparplanung</h4>
+                    <p>
                         Definieren Sie bis zu 3 verschiedene Sparphasen mit unterschiedlichen monatlichen Sparraten. 
                         Perfekt für Lebensphasen wie Berufseinstieg, Karrieremitte und Spitzenverdienst.
                     </p>
@@ -299,7 +299,7 @@ export function createScenarioPanel(scenario) {
                                 </div>
                                 <div class="phase-summary">
                                     <span class="phase-duration">Dauer: 11 Jahre</span>
-                                    <span class="phase-total">Gesamt: €39.600</span>
+                                    <span class="phase-total">Gesamt: 39.600 €</span>
                                 </div>
                             </div>
                         </div>
@@ -339,7 +339,7 @@ export function createScenarioPanel(scenario) {
                                 </div>
                                 <div class="phase-summary">
                                     <span class="phase-duration">Dauer: 15 Jahre</span>
-                                    <span class="phase-total">Gesamt: €144.000</span>
+                                    <span class="phase-total">Gesamt: 144.000 €</span>
                                 </div>
                             </div>
                         </div>
@@ -379,7 +379,7 @@ export function createScenarioPanel(scenario) {
                                 </div>
                                 <div class="phase-summary">
                                     <span class="phase-duration">Dauer: 15 Jahre</span>
-                                    <span class="phase-total">Gesamt: €216.000</span>
+                                    <span class="phase-total">Gesamt: 216.000 €</span>
                                 </div>
                             </div>
                         </div>
@@ -402,11 +402,11 @@ export function createScenarioPanel(scenario) {
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">Durchschnittliche Sparrate:</span>
-                            <span class="summary-value" id="averageSavingsRate_${scenario.id}">€300</span>
+                            <span class="summary-value" id="averageSavingsRate_${scenario.id}">300 €</span>
                         </div>
                         <div class="summary-item">
                             <span class="summary-label">Gesamteinzahlungen:</span>
-                            <span class="summary-value" id="totalContributions_${scenario.id}">€39.600</span>
+                            <span class="summary-value" id="totalContributions_${scenario.id}">39.600 €</span>
                         </div>
                     </div>
                     <div class="phase-timeline" id="phaseTimeline_${scenario.id}">
@@ -422,15 +422,15 @@ export function createScenarioPanel(scenario) {
         </div>
 
         <!-- Tax Toggle -->
-        <div class="toggle-container" style="margin-bottom: 30px;">
+        <div class="toggle-container">
             <label>Deutsche Abgeltungssteuer einbeziehen (25% mit Vorabpauschale)</label>
             <div class="toggle scenario-toggle active" id="taxToggle_${scenario.id}" data-scenario="${scenario.id}"></div>
         </div>
 
         <!-- ETF Type Selection -->
-        <div class="input-group" style="margin-top: 20px; margin-bottom: 25px;">
-            <label style="margin-bottom: 12px; display: block; font-weight: 600;">ETF-Typ für Steuerberechnung</label>
-            <div class="radio-group" style="margin-top: 10px;">
+        <div class="input-group">
+            <label style="display: block;">ETF-Typ für Steuerberechnung</label>
+            <div class="radio-group">
                 <label class="radio-option">
                     <input type="radio" name="etfType-${scenario.id}" value="accumulating" checked>
                     <span class="radio-custom"></span>
@@ -442,19 +442,19 @@ export function createScenarioPanel(scenario) {
                     Ausschüttend
                 </label>
             </div>
-            <small style="color: #7f8c8d; font-size: 0.85rem; margin-top: 12px; display: block; line-height: 1.4;">
-                💡 Thesaurierende ETFs: Niedrigere Steuerlast durch Vorabpauschale. Ausschüttende ETFs: Steuern auf Dividenden.
+            <small style="display: block;">
+                Thesaurierende ETFs: Niedrigere Steuerlast durch Vorabpauschale. Ausschüttende ETFs: Steuern auf Dividenden.
             </small>
         </div>
 
         <!-- Teilfreistellung Toggle -->
-        <div class="toggle-container" style="margin-top: 25px; margin-bottom: 30px;">
+        <div class="toggle-container">
             <label>Teilfreistellung bei Aktienfonds anwenden (30% steuerfrei)</label>
             <div class="toggle scenario-toggle active" id="teilfreistellungToggle_${scenario.id}" data-scenario="${scenario.id}"></div>
         </div>
-        <div style="margin-top: -15px; margin-bottom: 25px;" id="teilfreistellungHelp_${scenario.id}">
-            <small style="color: #7f8c8d; font-size: 0.85rem; display: block; line-height: 1.4;">
-                💡 Bei Aktien-ETFs sind 30% der Erträge steuerfrei. Bei Renten-ETFs oder Mischfonds gelten andere Sätze.
+        <div id="teilfreistellungHelp_${scenario.id}">
+            <small style="display: block;">
+                Bei Aktien-ETFs sind 30% der Erträge steuerfrei. Bei Renten-ETFs oder Mischfonds gelten andere Sätze.
             </small>
         </div>
 
@@ -494,8 +494,8 @@ export function createScenarioPanel(scenario) {
         <div class="input-group">
             <label for="baseSalary_${scenario.id}">Aktuelles Brutto-Jahresgehalt (€)</label>
             <input type="text" id="baseSalary_${scenario.id}" class="input-field scenario-input" value="${defaultValues.baseSalary}" step="1000" data-scenario="${scenario.id}">
-            <small style="color: #7f8c8d; font-size: 0.85rem; margin-top: 5px; display: block;">
-                💡 Benötigt für realistische Gehaltssteigerungs-Berechnung
+            <small style="display: block;">
+                Benötigt für realistische Gehaltssteigerungs-Berechnung
             </small>
         </div>
 
@@ -505,36 +505,36 @@ export function createScenarioPanel(scenario) {
                 <input type="range" id="salaryToSavings_${scenario.id}" class="slider scenario-slider" min="0" max="100" value="${defaultValues.salaryToSavings}" step="5" data-scenario="${scenario.id}">
                 <span class="slider-value" id="salaryToSavingsValue_${scenario.id}">${defaultValues.salaryToSavings}%</span>
             </div>
-            <small style="color: #7f8c8d; font-size: 0.85rem; margin-top: 5px; display: block;">
+            <small style="display: block;">
                 Wieviel % der <strong>Netto-Gehaltssteigerung</strong> fließt in die Sparrate?
             </small>
-            <div style="background: #e8f4fd; border: 1px solid #3498db; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 0.8rem; color: #2c3e50;">
-                💡 <strong>Realistische Berechnung:</strong> Berücksichtigt die deutsche progressive Besteuerung. Bei Gehaltssteigerungen steigt auch die Steuerlast, wodurch weniger Netto-Erhöhung für das Sparen verfügbar ist.
+            <div class="note-inline">
+                <strong>Realistische Berechnung:</strong> Berücksichtigt die deutsche progressive Besteuerung. Bei Gehaltssteigerungen steigt auch die Steuerlast, wodurch weniger Netto-Erhöhung für das Sparen verfügbar ist.
             </div>
             
             <!-- Salary Increase Analysis -->
-            <div id="salaryIncreaseAnalysis_${scenario.id}" class="salary-increase-analysis" style="background: #f0fff0; border: 1px solid #27ae60; border-radius: 8px; padding: 15px; margin-top: 10px; font-size: 0.9rem; color: #2c3e50;">
-                <h4 style="margin: 0 0 10px 0; color: #27ae60; font-size: 1rem;">📊 Auswirkung der Gehaltserhöhung</h4>
+            <div id="salaryIncreaseAnalysis_${scenario.id}" class="salary-increase-analysis">
+                <h4>Auswirkung der Gehaltserhöhung</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <div>
                         <strong>Brutto-Erhöhung:</strong><br>
-                        <span class="gross-increase">€1.800</span>
+                        <span class="gross-increase">1.800 €</span>
                     </div>
                     <div>
                         <strong>Netto-Erhöhung:</strong><br>
-                        <span class="net-increase" style="color: #27ae60; font-weight: bold;">€1.100</span>
+                        <span class="net-increase">1.100 €</span>
                     </div>
                     <div>
                         <strong>Steuer/Abgaben auf Erhöhung:</strong><br>
-                        <span class="tax-on-increase" style="color: #e74c3c;">€700</span>
+                        <span class="tax-on-increase">700 €</span>
                     </div>
                     <div>
                         <strong>Netto-Rate der Erhöhung:</strong><br>
-                        <span class="net-increase-rate" style="color: #f39c12; font-weight: bold;">61.1%</span>
+                        <span class="net-increase-rate">61.1%</span>
                     </div>
                 </div>
-                <div style="margin-top: 10px; padding: 8px; background: #fff; border-radius: 4px; font-size: 0.8rem; color: #7f8c8d;">
-                    💡 Bei höheren Gehältern bleibt prozentual weniger netto übrig (progressive Besteuerung)
+                <div>
+                    Bei höheren Gehältern bleibt prozentual weniger netto übrig (progressive Besteuerung)
                 </div>
             </div>
         </div>
@@ -650,7 +650,7 @@ export function removeScenario(scenarioId) {
     const { updateScenarioCheckboxes, updateContributionsScenarioDropdown, recalculateAll } = window;
     
     if (scenarioId === 'A') {
-        alert('❌ Das Basis-Szenario A kann nicht gelöscht werden.');
+        alert('Das Basis-Szenario A kann nicht gelöscht werden.');
         return;
     }
     
@@ -746,19 +746,19 @@ export function renameScenario(scenarioId) {
     // Update panel title
     const panelTitle = document.querySelector(`.scenario-panel[data-scenario="${scenarioId}"] .scenario-panel-title`);
     if (panelTitle) {
-        panelTitle.textContent = `📊 ${scenario.name}`;
+        panelTitle.textContent = `${scenario.name}`;
     }
     
     // Update tab text
     const tab = document.querySelector(`[data-scenario="${scenarioId}"].scenario-tab`);
     if (tab) {
-        tab.innerHTML = `📈 ${scenario.name}`;
+        tab.innerHTML = `${scenario.name}`;
     }
     
     // Update existing result card title immediately without waiting for recalculation
     const resultCardTitle = document.querySelector(`.scenario-result-card[data-scenario="${scenarioId}"] .scenario-result-title`);
     if (resultCardTitle) {
-        resultCardTitle.textContent = `📊 ${scenario.name}`;
+        resultCardTitle.textContent = `${scenario.name}`;
     }
     
     // Update scenario checkboxes and dropdown
@@ -799,7 +799,7 @@ export function renameScenario(scenarioId) {
     }
     
     if (showNotification) {
-        showNotification('✅ Erfolg', `Szenario wurde zu "${scenario.name}" umbenannt.`, 'success');
+        showNotification('Erfolg', `Szenario wurde zu "${scenario.name}" umbenannt.`, 'success');
     }
 }
 

@@ -6,7 +6,7 @@
  */
 
 // Import required modules
-import { formatCurrency, parseGermanNumber } from '../utils.js';
+import { formatCurrency, parseGermanNumber, formatAxisEuro } from '../utils.js';
 import { calculateTotalContributionsFromAccumulation, calculateWithdrawalPlan } from '../core/withdrawal.js';
 import { displayChartErrorMessage } from './mainChart.js';
 import { showNotification } from './dom.js';
@@ -31,7 +31,7 @@ export function updateWithdrawalChart(yearlyData) {
     if (!yearlyData || yearlyData.length === 0) {
         const canvas = document.getElementById('withdrawalChart');
         displayChartErrorMessage(canvas, ctx, 'no-data', {
-            icon: '💰',
+            icon: '',
             title: 'Keine Entnahmedaten verfügbar',
             subtitle: 'Es sind noch keine Entnahmeberechnungen vorhanden.',
             action: 'Bitte führen Sie eine Entnahmeberechnung durch.'
@@ -50,12 +50,12 @@ export function updateWithdrawalChart(yearlyData) {
 
     // Create gradients
     const capitalGradient = ctx.createLinearGradient(0, 0, 0, 400);
-    capitalGradient.addColorStop(0, 'rgba(231, 76, 60, 0.8)');
-    capitalGradient.addColorStop(1, 'rgba(231, 76, 60, 0.1)');
+    capitalGradient.addColorStop(0, 'rgba(83, 98, 61, 0.35)');
+    capitalGradient.addColorStop(1, 'rgba(83, 98, 61, 0.03)');
 
     const realGradient = ctx.createLinearGradient(0, 0, 0, 400);
-    realGradient.addColorStop(0, 'rgba(155, 89, 182, 0.8)');
-    realGradient.addColorStop(1, 'rgba(155, 89, 182, 0.1)');
+    realGradient.addColorStop(0, 'rgba(63, 110, 140, 0.18)');
+    realGradient.addColorStop(1, 'rgba(63, 110, 140, 0.02)');
 
     withdrawalChart = new Chart(ctx, {
         type: 'line',
@@ -65,7 +65,7 @@ export function updateWithdrawalChart(yearlyData) {
                 {
                     label: 'Portfoliowert (Nominal)',
                     data: capitalValues,
-                    borderColor: '#e74c3c',
+                    borderColor: '#53623D',
                     backgroundColor: capitalGradient,
                     fill: true,
                     tension: 0.4,
@@ -75,7 +75,7 @@ export function updateWithdrawalChart(yearlyData) {
                 {
                     label: 'Portfoliowert (Real)',
                     data: realCapitalValues,
-                    borderColor: '#9b59b6',
+                    borderColor: '#3F6E8C',
                     backgroundColor: realGradient,
                     fill: true,
                     tension: 0.4,
@@ -85,7 +85,7 @@ export function updateWithdrawalChart(yearlyData) {
                 {
                     label: 'Netto-Entnahme',
                     data: netWithdrawals,
-                    borderColor: '#27ae60',
+                    borderColor: '#B8862B',
                     backgroundColor: 'transparent',
                     fill: false,
                     tension: 0.4,
@@ -95,7 +95,7 @@ export function updateWithdrawalChart(yearlyData) {
                 {
                     label: 'Jährliche Steuern',
                     data: taxes,
-                    borderColor: '#f39c12',
+                    borderColor: '#A65A3A',
                     backgroundColor: 'transparent',
                     fill: false,
                     tension: 0.4,
@@ -110,10 +110,10 @@ export function updateWithdrawalChart(yearlyData) {
             maintainAspectRatio: false,
             plugins: {
                 title: {
-                    display: true,
+                    display: false,
                     text: 'Entnahmeplan: Portfolio & Cashflows',
                     font: { size: 18, weight: 'bold' },
-                    color: '#2c3e50'
+                    color: '#343A2E'
                 },
                 legend: {
                     position: 'top',
@@ -131,15 +131,10 @@ export function updateWithdrawalChart(yearlyData) {
                     title: {
                         display: true,
                         text: 'Portfolio Wert (€)',
-                        color: '#2c3e50'
+                        color: '#343A2E'
                     },
                     ticks: {
-                        callback: function(value) {
-                            return '€' + value.toLocaleString('de-DE', { 
-                                minimumFractionDigits: 0, 
-                                maximumFractionDigits: 0 
-                            });
-                        }
+                        callback: value => formatAxisEuro(value)
                     },
                     // Allow negative values to be displayed properly
                     beginAtZero: false,
@@ -153,25 +148,20 @@ export function updateWithdrawalChart(yearlyData) {
                     title: {
                         display: true,
                         text: 'Jährliche Beträge (€)',
-                        color: '#2c3e50'
+                        color: '#343A2E'
                     },
                     grid: {
                         drawOnChartArea: false,
                     },
                     ticks: {
-                        callback: function(value) {
-                            return '€' + value.toLocaleString('de-DE', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                            });
-                        }
+                        callback: value => formatAxisEuro(value)
                     }
                 },
                 x: {
                     title: {
                         display: true,
                         text: 'Jahre im Ruhestand',
-                        color: '#2c3e50'
+                        color: '#343A2E'
                     }
                 }
             },
@@ -217,7 +207,7 @@ export function createIntegratedTimeline() {
         console.log('No accumulation data available for integrated timeline');
         const canvas = document.getElementById('integratedChart');
         displayChartErrorMessage(canvas, ctx, 'no-scenario-data', {
-            icon: '🔄',
+            icon: '',
             title: 'Keine Daten für Lebenszyklus-Ansicht',
             subtitle: 'Es sind keine Berechnungsdaten für das aktuelle Szenario verfügbar.',
             action: 'Bitte führen Sie eine Berechnung in der Ansparphase durch.'
@@ -229,15 +219,15 @@ export function createIntegratedTimeline() {
     // This ensures the withdrawal phase starts exactly where the user has specified
     let retirementCapital = parseGermanNumber(document.getElementById('retirementCapital').value);
     
-    console.log(`🎯 Integrated Timeline: Using retirement capital from input field: €${retirementCapital.toLocaleString()}`);
+    console.log(`🎯 Integrated Timeline: Using retirement capital from input field: ${retirementCapital.toLocaleString()} €`);
     
     // Log the accumulation vs retirement capital difference for awareness
     if (currentActiveScenario.yearlyData && currentActiveScenario.yearlyData.length > 0) {
         const actualFinalCapital = currentActiveScenario.yearlyData[currentActiveScenario.yearlyData.length - 1].capital;
         const difference = Math.abs(actualFinalCapital - retirementCapital);
         if (difference > 1000) {
-            console.log(`ℹ️ Note: Accumulation ends with €${actualFinalCapital.toLocaleString()}, withdrawal starts with €${retirementCapital.toLocaleString()}`);
-            console.log(`📊 Difference at retirement: €${difference.toLocaleString()} (${difference > 0 ? 'increase' : 'decrease'})`);
+            console.log(`ℹ️ Note: Accumulation ends with ${actualFinalCapital.toLocaleString()} €, withdrawal starts with ${retirementCapital.toLocaleString()} €`);
+            console.log(`📊 Difference at retirement: ${difference.toLocaleString()} € (${difference > 0 ? 'increase' : 'decrease'})`);
         }
     }
     
@@ -277,7 +267,7 @@ export function createIntegratedTimeline() {
             retirementCapital * 0.6; // fallback estimate
         
         console.log(`💰 Calculating optimal withdrawal that depletes portfolio to €0 in ${withdrawalDuration} years`);
-        console.log(`Starting capital: €${retirementCapital.toLocaleString()}`);
+        console.log(`Starting capital: ${retirementCapital.toLocaleString()} €`);
         
         const withdrawalResults = calculateWithdrawalPlan(
             retirementCapital, withdrawalDuration, postRetirementReturn, 
@@ -286,8 +276,8 @@ export function createIntegratedTimeline() {
         withdrawalData = withdrawalResults.yearlyData || [];
         
         console.log(`Withdrawal calculation complete: ${withdrawalData.length} years of data`);
-        console.log(`Final portfolio value: €${withdrawalResults.finalCapital.toLocaleString()}`);
-        console.log(`Monthly withdrawal amount: €${withdrawalResults.monthlyGrossWithdrawal.toLocaleString()}`);
+        console.log(`Final portfolio value: ${withdrawalResults.finalCapital.toLocaleString()} €`);
+        console.log(`Monthly withdrawal amount: ${withdrawalResults.monthlyGrossWithdrawal.toLocaleString()} €`);
         
     } catch (error) {
         console.error('Withdrawal calculation failed for integrated timeline:', error);
@@ -335,10 +325,10 @@ export function createIntegratedTimeline() {
     // Verify that withdrawal data makes sense
     if (withdrawalData.length > 0) {
         console.log(`✅ Withdrawal data verification:`);
-        console.log(`   First withdrawal year start: €${withdrawalData[0].startCapital.toLocaleString()}`);
-        console.log(`   First withdrawal year end: €${withdrawalData[0].endCapital.toLocaleString()}`);
-        console.log(`   Last withdrawal year start: €${withdrawalData[withdrawalData.length - 1].startCapital.toLocaleString()}`);
-        console.log(`   Last withdrawal year end: €${withdrawalData[withdrawalData.length - 1].endCapital.toLocaleString()}`);
+        console.log(`   First withdrawal year start: ${withdrawalData[0].startCapital.toLocaleString()} €`);
+        console.log(`   First withdrawal year end: ${withdrawalData[0].endCapital.toLocaleString()} €`);
+        console.log(`   Last withdrawal year start: ${withdrawalData[withdrawalData.length - 1].startCapital.toLocaleString()} €`);
+        console.log(`   Last withdrawal year end: ${withdrawalData[withdrawalData.length - 1].endCapital.toLocaleString()} €`);
         console.log(`   Portfolio correctly declining: ${withdrawalData[0].startCapital > withdrawalData[withdrawalData.length - 1].endCapital ? 'YES' : 'NO'}`);
         console.log(`   Any negative end values: ${withdrawalData.some(d => d.endCapital < 0) ? 'YES' : 'NO'}`);
     }
@@ -354,7 +344,7 @@ export function createIntegratedTimeline() {
     let finalAccumulationReal = [...accumulationReal];
     
     // Always ensure the accumulation phase ends exactly at retirement capital for perfect visual connection
-    console.log(`🌉 Ensuring seamless transition: Accumulation ends at €${lastAccumulationCapital.toLocaleString()}, retirement starts at €${retirementCapital.toLocaleString()}`);
+    console.log(`🌉 Ensuring seamless transition: Accumulation ends at ${lastAccumulationCapital.toLocaleString()} €, retirement starts at ${retirementCapital.toLocaleString()} €`);
     
     // Always add/update the retirement capital as the final point of accumulation phase
     if (finalAccumulationYears[finalAccumulationYears.length - 1] === maxAccumulationYear) {
@@ -368,7 +358,7 @@ export function createIntegratedTimeline() {
         finalAccumulationReal.push(retirementCapital / Math.pow(1 + accumulationInflationRate, maxAccumulationYear));
     }
     
-    console.log(`📊 Accumulation phase now ends exactly at €${retirementCapital.toLocaleString()} in year ${maxAccumulationYear}`);
+    console.log(`📊 Accumulation phase now ends exactly at ${retirementCapital.toLocaleString()} € in year ${maxAccumulationYear}`);
     
     // For integrated timeline, show the portfolio decline by using endCapital
     // This will show the portfolio value AFTER withdrawals are made, reaching exactly €0
@@ -409,12 +399,12 @@ export function createIntegratedTimeline() {
 
     // Create gradients
     const accumulationGradient = ctx.createLinearGradient(0, 0, 0, 400);
-    accumulationGradient.addColorStop(0, 'rgba(39, 174, 96, 0.8)');
-    accumulationGradient.addColorStop(1, 'rgba(39, 174, 96, 0.1)');
+    accumulationGradient.addColorStop(0, 'rgba(83, 98, 61, 0.8)');
+    accumulationGradient.addColorStop(1, 'rgba(83, 98, 61, 0.1)');
 
     const withdrawalGradient = ctx.createLinearGradient(0, 0, 0, 400);
-    withdrawalGradient.addColorStop(0, 'rgba(231, 76, 60, 0.8)');
-    withdrawalGradient.addColorStop(1, 'rgba(231, 76, 60, 0.1)');
+    withdrawalGradient.addColorStop(0, 'rgba(166, 90, 58, 0.8)');
+    withdrawalGradient.addColorStop(1, 'rgba(166, 90, 58, 0.1)');
 
     // Store maxAccumulationYear for tooltip access
     const transitionYear = maxAccumulationYear;
@@ -429,21 +419,21 @@ export function createIntegratedTimeline() {
                         x: finalAccumulationYears[index],
                         y: value
                     })),
-                    borderColor: '#27ae60',
+                    borderColor: '#53623D',
                     backgroundColor: accumulationGradient,
                     fill: true,
                     tension: 0.4,
                     borderWidth: 3,
                     pointRadius: 0,
                     pointHoverRadius: 10,
-                    pointBackgroundColor: '#27ae60',
-                    pointBorderColor: '#ffffff',
+                    pointBackgroundColor: '#53623D',
+                    pointBorderColor: '#FCFAF5',
                     pointBorderWidth: 3,
-                    pointHoverBackgroundColor: '#2ecc71',
-                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBackgroundColor: '#6B7A50',
+                    pointHoverBorderColor: '#FCFAF5',
                     pointHoverBorderWidth: 4,
                     hoverBorderWidth: 4,
-                    hoverBackgroundColor: 'rgba(39, 174, 96, 0.9)',
+                    hoverBackgroundColor: 'rgba(83, 98, 61, 0.9)',
                 },
                 {
                     label: 'Ansparphase (Real)',
@@ -451,7 +441,7 @@ export function createIntegratedTimeline() {
                         x: finalAccumulationYears[index],
                         y: value
                     })),
-                    borderColor: '#2ecc71',
+                    borderColor: '#6B7A50',
                     backgroundColor: 'transparent',
                     fill: false,
                     tension: 0.4,
@@ -459,11 +449,11 @@ export function createIntegratedTimeline() {
                     borderDash: [5, 5],
                     pointRadius: 0,
                     pointHoverRadius: 8,
-                    pointBackgroundColor: '#2ecc71',
-                    pointBorderColor: '#ffffff',
+                    pointBackgroundColor: '#6B7A50',
+                    pointBorderColor: '#FCFAF5',
                     pointBorderWidth: 2,
-                    pointHoverBackgroundColor: '#27ae60',
-                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBackgroundColor: '#53623D',
+                    pointHoverBorderColor: '#FCFAF5',
                     pointHoverBorderWidth: 3,
                     hoverBorderWidth: 3,
                 },
@@ -473,21 +463,21 @@ export function createIntegratedTimeline() {
                         x: withdrawalYearsWithTransition[index],
                         y: value
                     })),
-                    borderColor: '#e74c3c',
+                    borderColor: '#A65A3A',
                     backgroundColor: withdrawalGradient,
                     fill: true,
                     tension: 0.4,
                     borderWidth: 3,
                     pointRadius: 0,
                     pointHoverRadius: 10,
-                    pointBackgroundColor: '#e74c3c',
-                    pointBorderColor: '#ffffff',
+                    pointBackgroundColor: '#A65A3A',
+                    pointBorderColor: '#FCFAF5',
                     pointBorderWidth: 3,
-                    pointHoverBackgroundColor: '#c0392b',
-                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBackgroundColor: '#8C4A2E',
+                    pointHoverBorderColor: '#FCFAF5',
                     pointHoverBorderWidth: 4,
                     hoverBorderWidth: 4,
-                    hoverBackgroundColor: 'rgba(231, 76, 60, 0.9)',
+                    hoverBackgroundColor: 'rgba(166, 90, 58, 0.9)',
                 },
                 {
                     label: 'Entnahmephase (Real)',
@@ -495,7 +485,7 @@ export function createIntegratedTimeline() {
                         x: withdrawalYearsWithTransition[index],
                         y: value
                     })),
-                    borderColor: '#c0392b',
+                    borderColor: '#8C4A2E',
                     backgroundColor: 'transparent',
                     fill: false,
                     tension: 0.4,
@@ -503,11 +493,11 @@ export function createIntegratedTimeline() {
                     borderDash: [5, 5],
                     pointRadius: 0,
                     pointHoverRadius: 8,
-                    pointBackgroundColor: '#c0392b',
-                    pointBorderColor: '#ffffff',
+                    pointBackgroundColor: '#8C4A2E',
+                    pointBorderColor: '#FCFAF5',
                     pointBorderWidth: 2,
-                    pointHoverBackgroundColor: '#e74c3c',
-                    pointHoverBorderColor: '#ffffff',
+                    pointHoverBackgroundColor: '#A65A3A',
+                    pointHoverBorderColor: '#FCFAF5',
                     pointHoverBorderWidth: 3,
                     hoverBorderWidth: 3,
                 }
@@ -518,13 +508,13 @@ export function createIntegratedTimeline() {
             maintainAspectRatio: false,
             plugins: {
                 title: {
-                    display: true,
+                    display: false,
                     text: 'Integrierte Finanzplanung: Anspar- & Entnahmephase',
                     font: {
                         size: 18,
                         weight: 'bold'
                     },
-                    color: '#2c3e50'
+                    color: '#343A2E'
                 },
                 legend: {
                     position: 'top',
@@ -535,9 +525,9 @@ export function createIntegratedTimeline() {
                 },
                 tooltip: {
                     backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                    titleColor: '#2c3e50',
-                    bodyColor: '#2c3e50',
-                    borderColor: '#3498db',
+                    titleColor: '#343A2E',
+                    bodyColor: '#343A2E',
+                    borderColor: '#53623D',
                     borderWidth: 2,
                     cornerRadius: 12,
                     displayColors: true,
@@ -566,7 +556,7 @@ export function createIntegratedTimeline() {
                             const year = context[0].parsed.x;
 
                             if (year === transitionYear) {
-                                return ['', '🔄 Übergang zur Entnahmephase', 'Renteneintritt erreicht!'];
+                                return ['', 'Übergang zur Entnahmephase', 'Renteneintritt erreicht!'];
                             }
 
                             // Use year-based logic: if year > transitionYear, it's Entnahmephase
@@ -587,7 +577,7 @@ export function createIntegratedTimeline() {
                     title: {
                         display: true,
                         text: 'Jahre',
-                        color: '#2c3e50',
+                        color: '#343A2E',
                         font: {
                             size: 14,
                             weight: 'bold'
@@ -597,7 +587,7 @@ export function createIntegratedTimeline() {
                         color: function(context) {
                             // Highlight transition point
                             return context.tick.value === transitionYear ? 
-                                'rgba(231, 76, 60, 0.5)' : 'rgba(0, 0, 0, 0.05)';
+                                'rgba(166, 90, 58, 0.5)' : 'rgba(0, 0, 0, 0.05)';
                         },
                         lineWidth: function(context) {
                             return context.tick.value === transitionYear ? 3 : 1;
@@ -609,22 +599,17 @@ export function createIntegratedTimeline() {
                         font: {
                             size: 11
                         },
-                        color: '#7f8c8d'
+                        color: '#6F6E62'
                     }
                 },
                 y: {
                     title: {
                         display: true,
                         text: 'Portfolio Wert (€)',
-                        color: '#2c3e50'
+                        color: '#343A2E'
                     },
                     ticks: {
-                        callback: function(value) {
-                            return '€' + value.toLocaleString('de-DE', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                            });
-                        }
+                        callback: value => formatAxisEuro(value)
                     }
                 }
             },

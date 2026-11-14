@@ -548,14 +548,14 @@ function updateScenarioSalaryAnalysis(scenarioId, baseSalary, salaryGrowthRate) 
         // Update color coding based on net rate
         if (netIncreaseEl && netIncreaseRateEl) {
             if (netIncreaseRate >= 70) {
-                netIncreaseEl.style.color = '#27ae60'; // Green
-                netIncreaseRateEl.style.color = '#27ae60';
+                netIncreaseEl.style.color = '#53623D'; // Green
+                netIncreaseRateEl.style.color = '#53623D';
             } else if (netIncreaseRate >= 60) {
-                netIncreaseEl.style.color = '#f39c12'; // Orange
-                netIncreaseRateEl.style.color = '#f39c12';
+                netIncreaseEl.style.color = '#B8862B'; // Orange
+                netIncreaseRateEl.style.color = '#B8862B';
             } else {
-                netIncreaseEl.style.color = '#e74c3c'; // Red
-                netIncreaseRateEl.style.color = '#e74c3c';
+                netIncreaseEl.style.color = '#A65A3A'; // Red
+                netIncreaseRateEl.style.color = '#A65A3A';
             }
         }
     }

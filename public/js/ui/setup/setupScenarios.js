@@ -678,7 +678,7 @@ function updatePhaseSummaries(scenarioId) {
       const totalSpan = phaseSummary.querySelector('.phase-total');
       
       if (durationSpan) durationSpan.textContent = `Dauer: ${duration} Jahre`;
-      if (totalSpan) totalSpan.textContent = `Gesamt: €${Math.round(totalWithReturns).toLocaleString('de-DE')}`;
+      if (totalSpan) totalSpan.textContent = `Gesamt: ${Math.round(totalWithReturns).toLocaleString('de-DE')} €`;
     }
   }
 }
@@ -720,8 +720,8 @@ function updateMultiPhaseSummary(scenarioId) {
 
   if (activePhasesElement) activePhasesElement.textContent = activePhases.toString();
   if (totalDurationElement) totalDurationElement.textContent = `${totalDuration} Jahre`;
-  if (averageSavingsElement) averageSavingsElement.textContent = `€${Math.round(averageSavingsRate).toLocaleString('de-DE')}`;
-  if (totalContributionsElement) totalContributionsElement.textContent = `€${Math.round(totalContributions).toLocaleString('de-DE')}`;
+  if (averageSavingsElement) averageSavingsElement.textContent = `${Math.round(averageSavingsRate).toLocaleString('de-DE')} €`;
+  if (totalContributionsElement) totalContributionsElement.textContent = `${Math.round(totalContributions).toLocaleString('de-DE')} €`;
 }
 
 // Export functions to window object for backward compatibility

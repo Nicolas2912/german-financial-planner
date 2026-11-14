@@ -38,8 +38,8 @@ describe('UI DOM helpers', () => {
     const cards = document.querySelectorAll('.scenario-result-card');
     expect(cards).toHaveLength(2);
     expect(cards[0].querySelector('.scenario-result-title').textContent).toContain('Szenario A');
-    expect(cards[0].textContent).toContain('€250.000,00');
-    expect(cards[0].textContent).toContain('€8.500,00');
+    expect(cards[0].textContent).toContain('250.000 €');
+    expect(cards[0].textContent).toContain('8.500 €');
   });
 
   test('refreshScenarioResultNames updates card headers without re-rendering', () => {

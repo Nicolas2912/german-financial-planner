@@ -15,12 +15,12 @@ class ScenarioComparisonManager {
         this.selectedWithdrawScenarioKey = null;
 
         // Base scenarios registry powering charts/table/overview
-        const scColors = baseScenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
+        const scColors = baseScenarioColors || { 'A': '#53623D', 'B': '#A65A3A', 'C': '#3F6E8C', 'D': '#B8862B' };
         this.scenarioConfigs = [
             {
                 id: 'optimistic',
-                label: '🎯 Optimistisch',
-                color: scColors['A'] || '#3498db',
+                label: 'Optimistisch',
+                color: scColors['A'] || '#53623D',
                 params: {
                     budget: {
                         income: 4000,
@@ -58,8 +58,8 @@ class ScenarioComparisonManager {
             },
             {
                 id: 'conservative',
-                label: '🛡️ Konservativ',
-                color: scColors['B'] || '#27ae60',
+                label: 'Konservativ',
+                color: scColors['B'] || '#53623D',
                 params: {
                     budget: {
                         income: 3500,
@@ -138,7 +138,7 @@ class ScenarioComparisonManager {
     // Create a scenario from the current left-side selections and add to overview
     addSelectionAsScenario() {
         if (this.scenarioConfigs.length >= 5) {
-            alert('⚠️ Maximal 5 Szenarien im Vergleich erlaubt.');
+            alert('Maximal 5 Szenarien im Vergleich erlaubt.');
             return;
         }
 
@@ -229,12 +229,12 @@ class ScenarioComparisonManager {
         const existingCustom = this.scenarioConfigs.filter(s => s.id.startsWith('custom-')).length;
         const newId = `custom-${existingCustom + 1}`;
         const newIndex = this.scenarioConfigs.length + 1;
-        const scColors = baseScenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
+        const scColors = baseScenarioColors || { 'A': '#53623D', 'B': '#A65A3A', 'C': '#3F6E8C', 'D': '#B8862B' };
         const pickOrder = ['C','D','E'];
         const pick = pickOrder[existingCustom] || 'D';
-        const color = scColors[pick] || '#8e44ad';
+        const color = scColors[pick] || '#6E8FA8';
 
-        const label = `✨ Szenario ${newIndex}`;
+        const label = `Szenario ${newIndex}`;
         const sources = {
             budgetName: getName('budgetProfile_', this.selectedBudgetProfileKey, budData),
             accumName: getName('ansparphaseScenario_', this.selectedAccumScenarioKey, accData),
@@ -335,27 +335,19 @@ class ScenarioComparisonManager {
         if (!top) return;
         if (!card.getAttribute('data-scenario-id')) card.setAttribute('data-scenario-id', scenarioId);
         const wrap = document.createElement('div');
-        wrap.style.display = 'flex';
-        wrap.style.gap = '6px';
-        wrap.style.marginLeft = '8px';
-        const btnEdit = document.createElement('button');
-        btnEdit.textContent = '✏️';
-        btnEdit.title = 'Umbenennen';
-        btnEdit.style.border = '0';
-        btnEdit.style.background = 'transparent';
-        btnEdit.style.cursor = 'pointer';
-        const btnRefresh = document.createElement('button');
-        btnRefresh.textContent = '⟲';
-        btnRefresh.title = 'Mit Auswahl aktualisieren';
-        btnRefresh.style.border = '0';
-        btnRefresh.style.background = 'transparent';
-        btnRefresh.style.cursor = 'pointer';
-        const btnDelete = document.createElement('button');
-        btnDelete.textContent = '🗑️';
-        btnDelete.title = 'Szenario entfernen';
-        btnDelete.style.border = '0';
-        btnDelete.style.background = 'transparent';
-        btnDelete.style.cursor = 'pointer';
+        wrap.className = 'card-actions';
+        const makeAction = (label, title) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'card-action-btn';
+            button.textContent = label;
+            button.title = title;
+            return button;
+        };
+        const btnEdit = makeAction('Umbenennen', 'Szenario umbenennen');
+        const btnRefresh = makeAction('Aktualisieren', 'Mit Auswahl aktualisieren');
+        const btnDelete = makeAction('Entfernen', 'Szenario entfernen');
+        btnDelete.classList.add('is-danger');
         wrap.appendChild(btnEdit);
         wrap.appendChild(btnRefresh);
         wrap.appendChild(btnDelete);
@@ -820,10 +812,10 @@ class ScenarioComparisonManager {
             dropdown.id = 'accumImportDropdown';
             dropdown.style.display = 'none';
             dropdown.style.marginTop = '10px';
-            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.border = '1px solid #E2DACA';
             dropdown.style.borderRadius = '8px';
             dropdown.style.padding = '10px';
-            dropdown.style.background = '#fff';
+            dropdown.style.background = '#FCFAF5';
             header.after(dropdown);
         }
 
@@ -844,7 +836,7 @@ class ScenarioComparisonManager {
             }
         }
 
-        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Ansparphase‑Szenario wählen</strong>';
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#343A2E;">Ansparphase‑Szenario wählen</strong>';
         const list = document.createElement('div');
         list.id = 'accumImportDropdownList';
         list.style.display = 'flex';
@@ -852,14 +844,14 @@ class ScenarioComparisonManager {
         list.style.gap = '8px';
 
         if (!entries.length) {
-            list.innerHTML = '<div style="color:#7f8c8d">Keine gespeicherten Ansparphase‑Szenarien gefunden.</div>';
+            list.innerHTML = '<div style="color:#6F6E62">Keine gespeicherten Ansparphase‑Szenarien gefunden.</div>';
         } else {
             entries.sort((a,b) => (a.data?.name || a.key).localeCompare(b.data?.name || b.key));
             entries.forEach(({ key, data }) => {
                 const name = (data?.name) || key.replace('ansparphaseScenario_','');
                 const btn = document.createElement('button');
                 btn.className = 'profile-action-btn profile-load-btn';
-                btn.textContent = `📂 ${name}`;
+                btn.textContent = `${name}`;
                 btn.style.justifySelf = 'start';
                 btn.dataset.storageKey = key;
                 if (this.selectedAccumScenarioKey === key) btn.classList.add('active');
@@ -890,14 +882,14 @@ class ScenarioComparisonManager {
             dropdown.id = 'accumImportDropdown';
             dropdown.style.display = 'none';
             dropdown.style.marginTop = '10px';
-            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.border = '1px solid #E2DACA';
             dropdown.style.borderRadius = '8px';
             dropdown.style.padding = '10px';
-            dropdown.style.background = '#fff';
+            dropdown.style.background = '#FCFAF5';
             header.after(dropdown);
         }
         const wasOpen = dropdown.style.display !== 'none';
-        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Ansparphase‑Szenario wählen</strong>';
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#343A2E;">Ansparphase‑Szenario wählen</strong>';
         const list = document.createElement('div');
         list.id = 'accumImportDropdownList';
         list.style.display = 'flex';
@@ -915,7 +907,7 @@ class ScenarioComparisonManager {
             const name = (data?.name) || key.replace('ansparphaseScenario_','');
             const btn = document.createElement('button');
             btn.className = 'profile-action-btn profile-load-btn';
-            btn.textContent = `📂 ${name}`;
+            btn.textContent = `${name}`;
             btn.dataset.storageKey = key;
             if (this.selectedAccumScenarioKey === key) btn.classList.add('active');
             btn.addEventListener('click', () => {
@@ -1014,10 +1006,10 @@ class ScenarioComparisonManager {
             dropdown.id = 'withdrawImportDropdown';
             dropdown.style.display = 'none';
             dropdown.style.marginTop = '10px';
-            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.border = '1px solid #E2DACA';
             dropdown.style.borderRadius = '8px';
             dropdown.style.padding = '10px';
-            dropdown.style.background = '#fff';
+            dropdown.style.background = '#FCFAF5';
             header.after(dropdown);
         }
 
@@ -1038,7 +1030,7 @@ class ScenarioComparisonManager {
             }
         }
 
-        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Entnahmephase‑Szenario wählen</strong>';
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#343A2E;">Entnahmephase‑Szenario wählen</strong>';
         const list = document.createElement('div');
         list.id = 'withdrawImportDropdownList';
         list.style.display = 'flex';
@@ -1046,14 +1038,14 @@ class ScenarioComparisonManager {
         list.style.gap = '8px';
 
         if (!entries.length) {
-            list.innerHTML = '<div style="color:#7f8c8d">Keine gespeicherten Entnahmephase‑Szenarien gefunden.</div>';
+            list.innerHTML = '<div style="color:#6F6E62">Keine gespeicherten Entnahmephase‑Szenarien gefunden.</div>';
         } else {
             entries.sort((a,b) => (a.data?.name || a.key).localeCompare(b.data?.name || b.key));
             entries.forEach(({ key, data }) => {
                 const name = (data?.name) || key.replace('entnahmephaseScenario_','');
                 const btn = document.createElement('button');
                 btn.className = 'profile-action-btn profile-load-btn';
-                btn.textContent = `📂 ${name}`;
+                btn.textContent = `${name}`;
                 btn.style.justifySelf = 'start';
                 btn.dataset.storageKey = key;
                 if (this.selectedWithdrawScenarioKey === key) btn.classList.add('active');
@@ -1083,14 +1075,14 @@ class ScenarioComparisonManager {
             dropdown.id = 'withdrawImportDropdown';
             dropdown.style.display = 'none';
             dropdown.style.marginTop = '10px';
-            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.border = '1px solid #E2DACA';
             dropdown.style.borderRadius = '8px';
             dropdown.style.padding = '10px';
-            dropdown.style.background = '#fff';
+            dropdown.style.background = '#FCFAF5';
             header.after(dropdown);
         }
         const wasOpen = dropdown.style.display !== 'none';
-        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Entnahmephase‑Szenario wählen</strong>';
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#343A2E;">Entnahmephase‑Szenario wählen</strong>';
         const list = document.createElement('div');
         list.id = 'withdrawImportDropdownList';
         list.style.display = 'flex';
@@ -1108,7 +1100,7 @@ class ScenarioComparisonManager {
             const name = (data?.name) || key.replace('entnahmephaseScenario_','');
             const btn = document.createElement('button');
             btn.className = 'profile-action-btn profile-load-btn';
-            btn.textContent = `📂 ${name}`;
+            btn.textContent = `${name}`;
             btn.dataset.storageKey = key;
             if (this.selectedWithdrawScenarioKey === key) btn.classList.add('active');
             btn.addEventListener('click', () => {
@@ -1237,7 +1229,7 @@ class ScenarioComparisonManager {
         // Set accent variables on layout (border + light fill) based on scenario color
         if (scenarioType) {
             const sc = this.scenarioConfigs.find(s => s.id === scenarioType);
-            const color = sc?.color || '#3498db';
+            const color = sc?.color || '#53623D';
             layout.style.setProperty('--accent-color', color);
             layout.style.setProperty('--accent-light', this.hexToRgba(color, 0.15));
         } else {
@@ -1695,10 +1687,10 @@ class ScenarioComparisonManager {
             dropdown.id = 'budgetImportDropdown';
             dropdown.style.display = 'none';
             dropdown.style.marginTop = '10px';
-            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.border = '1px solid #E2DACA';
             dropdown.style.borderRadius = '8px';
             dropdown.style.padding = '10px';
-            dropdown.style.background = '#fff';
+            dropdown.style.background = '#FCFAF5';
             // Insert after header, before the grid
             header.after(dropdown);
         }
@@ -1728,9 +1720,9 @@ class ScenarioComparisonManager {
             }
         }
 
-        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Profil wählen</strong>';
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#343A2E;">Profil wählen</strong>';
         if (!entries.length) {
-            dropdown.insertAdjacentHTML('beforeend', '<div style="color:#7f8c8d">Keine gespeicherten Profile gefunden.</div>');
+            dropdown.insertAdjacentHTML('beforeend', '<div style="color:#6F6E62">Keine gespeicherten Profile gefunden.</div>');
             return;
         }
 
@@ -1739,7 +1731,7 @@ class ScenarioComparisonManager {
             const name = (data?.name) || key.replace('budgetProfile_','');
             const btn = document.createElement('button');
             btn.className = 'profile-action-btn profile-load-btn';
-            btn.textContent = `📂 ${name}`;
+            btn.textContent = `${name}`;
             btn.style.justifySelf = 'start';
             btn.dataset.key = key;
             if (this.selectedBudgetProfileKey === key) {
@@ -1774,15 +1766,15 @@ class ScenarioComparisonManager {
             dropdown.id = 'budgetImportDropdown';
             dropdown.style.display = 'none';
             dropdown.style.marginTop = '10px';
-            dropdown.style.border = '1px solid #e5e7eb';
+            dropdown.style.border = '1px solid #E2DACA';
             dropdown.style.borderRadius = '8px';
             dropdown.style.padding = '10px';
-            dropdown.style.background = '#fff';
+            dropdown.style.background = '#FCFAF5';
             header.after(dropdown);
         }
         const wasOpen = dropdown.style.display !== 'none';
         // Always rebuild content
-        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#2c3e50;">Profil wählen</strong>';
+        dropdown.innerHTML = '<strong style="display:block; margin-bottom:8px; color:#343A2E;">Profil wählen</strong>';
         const list = document.createElement('div');
         list.id = 'budgetImportDropdownList';
         list.style.display = 'flex';
@@ -1801,7 +1793,7 @@ class ScenarioComparisonManager {
             const name = (data?.name) || key.replace('budgetProfile_','');
             const btn = document.createElement('button');
             btn.className = 'profile-action-btn profile-load-btn';
-            btn.textContent = `📂 ${name}`;
+            btn.textContent = `${name}`;
             btn.style.justifySelf = 'start';
             btn.dataset.key = key;
             if (this.selectedBudgetProfileKey === key) btn.classList.add('active');
@@ -1826,7 +1818,7 @@ class ScenarioComparisonManager {
     applyBudgetProfile(profileName, profileData, profileKey = null) {
         try {
             const fmt = new Intl.NumberFormat('de-DE');
-            const euros = (n) => `€${fmt.format(Math.round(n || 0))}`;
+            const euros = (n) => `${fmt.format(Math.round(n || 0))} €`;
             const profile = profileData || {};
             const totals = profile.budgetData || {};
             const income = profile.income || {};
@@ -2043,7 +2035,7 @@ class ScenarioComparisonManager {
             const id = btn.getAttribute('data-scenario');
             if (!id || id === 'new') return;
             // Always use explicit color mapping by ID to avoid coupling to array order
-            const color = colorById.get(id) || '#3498db';
+            const color = colorById.get(id) || '#53623D';
             if (color) {
                 btn.style.setProperty('--scenario-accent', color);
                 btn.style.setProperty('--scenario-accent-light', this.hexToRgba(color, 0.15));
@@ -2094,7 +2086,7 @@ class ScenarioComparisonManager {
                     fill: true,
                     tension: 0.2,
                     borderWidth: 2,
-                    pointBorderColor: '#ffffff',
+                    pointBorderColor: '#FCFAF5',
                     pointBorderWidth: 2
                 };
             });
@@ -2142,7 +2134,7 @@ class ScenarioComparisonManager {
             backgroundColor: this.hexToRgba(sc.color, chartType === 'withdrawal' ? 0.12 : 0.08),
             tension: 0.3,
             pointBackgroundColor: sc.color,
-            pointBorderColor: '#ffffff',
+            pointBorderColor: '#FCFAF5',
             pointBorderWidth: 2,
             // Show points only at start and every 5 years for readability
             pointRadius: (ctx) => {
@@ -2467,7 +2459,7 @@ class ScenarioComparisonManager {
                     const pts = meta.data || [];
                     if (!pts.length) return;
                     ctx.save();
-                    ctx.fillStyle = ds.backgroundColor || 'rgba(52,152,219,0.18)';
+                    ctx.fillStyle = ds.backgroundColor || 'rgba(83, 98, 61,0.18)';
                     ctx.beginPath();
                     for (let k = 0; k < pts.length; k += 1) {
                         const p = pts[k];
@@ -2623,7 +2615,7 @@ class ScenarioComparisonManager {
     createNewScenario() {
         // Enforce maximum of 5 scenarios total
         if (this.scenarioConfigs.length >= 5) {
-            alert('⚠️ Maximal 5 Szenarien im Vergleich erlaubt.');
+            alert('Maximal 5 Szenarien im Vergleich erlaubt.');
             return;
         }
 
@@ -2633,14 +2625,14 @@ class ScenarioComparisonManager {
         const newId = `custom-${existingCustom + 1}`;
         const newIndex = this.scenarioConfigs.length + 1;
         // Use same palette as Ansparphase (A-D), try C, then D, then E if present, else a fallback
-        const scColors = baseScenarioColors || { 'A': '#3498db', 'B': '#27ae60', 'C': '#e74c3c', 'D': '#f39c12' };
+        const scColors = baseScenarioColors || { 'A': '#53623D', 'B': '#A65A3A', 'C': '#3F6E8C', 'D': '#B8862B' };
         const colorOrder = ['C', 'D', 'E'];
         const pick = colorOrder[existingCustom] || 'D';
-        const color = scColors[pick] || '#8e44ad';
+        const color = scColors[pick] || '#6E8FA8';
 
         const newScenario = {
             id: newId,
-            label: `✨ Szenario ${newIndex}`,
+            label: `Szenario ${newIndex}`,
             color,
             params: {
                 budget: { ...base.params.budget },

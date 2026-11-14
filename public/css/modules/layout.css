@@ -34,12 +34,12 @@
     height: 3px;
     background: linear-gradient(90deg, 
         transparent 0%, 
-        rgba(59, 130, 246, 0.6) 15%, 
+        rgba(83, 98, 61, 0.6) 15%, 
         rgba(16, 185, 129, 0.6) 30%,
         rgba(139, 92, 246, 0.6) 45%,
         rgba(236, 72, 153, 0.6) 60%,
         rgba(245, 158, 11, 0.6) 75%,
-        rgba(59, 130, 246, 0.6) 90%,
+        rgba(83, 98, 61, 0.6) 90%,
         transparent 100%
     );
     z-index: 1;
@@ -69,7 +69,7 @@
             #94a3b8 100%         /* Slate 400 */
         ),
         /* Subtle accent overlay */
-        radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 30% 20%, rgba(83, 98, 61, 0.1) 0%, transparent 50%),
         radial-gradient(circle at 70% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
     color: white;
     padding: 20px 40px;
@@ -100,7 +100,7 @@
     height: 2px;
     background: linear-gradient(90deg, 
         transparent 0%, 
-        rgba(59, 130, 246, 0.6) 25%, 
+        rgba(83, 98, 61, 0.6) 25%, 
         rgba(16, 185, 129, 0.6) 50%,
         rgba(139, 92, 246, 0.6) 75%,
         transparent 100%
@@ -144,7 +144,7 @@
 .controls-section {
     background: 
         linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%),
-        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+        radial-gradient(circle at 80% 20%, rgba(83, 98, 61, 0.05) 0%, transparent 50%);
     backdrop-filter: blur(10px);
     padding: 32px;
     border-radius: 16px;
@@ -178,9 +178,9 @@
    ------------------------- */
 .section-title {
     font-size: 1.5rem;
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 25px;
-    border-bottom: 3px solid #3498db;
+    border-bottom: 3px solid #53623D;
     padding-bottom: 10px;
 }
 
@@ -195,7 +195,7 @@
 .tax-section h3 {
     font-size: 1.3rem;
     margin-bottom: 15px;
-    color: #ecf0f1;
+    color: #E2DACA;
     font-weight: 600;
     opacity: 0.95;
 }
@@ -240,23 +240,23 @@
     background: #f0f8ff;
     padding: 30px;
     border-radius: 15px;
-    border: 2px solid #3498db;
+    border: 2px solid #53623D;
     margin-top: 40px;
 }
 
 .budget-section {
-    background: #f0fff0;
+    background: #EDEEE2;
     padding: 30px;
     border-radius: 15px;
-    border: 2px solid #27ae60;
+    border: 2px solid #53623D;
     margin-top: 40px;
 }
 
 .chart-section {
-    background: #f8f9fa;
+    background: #F3EEE3;
     padding: 30px;
     border-radius: 15px;
-    border: 2px solid #e9ecef;
+    border: 2px solid #E2DACA;
 }
 
 /* -------------------------

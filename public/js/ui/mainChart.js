@@ -2,6 +2,7 @@
 // Handles the main chart display, comparison charts, and contributions/gains charts
 
 // Import required modules
+import { formatAxisEuro } from '../utils.js';
 import * as state from '../state.js';
 
 // Chart instance (global for destruction)
@@ -63,13 +64,13 @@ function displayChartErrorMessage(canvas, ctx, errorType = 'no-scenarios', custo
     ctx.font = `bold ${titleSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#e74c3c'; // Red color
+    ctx.fillStyle = '#A65A3A'; // Red color
     ctx.fillText(message.title, centerX, centerY - 15);
     
     // Draw subtitle in lighter red
     const subtitleSize = Math.max(14, Math.min(16, canvas.width * 0.025));
     ctx.font = `${subtitleSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
-    ctx.fillStyle = '#c0392b'; // Darker red
+    ctx.fillStyle = '#8C4A2E'; // Darker red
     ctx.fillText(message.subtitle, centerX, centerY + 15);
     
     ctx.restore();
@@ -147,7 +148,7 @@ function updateComparisonChart() {
             tension: 0.4,
             borderWidth: 3,
             pointBackgroundColor: scenario.color,
-            pointBorderColor: '#ffffff',
+            pointBorderColor: '#FCFAF5',
             pointBorderWidth: 2,
             pointRadius: 2,
             pointHoverRadius: 8,
@@ -165,7 +166,7 @@ function updateComparisonChart() {
             borderWidth: 2,
             borderDash: [8, 4],
             pointBackgroundColor: scenario.color,
-            pointBorderColor: '#ffffff',
+            pointBorderColor: '#FCFAF5',
             pointBorderWidth: 2,
             pointRadius: 2,
             pointHoverRadius: 6,
@@ -192,14 +193,14 @@ function updateComparisonChart() {
             },
             plugins: {
                 title: {
-                    display: true,
+                    display: false,
                     text: 'Szenario-Vergleich: Vermögensentwicklung',
                     font: {
                         size: 18,
                         weight: 'bold',
-                        family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                        family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                     },
-                    color: '#2c3e50',
+                    color: '#343A2E',
                     padding: {
                         top: 10,
                         bottom: 30
@@ -213,9 +214,9 @@ function updateComparisonChart() {
                         pointStyle: 'circle',
                         font: {
                             size: 12,
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#2c3e50',
+                        color: '#343A2E',
                         padding: 20,
                         boxWidth: 12,
                         boxHeight: 12
@@ -223,9 +224,9 @@ function updateComparisonChart() {
                 },
                 tooltip: {
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    titleColor: '#2c3e50',
-                    bodyColor: '#2c3e50',
-                    borderColor: '#3498db',
+                    titleColor: '#343A2E',
+                    bodyColor: '#343A2E',
+                    borderColor: '#53623D',
                     borderWidth: 1,
                     cornerRadius: 8,
                     displayColors: true,
@@ -257,9 +258,9 @@ function updateComparisonChart() {
                         font: {
                             size: 14,
                             weight: 'bold',
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#2c3e50'
+                        color: '#343A2E'
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)',
@@ -268,9 +269,9 @@ function updateComparisonChart() {
                     ticks: {
                         font: {
                             size: 12,
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#7f8c8d',
+                        color: '#6F6E62',
                         maxTicksLimit: 10
                     }
                 },
@@ -282,9 +283,9 @@ function updateComparisonChart() {
                         font: {
                             size: 14,
                             weight: 'bold',
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#2c3e50'
+                        color: '#343A2E'
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)',
@@ -293,15 +294,10 @@ function updateComparisonChart() {
                     ticks: {
                         font: {
                             size: 12,
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#7f8c8d',
-                        callback: function(value) {
-                            return '€' + value.toLocaleString('de-DE', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                            });
-                        }
+                        color: '#6F6E62',
+                        callback: value => formatAxisEuro(value)
                     }
                 }
             },
@@ -371,12 +367,12 @@ function updateContributionsGainsChart() {
 
     // Create gradients for the stacked areas - use consistent colors regardless of scenario
     const contributionsGradient = ctx.createLinearGradient(0, 0, 0, 400);
-    contributionsGradient.addColorStop(0, '#3498db80'); // Always blue for contributions
-    contributionsGradient.addColorStop(1, '#3498db40');
+    contributionsGradient.addColorStop(0, 'rgba(140, 138, 124, 0.35)'); // Always blue for contributions
+    contributionsGradient.addColorStop(1, 'rgba(140, 138, 124, 0.12)');
 
     const gainsGradient = ctx.createLinearGradient(0, 0, 0, 400);
-    gainsGradient.addColorStop(0, '#27ae6080'); // Always green for gains
-    gainsGradient.addColorStop(1, '#27ae6040');
+    gainsGradient.addColorStop(0, 'rgba(83, 98, 61, 0.5)'); // Always green for gains
+    gainsGradient.addColorStop(1, 'rgba(83, 98, 61, 0.25)');
 
     chart = new Chart(ctx, {
         type: 'line',
@@ -386,7 +382,7 @@ function updateContributionsGainsChart() {
                 {
                     label: 'Eingezahltes Kapital',
                     data: contributionsData,
-                    borderColor: '#3498db', // Always blue for contributions
+                    borderColor: '#8C8A7C', // Stone for contributions
                     backgroundColor: contributionsGradient,
                     fill: 'origin',
                     tension: 0.4,
@@ -397,7 +393,7 @@ function updateContributionsGainsChart() {
                 {
                     label: 'Kursgewinne',
                     data: gainsData.map((gain, index) => gain + contributionsData[index]),
-                    borderColor: '#27ae60', // Always green for gains
+                    borderColor: '#53623D', // Always green for gains
                     backgroundColor: gainsGradient,
                     fill: '-1', // Fill to previous dataset
                     tension: 0.4,
@@ -408,7 +404,7 @@ function updateContributionsGainsChart() {
                 {
                     label: 'Realer Wert (inflationsbereinigt)',
                     data: realValueData,
-                    borderColor: '#9b59b6',
+                    borderColor: '#3F6E8C',
                     backgroundColor: 'transparent',
                     fill: false,
                     tension: 0.4,
@@ -432,14 +428,14 @@ function updateContributionsGainsChart() {
             },
             plugins: {
                 title: {
-                    display: true,
+                    display: false,
                     text: `Vermögensentwicklung: Einzahlungen vs. Kursgewinne (${displayScenario.name})`,
                     font: {
                         size: 18,
                         weight: 'bold',
-                        family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                        family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                     },
-                    color: '#2c3e50',
+                    color: '#343A2E',
                     padding: {
                         top: 10,
                         bottom: 30
@@ -453,9 +449,9 @@ function updateContributionsGainsChart() {
                         pointStyle: 'circle',
                         font: {
                             size: 12,
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#2c3e50',
+                        color: '#343A2E',
                         padding: 20,
                         boxWidth: 12,
                         boxHeight: 12
@@ -463,9 +459,9 @@ function updateContributionsGainsChart() {
                 },
                 tooltip: {
                     backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    titleColor: '#2c3e50',
-                    bodyColor: '#2c3e50',
-                    borderColor: '#3498db',
+                    titleColor: '#343A2E',
+                    bodyColor: '#343A2E',
+                    borderColor: '#53623D',
                     borderWidth: 1,
                     cornerRadius: 8,
                     displayColors: true,
@@ -497,9 +493,9 @@ function updateContributionsGainsChart() {
                         font: {
                             size: 14,
                             weight: 'bold',
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#2c3e50'
+                        color: '#343A2E'
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)',
@@ -508,9 +504,9 @@ function updateContributionsGainsChart() {
                     ticks: {
                         font: {
                             size: 12,
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#7f8c8d',
+                        color: '#6F6E62',
                         maxTicksLimit: 10
                     }
                 },
@@ -522,9 +518,9 @@ function updateContributionsGainsChart() {
                         font: {
                             size: 14,
                             weight: 'bold',
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#2c3e50'
+                        color: '#343A2E'
                     },
                     grid: {
                         color: 'rgba(0, 0, 0, 0.05)',
@@ -533,15 +529,10 @@ function updateContributionsGainsChart() {
                     ticks: {
                         font: {
                             size: 12,
-                            family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+                            family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
                         },
-                        color: '#7f8c8d',
-                        callback: function(value) {
-                            return '€' + value.toLocaleString('de-DE', { 
-                                minimumFractionDigits: 2, 
-                                maximumFractionDigits: 2 
-                            });
-                        }
+                        color: '#6F6E62',
+                        callback: value => formatAxisEuro(value)
                     },
                     stacked: false
                 }

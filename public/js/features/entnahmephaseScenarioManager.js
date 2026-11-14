@@ -66,13 +66,13 @@ function updateEntnahmephaseScenarioPreview() {
 
   const p = collectCurrentWithdrawalParams();
   previewContainer.innerHTML = `
-    <div class="preview-item"><span class="preview-label">🏦 Kapital zum Rentenstart</span><span class="preview-value">€${formatGermanNumber(p.retirementCapital, 0)}</span></div>
-    <div class="preview-item"><span class="preview-label">⏱️ Entnahmedauer</span><span class="preview-value">${p.withdrawalDuration} Jahre</span></div>
-    <div class="preview-item"><span class="preview-label">📈 Rendite (Ruhestand)</span><span class="preview-value">${p.postRetirementReturn}%</span></div>
-    <div class="preview-item"><span class="preview-label">📉 Inflation</span><span class="preview-value">${p.withdrawalInflation}%</span></div>
-    <div class="preview-item"><span class="preview-label">🇩🇪 Abgeltungssteuer</span><span class="preview-value">${p.withdrawalTaxActive ? 'Aktiv' : 'Aus'}</span></div>
-    <div class="preview-item"><span class="preview-label">🧾 Teilfreistellung</span><span class="preview-value">${p.teilfreistellungRate}%</span></div>
-    <div class="preview-item"><span class="preview-label">📅 Erstellt</span><span class="preview-value">${new Date().toLocaleDateString('de-DE')}</span></div>
+    <div class="preview-item"><span class="preview-label">Kapital zum Rentenstart</span><span class="preview-value">${formatGermanNumber(p.retirementCapital, 0)} €</span></div>
+    <div class="preview-item"><span class="preview-label">Entnahmedauer</span><span class="preview-value">${p.withdrawalDuration} Jahre</span></div>
+    <div class="preview-item"><span class="preview-label">Rendite (Ruhestand)</span><span class="preview-value">${p.postRetirementReturn}%</span></div>
+    <div class="preview-item"><span class="preview-label">Inflation</span><span class="preview-value">${p.withdrawalInflation}%</span></div>
+    <div class="preview-item"><span class="preview-label">Abgeltungssteuer</span><span class="preview-value">${p.withdrawalTaxActive ? 'Aktiv' : 'Aus'}</span></div>
+    <div class="preview-item"><span class="preview-label">Teilfreistellung</span><span class="preview-value">${p.teilfreistellungRate}%</span></div>
+    <div class="preview-item"><span class="preview-label">Erstellt</span><span class="preview-value">${new Date().toLocaleDateString('de-DE')}</span></div>
   `;
 
   const saveBtn = document.getElementById('confirmSaveEntnahmephaseScenario');
@@ -84,7 +84,7 @@ function confirmSaveEntnahmephaseScenario() {
   const scenarioName = document.getElementById('entnahmephaseScenarioName')?.value.trim();
   const scenarioDescription = document.getElementById('entnahmephaseScenarioDescription')?.value.trim() || '';
   if (!scenarioName) {
-    showNotification('❌ Fehler', 'Bitte geben Sie einen Szenario-Namen ein.', 'error');
+    showNotification('Fehler', 'Bitte geben Sie einen Szenario-Namen ein.', 'error');
     return;
   }
 
@@ -102,7 +102,7 @@ function confirmSaveEntnahmephaseScenario() {
   localStorage.setItem(key, JSON.stringify(data));
 
   closeSaveEntnahmephaseScenarioModal();
-  showNotification(existed ? '⚠️ Überschrieben' : '✅ Gespeichert', `Entnahmephase-Szenario "${escapeHtml(scenarioName)}" ${existed ? 'überschrieben' : 'gespeichert'}.`, existed ? 'warning' : 'success');
+  showNotification(existed ? 'Überschrieben' : 'Gespeichert', `Entnahmephase-Szenario "${escapeHtml(scenarioName)}" ${existed ? 'überschrieben' : 'gespeichert'}.`, existed ? 'warning' : 'success');
 }
 
 // =============== Manage Modal ===============
@@ -136,7 +136,7 @@ function loadManageEntnahmephaseScenarioList() {
   if (scenarios.length === 0) {
     list.innerHTML = `
       <div class="no-profiles">
-        <div class="no-profiles-icon">📁</div>
+        <div class="no-profiles-icon"></div>
         <p>Keine gespeicherten Szenarien gefunden.</p>
         <p>Erstellen Sie Ihr erstes Szenario mit "Szenario speichern".</p>
       </div>
@@ -156,11 +156,11 @@ function loadManageEntnahmephaseScenarioList() {
       <div class="profile-item">
         <div class="profile-info">
           <div class="profile-name">${name}</div>
-          <div class="profile-details">Kapital: €${formatGermanNumber(capital, 0)} | Dauer: ${years} Jahre | Rendite: ${ret}%</div>
+          <div class="profile-details">Kapital: ${formatGermanNumber(capital, 0)} € | Dauer: ${years} Jahre | Rendite: ${ret}%</div>
         </div>
         <div class="profile-actions">
-          <button class="profile-action-btn profile-load-btn" onclick="loadEntnahmephaseScenarioFromManager('${name}')">📂 Laden</button>
-          <button class="profile-action-btn profile-delete-btn" onclick="deleteEntnahmephaseScenario('${name}')">🗑️ Löschen</button>
+          <button class="profile-action-btn profile-load-btn" onclick="loadEntnahmephaseScenarioFromManager('${name}')">Laden</button>
+          <button class="profile-action-btn profile-delete-btn" onclick="deleteEntnahmephaseScenario('${name}')">Löschen</button>
         </div>
       </div>
     `;
@@ -183,7 +183,7 @@ function loadEntnahmephaseScenarioFromManager(scenarioName) {
     }
   }
   if (!found) {
-    showNotification('❌ Fehler', 'Szenario konnte nicht geladen werden.', 'error');
+    showNotification('Fehler', 'Szenario konnte nicht geladen werden.', 'error');
     return;
   }
 
@@ -223,11 +223,11 @@ function loadEntnahmephaseScenarioFromManager(scenarioName) {
   if (typeof calculateWithdrawal === 'function') calculateWithdrawal();
 
   closeManageEntnahmephaseScenarioModal();
-  showNotification('✅ Geladen', `Entnahmephase-Szenario "${escapeHtml(scenarioName)}" geladen.`, 'success');
+  showNotification('Geladen', `Entnahmephase-Szenario "${escapeHtml(scenarioName)}" geladen.`, 'success');
 }
 
 function deleteEntnahmephaseScenario(scenarioName) {
-  if (!confirm(`❓ Szenario "${scenarioName}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) return;
+  if (!confirm(`Szenario "${scenarioName}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) return;
 
   const keysToDelete = [];
   for (let i = 0; i < localStorage.length; i++) {
@@ -244,7 +244,7 @@ function deleteEntnahmephaseScenario(scenarioName) {
 
   keysToDelete.forEach(k => localStorage.removeItem(k));
   loadManageEntnahmephaseScenarioList();
-  showNotification('🗑️ Gelöscht', `Szenario "${escapeHtml(scenarioName)}" entfernt.`, 'success');
+  showNotification('Gelöscht', `Szenario "${escapeHtml(scenarioName)}" entfernt.`, 'success');
 }
 
 // =============== Public setup hook ===============

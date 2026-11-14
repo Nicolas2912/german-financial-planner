@@ -44,6 +44,7 @@ import {
 
 import { updateMainChart } from './ui/mainChart.js';
 import { createIntegratedTimeline } from './ui/withdrawalChart.js';
+import { setupPageIntro } from './ui/pageIntro.js';
 
 // Import scenario management functions
 import { addNewScenario, switchToScenario, removeScenario, renameScenario, copyScenario } from './features/scenarioManager.js';
@@ -214,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.scenarioComparison = new ScenarioComparisonManager();
     
     setupPhaseToggle();
+    setupPageIntro();
     setupGermanNumberInputs();
     setupSavingsModeFunctionality();
     setupStickyScenarioCards();

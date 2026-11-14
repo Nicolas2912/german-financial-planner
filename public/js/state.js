@@ -30,7 +30,7 @@ export let scenarios = [
     {
         id: 'A',
         name: 'Szenario A',
-        color: '#3498db',
+        color: '#53623D',
         inputs: {},
         yearlyData: [],
         results: {}
@@ -39,10 +39,10 @@ export let scenarios = [
 
 // Scenario colors
 export const scenarioColors = {
-    'A': '#3498db',
-    'B': '#27ae60', 
-    'C': '#e74c3c',
-    'D': '#f39c12'
+    'A': '#53623D',
+    'B': '#A65A3A', 
+    'C': '#3F6E8C',
+    'D': '#B8862B'
 };
 
 // Chart and UI state

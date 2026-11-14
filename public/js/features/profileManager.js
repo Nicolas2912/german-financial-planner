@@ -49,22 +49,22 @@ function showNotification(title, message, type = 'info') {
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: white;
+                background: #FCFAF5;
                 border-radius: 10px;
                 padding: 20px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.2);
                 z-index: 10000;
                 max-width: 400px;
-                border-left: 5px solid #3498db;
+                border-left: 5px solid #53623D;
                 animation: slideInNotification 0.3s ease-out;
             }
             
             .notification-success {
-                border-left-color: #27ae60;
+                border-left-color: #53623D;
             }
             
             .notification-error {
-                border-left-color: #e74c3c;
+                border-left-color: #A65A3A;
             }
             
             .notification-content {
@@ -73,12 +73,12 @@ function showNotification(title, message, type = 'info') {
             
             .notification-title {
                 font-weight: bold;
-                color: #2c3e50;
+                color: #343A2E;
                 margin-bottom: 5px;
             }
             
             .notification-message {
-                color: #7f8c8d;
+                color: #6F6E62;
                 font-size: 0.9rem;
             }
             
@@ -89,7 +89,7 @@ function showNotification(title, message, type = 'info') {
                 background: none;
                 border: none;
                 font-size: 1.5rem;
-                color: #bdc3c7;
+                color: #CFC7B4;
                 cursor: pointer;
                 width: 30px;
                 height: 30px;
@@ -100,8 +100,8 @@ function showNotification(title, message, type = 'info') {
             }
             
             .notification-close:hover {
-                background: #ecf0f1;
-                color: #7f8c8d;
+                background: #E2DACA;
+                color: #6F6E62;
             }
             
             @keyframes slideInNotification {
@@ -169,28 +169,28 @@ export function updateProfilePreview() {
     
     previewContainer.innerHTML = `
         <div class="preview-item">
-            <span class="preview-label">💰 Gesamteinkommen</span>
-            <span class="preview-value">€${totalIncome.toLocaleString('de-DE')}</span>
+            <span class="preview-label">Gesamteinkommen</span>
+            <span class="preview-value">${totalIncome.toLocaleString('de-DE')} €</span>
         </div>
         <div class="preview-item">
-            <span class="preview-label">💸 Gesamtausgaben</span>
-            <span class="preview-value">€${totalExpenses.toLocaleString('de-DE')}</span>
+            <span class="preview-label">Gesamtausgaben</span>
+            <span class="preview-value">${totalExpenses.toLocaleString('de-DE')} €</span>
         </div>
         <div class="preview-item">
-            <span class="preview-label">💾 Sparrate</span>
-            <span class="preview-value">€${savingsAmount.toLocaleString('de-DE')}</span>
+            <span class="preview-label">Sparrate</span>
+            <span class="preview-value">${savingsAmount.toLocaleString('de-DE')} €</span>
         </div>
         <div class="preview-item">
-            <span class="preview-label">📊 Sparmodus</span>
+            <span class="preview-label">Sparmodus</span>
             <span class="preview-value">${savingsMode === 'fixed' ? 'Fester Betrag' : 'Prozentsatz'}</span>
         </div>
         <div class="preview-item">
-            <span class="preview-label">📅 Erstellt</span>
+            <span class="preview-label">Erstellt</span>
             <span class="preview-value">${new Date().toLocaleDateString('de-DE')}</span>
         </div>
         <div class="preview-item">
-            <span class="preview-label">🎯 Verfügbar</span>
-            <span class="preview-value">€${Math.max(0, totalIncome - totalExpenses).toLocaleString('de-DE')}</span>
+            <span class="preview-label">Verfügbar</span>
+            <span class="preview-value">${Math.max(0, totalIncome - totalExpenses).toLocaleString('de-DE')} €</span>
         </div>
     `;
     
@@ -210,13 +210,13 @@ export function confirmSaveProfile() {
     const profileDescription = document.getElementById('profileDescription').value.trim();
     
     if (!profileName) {
-        alert('❌ Bitte geben Sie einen Profilnamen ein.');
+        alert('Bitte geben Sie einen Profilnamen ein.');
         return;
     }
     
     // Check if profile already exists
     if (localStorage.getItem('budgetProfile_' + profileName)) {
-        if (!confirm(`⚠️ Ein Profil mit dem Namen "${profileName}" existiert bereits. Möchten Sie es überschreiben?`)) {
+        if (!confirm(`Ein Profil mit dem Namen "${profileName}" existiert bereits. Möchten Sie es überschreiben?`)) {
             return;
         }
     }
@@ -255,7 +255,7 @@ export function confirmSaveProfile() {
     closeSaveProfileModal();
     
     // Show success message with nice styling
-    showNotification('✅ Profil erfolgreich gespeichert!', `Das Profil "${profileName}" wurde erfolgreich gespeichert.`, 'success');
+    showNotification('Profil erfolgreich gespeichert!', `Das Profil "${profileName}" wurde erfolgreich gespeichert.`, 'success');
 }
 
 // ==================== Load Profile Modal Functions ====================
@@ -310,7 +310,7 @@ export function loadProfilesForModal() {
     if (profiles.length === 0) {
         profileList.innerHTML = `
             <div class="no-profiles">
-                <div class="no-profiles-icon">📂</div>
+                <div class="no-profiles-icon"></div>
                 <h4>Keine Profile gefunden</h4>
                 <p>Erstellen Sie Ihr erstes Profil mit "Profil speichern".</p>
             </div>
@@ -340,12 +340,12 @@ export function loadProfilesForModal() {
                 <div class="profile-info">
                     <div class="profile-name">${escapeHtml(profile.data.name || profile.name)}</div>
                     <div class="profile-details">
-                        ${profile.data.description ? `<div style="margin-bottom: 5px; color: #34495e;">${escapeHtml(profile.data.description)}</div>` : ''}
+                        ${profile.data.description ? `<div style="margin-bottom: 5px; color: #4A5040;">${escapeHtml(profile.data.description)}</div>` : ''}
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.8rem;">
-                            <span>💰 Einkommen: €${totalIncome.toLocaleString('de-DE')}</span>
-                            <span>💸 Ausgaben: €${totalExpenses.toLocaleString('de-DE')}</span>
-                            <span>💾 Sparrate: €${savingsAmount.toLocaleString('de-DE')}</span>
-                            <span>📅 Erstellt: ${createdDate}</span>
+                            <span>Einkommen: ${totalIncome.toLocaleString('de-DE')} €</span>
+                            <span>Ausgaben: ${totalExpenses.toLocaleString('de-DE')} €</span>
+                            <span>Sparrate: ${savingsAmount.toLocaleString('de-DE')} €</span>
+                            <span>Erstellt: ${createdDate}</span>
                         </div>
                     </div>
                 </div>
@@ -440,7 +440,7 @@ export function selectProfileForLoad(profileName) {
         
     } catch (error) {
         console.error('Error in selectProfileForLoad:', error);
-        showNotification('❌ Fehler beim Laden', 'Es gab einen Fehler beim Auswählen des Profils.', 'error');
+        showNotification('Fehler beim Laden', 'Es gab einen Fehler beim Auswählen des Profils.', 'error');
     }
 }
 
@@ -452,7 +452,7 @@ export function loadSelectedProfile(profileName) {
     const profile = JSON.parse(localStorage.getItem('budgetProfile_' + profileName));
     
     if (!profile) {
-        alert('❌ Profil konnte nicht geladen werden.');
+        alert('Profil konnte nicht geladen werden.');
         return;
     }
     
@@ -524,7 +524,7 @@ export function loadSelectedProfile(profileName) {
     }
     
     closeLoadProfileModal();
-    showNotification('✅ Profil erfolgreich geladen!', `Das Profil "${profile.name || profileName}" wurde erfolgreich geladen.`, 'success');
+    showNotification('Profil erfolgreich geladen!', `Das Profil "${profile.name || profileName}" wurde erfolgreich geladen.`, 'success');
 }
 
 // ==================== Profile Manager Functions ====================
@@ -564,7 +564,7 @@ export function loadProfileList() {
     if (profiles.length === 0) {
         profileList.innerHTML = `
             <div class="no-profiles">
-                <div class="no-profiles-icon">📁</div>
+                <div class="no-profiles-icon"></div>
                 <p>Keine gespeicherten Profile gefunden.</p>
                 <p>Erstellen Sie Ihr erstes Profil mit "Profil speichern".</p>
             </div>
@@ -585,17 +585,17 @@ export function loadProfileList() {
                 <div class="profile-info">
                     <div class="profile-name">${escapeHtml(profile.name)}</div>
                     <div class="profile-details">
-                        Einkommen: €${formatGermanNumber(totalIncome, 0)} | 
-                        Ausgaben: €${formatGermanNumber(totalExpenses, 0)} | 
-                        Sparrate: €${formatGermanNumber(savings, 0)}
+                        Einkommen: ${formatGermanNumber(totalIncome, 0)} € | 
+                        Ausgaben: ${formatGermanNumber(totalExpenses, 0)} € | 
+                        Sparrate: ${formatGermanNumber(savings, 0)} €
                     </div>
                 </div>
                 <div class="profile-actions">
                     <button class="profile-action-btn profile-load-btn" onclick="loadProfileFromManager('${escapeHtml(profile.name)}')">
-                        📂 Laden
+                        Laden
                     </button>
                     <button class="profile-action-btn profile-delete-btn" onclick="deleteProfile('${escapeHtml(profile.name)}')">
-                        🗑️ Löschen
+                        Löschen
                     </button>
                 </div>
             </div>
@@ -683,11 +683,11 @@ export function loadProfileFromManager(profileName) {
     const successMsg = document.createElement('div');
     successMsg.style.cssText = `
         position: fixed; top: 20px; right: 20px; z-index: 1001;
-        background: #27ae60; color: white; padding: 15px 20px;
+        background: #53623D; color: white; padding: 15px 20px;
         border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         font-weight: bold; animation: slideInRight 0.3s ease-out;
     `;
-    successMsg.textContent = `✅ Profil "${profileName}" erfolgreich geladen!`;
+    successMsg.textContent = `Profil "${profileName}" erfolgreich geladen!`;
     document.body.appendChild(successMsg);
     
     setTimeout(() => {
@@ -702,7 +702,7 @@ export function loadProfileFromManager(profileName) {
  * @param {string} profileName - Name of the profile to delete
  */
 export function deleteProfile(profileName) {
-    if (confirm(`❓ Profil "${profileName}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
+    if (confirm(`Profil "${profileName}" wirklich löschen?\n\nDiese Aktion kann nicht rückgängig gemacht werden.`)) {
         localStorage.removeItem('budgetProfile_' + profileName);
         loadProfileList(); // Refresh the list
         
@@ -710,11 +710,11 @@ export function deleteProfile(profileName) {
         const successMsg = document.createElement('div');
         successMsg.style.cssText = `
             position: fixed; top: 20px; right: 20px; z-index: 1001;
-            background: #e74c3c; color: white; padding: 15px 20px;
+            background: #A65A3A; color: white; padding: 15px 20px;
             border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             font-weight: bold; animation: slideInRight 0.3s ease-out;
         `;
-        successMsg.textContent = `🗑️ Profil "${profileName}" gelöscht!`;
+        successMsg.textContent = `Profil "${profileName}" gelöscht!`;
         document.body.appendChild(successMsg);
         
         setTimeout(() => {
@@ -953,20 +953,20 @@ export function showProfileSelectionStatusForScenario(scenarioId, type, message)
     
     switch (type) {
         case 'success':
-            statusIcon.textContent = '✅';
+            statusIcon.textContent = '';
             break;
         case 'warning':
-            statusIcon.textContent = '⚠️';
+            statusIcon.textContent = '';
             break;
         case 'error':
-            statusIcon.textContent = '❌';
+            statusIcon.textContent = '';
             break;
         case 'ready':
-            statusIcon.textContent = '🎯';
+            statusIcon.textContent = '';
             statusElement.classList.add('info');
             break;
         default:
-            statusIcon.textContent = 'ℹ️';
+            statusIcon.textContent = '';
             break;
     }
     

@@ -18,7 +18,7 @@ button, input, select, .toggle, .slider {
     border: none;
     border-radius: 20px;
     background: transparent;
-    color: #ecf0f1;
+    color: #E2DACA;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -50,38 +50,38 @@ button, input, select, .toggle, .slider {
 }
 
 .main-phases .phase-button.active {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #53623D, #6B7A50);
     color: white;
-    box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.4);
     transform: translateY(-1px);
 }
 
 .main-phases .phase-button:hover {
-    background: rgba(39, 174, 96, 0.2);
+    background: rgba(83, 98, 61, 0.2);
 }
 
 .main-phases .phase-button.active:hover {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #53623D, #6B7A50);
 }
 
 .tax-calculator .phase-button {
-    background: rgba(52, 152, 219, 0.2);
-    border: 2px solid #3498db;
-    color: #ecf0f1;
+    background: rgba(83, 98, 61, 0.2);
+    border: 2px solid #53623D;
+    color: #E2DACA;
     font-weight: 500;
     min-width: 280px;
 }
 
 .tax-calculator .phase-button:hover {
-    background: rgba(52, 152, 219, 0.3);
+    background: rgba(83, 98, 61, 0.3);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 .tax-calculator .phase-button.active {
-    background: #3498db;
+    background: #53623D;
     color: white;
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.4);
 }
 
 /* Special Scenario Comparison Button */
@@ -128,10 +128,10 @@ button, input, select, .toggle, .slider {
 /* Profile and Scenario Management Buttons */
 .profile-button, .scenario-button {
     padding: 8px 16px;
-    border: 1px solid #27ae60;
+    border: 1px solid #53623D;
     border-radius: 5px;
-    background: white;
-    color: #27ae60;
+    background: #FCFAF5;
+    color: #53623D;
     cursor: pointer;
     font-size: 0.9rem;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -140,8 +140,8 @@ button, input, select, .toggle, .slider {
 }
 
 .scenario-button {
-    border-color: #3498db;
-    color: #3498db;
+    border-color: #53623D;
+    color: #53623D;
 }
 
 .profile-button::before, .scenario-button::before {
@@ -151,13 +151,13 @@ button, input, select, .toggle, .slider {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: rgba(39, 174, 96, 0.15);
+    background: rgba(83, 98, 61, 0.15);
     transition: left 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     z-index: 0;
 }
 
 .scenario-button::before {
-    background: rgba(52, 152, 219, 0.15);
+    background: rgba(83, 98, 61, 0.15);
 }
 
 .profile-button span, .scenario-button span {
@@ -170,24 +170,24 @@ button, input, select, .toggle, .slider {
 }
 
 .profile-button:hover {
-    color: #1e7e34;
+    color: #434F31;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 .scenario-button:hover {
-    color: #2980b9;
+    color: #434F31;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 /* Chart Toggle Buttons */
 .chart-toggle-btn {
     padding: 12px 24px;
-    border: 2px solid #3498db;
+    border: 2px solid #53623D;
     border-radius: 25px;
-    background: white;
-    color: #3498db;
+    background: #FCFAF5;
+    color: #53623D;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -195,16 +195,16 @@ button, input, select, .toggle, .slider {
 }
 
 .chart-toggle-btn:hover {
-    background: #3498db;
+    background: #53623D;
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 .chart-toggle-btn.active {
-    background: #3498db;
+    background: #53623D;
     color: white;
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 /* Action Buttons */
@@ -220,53 +220,53 @@ button, input, select, .toggle, .slider {
 }
 
 .cancel-btn {
-    background: #95a5a6;
+    background: #8C8A7C;
     color: white;
 }
 
 .cancel-btn:hover {
-    background: #7f8c8d;
+    background: #6F6E62;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(149, 165, 166, 0.3);
 }
 
 .save-btn {
-    background: #27ae60;
+    background: #53623D;
     color: white;
 }
 
 .save-btn:hover {
-    background: #229954;
+    background: #434F31;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 .save-btn:disabled {
-    background: #bdc3c7;
+    background: #CFC7B4;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
 }
 
 .secondary-btn {
-    background-color: #f8f9fa;
+    background-color: #F3EEE3;
     color: #495057;
-    border: 1px solid #dee2e6;
+    border: 1px solid #E2DACA;
     min-width: auto;
 }
 
 .secondary-btn:hover {
-    background-color: #e9ecef;
+    background-color: #E2DACA;
     border-color: #adb5bd;
 }
 
 /* Chart Action Button */
 .chart-action-btn {
     padding: 8px 16px;
-    border: 1px solid #bdc3c7;
+    border: 1px solid #CFC7B4;
     border-radius: 6px;
-    background: white;
-    color: #2c3e50;
+    background: #FCFAF5;
+    color: #343A2E;
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 600;
@@ -274,7 +274,7 @@ button, input, select, .toggle, .slider {
 }
 
 .chart-action-btn:hover {
-    background: #ecf0f1;
+    background: #E2DACA;
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
@@ -292,48 +292,48 @@ button, input, select, .toggle, .slider {
 }
 
 .profile-load-btn {
-    background: #27ae60 !important;
+    background: #53623D !important;
     color: white !important;
 }
 
 .profile-load-btn:hover {
-    background: #229954 !important;
+    background: #434F31 !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 .profile-delete-btn {
-    background: #e74c3c !important;
+    background: #A65A3A !important;
     color: white !important;
 }
 
 .profile-delete-btn:hover {
-    background: #c0392b !important;
+    background: #8C4A2E !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    box-shadow: 0 4px 12px rgba(166, 90, 58, 0.3);
 }
 
 /* Additional Modal Button Specificity */
 .profile-modal .profile-action-btn.profile-load-btn {
-    background: #27ae60 !important;
+    background: #53623D !important;
     color: white !important;
 }
 
 .profile-modal .profile-action-btn.profile-delete-btn {
-    background: #e74c3c !important;
+    background: #A65A3A !important;
     color: white !important;
 }
 
 .profile-modal .profile-action-btn.profile-load-btn:hover {
-    background: #229954 !important;
+    background: #434F31 !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(39, 174, 96, 0.3);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 .profile-modal .profile-action-btn.profile-delete-btn:hover {
-    background: #c0392b !important;
+    background: #8C4A2E !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+    box-shadow: 0 4px 12px rgba(166, 90, 58, 0.3);
 }
 
 /* -------------------------
@@ -376,8 +376,8 @@ button, input, select, .toggle, .slider {
 }
 
 .toggle.active {
-    background: #3498db;
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    background: #53623D;
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.3);
 }
 
 .toggle.disabled {
@@ -402,7 +402,7 @@ button, input, select, .toggle, .slider {
     left: 3px;
     width: 24px;
     height: 24px;
-    background: white;
+    background: #FCFAF5;
     border-radius: 50%;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
@@ -456,7 +456,7 @@ button, input, select, .toggle, .slider {
 /* Period and Allocation Toggles */
 .period-toggle, .allocation-toggle {
     display: flex;
-    background: #ecf0f1;
+    background: #E2DACA;
     border-radius: 15px;
     padding: 2px;
 }
@@ -471,7 +471,7 @@ button, input, select, .toggle, .slider {
     border: none;
     border-radius: 13px;
     background: transparent;
-    color: #7f8c8d;
+    color: #6F6E62;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
@@ -485,7 +485,7 @@ button, input, select, .toggle, .slider {
 }
 
 .period-option.active, .allocation-option.active {
-    background: #27ae60;
+    background: #53623D;
     color: white;
 }
 
@@ -495,22 +495,22 @@ button, input, select, .toggle, .slider {
 .input-field {
     width: 100%;
     padding: 12px;
-    border: 2px solid #ddd;
+    border: 2px solid #E2DACA;
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    background: white;
+    background: #FCFAF5;
 }
 
 .input-field:focus {
     outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    border-color: #53623D;
+    box-shadow: 0 0 0 3px rgba(83, 98, 61, 0.1);
     transform: scale(1.02);
 }
 
 .input-field:hover:not(:focus) {
-    border-color: #bdc3c7;
+    border-color: #CFC7B4;
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
@@ -522,13 +522,13 @@ button, input, select, .toggle, .slider {
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #2c3e50;
+    color: #343A2E;
 }
 
 /* Form Elements in Modals */
 .form-input, .form-textarea {
     padding: 12px 16px;
-    border: 2px solid #e9ecef;
+    border: 2px solid #E2DACA;
     border-radius: 8px;
     font-size: 1rem;
     transition: all 0.3s ease;
@@ -537,8 +537,8 @@ button, input, select, .toggle, .slider {
 
 .form-input:focus, .form-textarea:focus {
     outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    border-color: #53623D;
+    box-shadow: 0 0 0 3px rgba(83, 98, 61, 0.1);
 }
 
 .form-textarea {
@@ -554,13 +554,13 @@ button, input, select, .toggle, .slider {
 
 .form-label {
     font-weight: 600;
-    color: #2c3e50;
+    color: #343A2E;
     font-size: 1rem;
 }
 
 .form-hint {
     font-size: 0.85rem;
-    color: #7f8c8d;
+    color: #6F6E62;
     font-style: italic;
 }
 
@@ -568,7 +568,7 @@ button, input, select, .toggle, .slider {
 .expense-input {
     width: 80px;
     padding: 2px 4px;
-    border: 1px solid #ddd;
+    border: 1px solid #E2DACA;
     border-radius: 4px;
     text-align: right;
     font-size: 0.9rem;
@@ -576,7 +576,7 @@ button, input, select, .toggle, .slider {
 
 .expense-input:focus {
     outline: none;
-    border-color: #27ae60;
+    border-color: #53623D;
 }
 
 /* -------------------------
@@ -592,7 +592,7 @@ button, input, select, .toggle, .slider {
     flex: 1;
     height: 8px;
     border-radius: 5px;
-    background: #ddd;
+    background: #E2DACA;
     outline: none;
     -webkit-appearance: none;
 }
@@ -603,7 +603,7 @@ button, input, select, .toggle, .slider {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #3498db;
+    background: #53623D;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -611,19 +611,19 @@ button, input, select, .toggle, .slider {
 
 .slider::-webkit-slider-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.4);
 }
 
 .slider::-webkit-slider-thumb:active {
     transform: scale(1.3);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.6);
+    box-shadow: 0 6px 20px rgba(83, 98, 61, 0.6);
 }
 
 .slider::-moz-range-thumb {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #3498db;
+    background: #53623D;
     cursor: pointer;
     border: none;
     transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -631,15 +631,15 @@ button, input, select, .toggle, .slider {
 
 .slider::-moz-range-thumb:hover {
     transform: scale(1.2);
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.4);
 }
 
 .slider:hover {
-    background: #bdc3c7;
+    background: #CFC7B4;
 }
 
 .slider-value {
-    background: #3498db;
+    background: #53623D;
     color: white !important;
     padding: 8px 12px;
     border-radius: 8px;
@@ -647,22 +647,22 @@ button, input, select, .toggle, .slider {
     min-width: 70px;
     text-align: center;
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    box-shadow: 0 2px 8px rgba(83, 98, 61, 0.3);
 }
 
 .slider-value:hover {
     transform: scale(1.05);
-    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+    box-shadow: 0 4px 15px rgba(83, 98, 61, 0.4);
 }
 
 /* -------------------------
    Cards
    ------------------------- */
 .result-card {
-    background: white;
+    background: #FCFAF5;
     padding: 20px;
     border-radius: 12px;
-    border-left: 5px solid #3498db;
+    border-left: 5px solid #53623D;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     cursor: pointer;
@@ -677,15 +677,15 @@ button, input, select, .toggle, .slider {
 }
 
 .result-card:nth-child(odd):hover {
-    border-left-color: #27ae60;
+    border-left-color: #53623D;
 }
 
 .result-card:nth-child(even):hover {
-    border-left-color: #e74c3c;
+    border-left-color: #A65A3A;
 }
 
 .result-card h3 {
-    color: #2c3e50;
+    color: #343A2E;
     font-size: 1rem;
     margin-bottom: 10px;
 }
@@ -693,7 +693,7 @@ button, input, select, .toggle, .slider {
 .result-value {
     font-size: 1.6rem;
     font-weight: bold;
-    color: #27ae60;
+    color: #53623D;
     word-break: break-word;
     hyphens: auto;
     line-height: 1.2;
@@ -707,7 +707,7 @@ button, input, select, .toggle, .slider {
 
 /* Expense Categories */
 .expense-category {
-    background: white;
+    background: #FCFAF5;
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -722,10 +722,10 @@ button, input, select, .toggle, .slider {
 }
 
 .expense-category h4 {
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 15px;
     font-size: 1.1rem;
-    border-bottom: 2px solid #27ae60;
+    border-bottom: 2px solid #53623D;
     padding-bottom: 8px;
 }
 
@@ -752,10 +752,10 @@ button, input, select, .toggle, .slider {
     align-items: center;
     gap: 8px;
     padding: 12px 20px;
-    border: 2px solid #e3f2fd;
+    border: 2px solid #EDEEE2;
     border-radius: 8px;
-    background: #ffffff;
-    color: #34495e;
+    background: #FCFAF5;
+    color: #4A5040;
     cursor: pointer;
     font-weight: 600;
     font-size: 0.9rem;
@@ -783,15 +783,15 @@ button, input, select, .toggle, .slider {
 }
 
 .savings-mode-btn:hover {
-    background: #ffffff;
-    border-color: #3498db;
+    background: #FCFAF5;
+    border-color: #53623D;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
 .savings-mode-btn.active {
     background: #e7f3fe;
-    border-color: #3498db;
+    border-color: #53623D;
     color: #1f2d3a;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     transform: translateY(-1px);
@@ -815,12 +815,12 @@ button, input, select, .toggle, .slider {
 }
 
 .multi-phase-header h4 {
-    color: #2c3e50;
+    color: #343A2E;
     margin-bottom: 15px;
 }
 
 .multi-phase-header p {
-    color: #7f8c8d;
+    color: #6F6E62;
     font-size: 0.9rem;
     margin-bottom: 20px;
     line-height: 1.4;
@@ -833,8 +833,8 @@ button, input, select, .toggle, .slider {
 }
 
 .savings-phase {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
+    background: #F3EEE3;
+    border: 2px solid #E2DACA;
     border-radius: 8px;
     padding: 16px;
     transition: all 0.3s ease;
@@ -842,9 +842,9 @@ button, input, select, .toggle, .slider {
 }
 
 .savings-phase.active {
-    border-color: #3498db;
-    background: #ffffff;
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
+    border-color: #53623D;
+    background: #FCFAF5;
+    box-shadow: 0 4px 12px rgba(83, 98, 61, 0.1);
 }
 
 .phase-header {
@@ -864,11 +864,11 @@ button, input, select, .toggle, .slider {
     margin: 0;
     font-size: 1.1rem;
     font-weight: 600;
-    color: #2c3e50;
+    color: #343A2E;
 }
 
 .phase-number {
-    background: #3498db;
+    background: #53623D;
     color: white;
     width: 32px;
     height: 32px;
@@ -885,7 +885,7 @@ button, input, select, .toggle, .slider {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: #e9ecef;
+    background: #E2DACA;
     border: 2px solid #adb5bd;
 }
 
@@ -933,25 +933,25 @@ button, input, select, .toggle, .slider {
 .rendite-input input {
     width: 100%;
     padding: 8px 10px;
-    border: 2px solid #e3f2fd;
+    border: 2px solid #EDEEE2;
     border-radius: 6px;
     font-size: 0.95rem;
     transition: all 0.3s ease;
-    background: #ffffff;
+    background: #FCFAF5;
 }
 
 .time-input input:focus,
 .savings-input input:focus,
 .rendite-input input:focus {
     outline: none;
-    border-color: #3498db;
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+    border-color: #53623D;
+    box-shadow: 0 0 0 3px rgba(83, 98, 61, 0.1);
     transform: scale(1.02);
 }
 
 .phase-summary {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: #F3EEE3;
+    border: 1px solid #E2DACA;
     border-radius: 6px;
     padding: 12px;
     margin-top: 15px;
@@ -961,8 +961,8 @@ button, input, select, .toggle, .slider {
 
 /* Multi-Phase Summary Styling */
 .multi-phase-summary {
-    background: #ffffff;
-    border: 2px solid #e3f2fd;
+    background: #FCFAF5;
+    border: 2px solid #EDEEE2;
     border-radius: 12px;
     padding: 0;
     margin-top: 20px;
@@ -971,9 +971,9 @@ button, input, select, .toggle, .slider {
 }
 
 .multi-phase-summary .summary-header {
-    background: linear-gradient(135deg, #e3f2fd 0%, #f8faff 100%);
+    background: linear-gradient(135deg, #EDEEE2 0%, #f8faff 100%);
     padding: 16px 20px;
-    border-bottom: 1px solid #e3f2fd;
+    border-bottom: 1px solid #EDEEE2;
 }
 
 .multi-phase-summary .summary-header h4 {
@@ -995,7 +995,7 @@ button, input, select, .toggle, .slider {
     justify-content: space-between;
     align-items: center;
     padding: 8px 0;
-    border-bottom: 1px dashed #e9ecef;
+    border-bottom: 1px dashed #E2DACA;
     font-size: 0.95rem;
 }
 
@@ -1004,24 +1004,24 @@ button, input, select, .toggle, .slider {
 }
 
 .summary-label {
-    color: #6c757d;
+    color: #6F6E62;
     font-weight: 500;
     flex: 1;
 }
 
 .summary-value {
     font-weight: 700;
-    color: #2c3e50;
+    color: #343A2E;
     text-align: right;
     font-variant-numeric: tabular-nums;
 }
 
 .phase-timeline {
-    background: #f8f9fa;
-    border-top: 1px solid #e9ecef;
+    background: #F3EEE3;
+    border-top: 1px solid #E2DACA;
     padding: 12px 20px;
     font-size: 0.85rem;
-    color: #6c757d;
+    color: #6F6E62;
 }
 
 .phase-toggle-btn {

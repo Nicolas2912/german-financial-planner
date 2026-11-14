@@ -8,6 +8,10 @@ import { formatCurrency, parseGermanNumber } from '../utils.js';
 import * as state from '../state.js';
 import { updateMainChart } from './mainChart.js';
 
+function escapeHtml(text) {
+    return String(text ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+}
+
 // ==================== Scenario Results Display ====================
 
 /**
@@ -27,7 +31,7 @@ export function updateScenarioResults() {
         
         // Helper function to determine data-length attribute based on text length
         const getDataLength = (value) => {
-            const formattedText = formatCurrency(value);
+            const formattedText = `${Math.round(Number(value) || 0).toLocaleString('de-DE')} €`;
             const length = formattedText.length;
             if (length > 18) return 'very-long';
             if (length > 13) return 'long';
@@ -43,40 +47,49 @@ export function updateScenarioResults() {
             return `${percentFormatter.format(percentage)} %`;
         };
 
+        const formatEuro = (value) => `${Math.round(Number(value) || 0).toLocaleString('de-DE')} €`;
+        const results = scenario.results;
+        const years = results.durationYears || scenario.duration || 0;
+        const grossReturn = (results.totalReturn || 0) + (results.totalTaxesPaid || 0);
+        const includeTax = scenario.inputs ? scenario.inputs.includeTax : true;
+
         resultCard.innerHTML = `
             <div class="scenario-result-header">
-                <h3 class="scenario-result-title">📊 ${scenario.name}</h3>
+                <h3 class="scenario-result-title"><span class="scenario-dot"></span><span class="scenario-name">${escapeHtml(scenario.name)}</span></h3>
+                <span class="result-live">Live</span>
+            </div>
+            <div class="result-hero">
+                <div class="result-hero-main">
+                    <div class="result-hero-label">Dein Vermögen nach ${years} Jahren</div>
+                    <div class="result-hero-value">${formatEuro(results.finalNominal)}</div>
+                    <div class="result-hero-note">Endbetrag nominal${includeTax ? ' · nach Steuern' : ''}</div>
+                </div>
+                <div class="result-hero-side">
+                    <div class="scenario-result-item">
+                        <div class="scenario-result-label">Kaufkraft in heutigen Euro</div>
+                        <div class="scenario-result-value" data-length="${getDataLength(results.finalReal)}">${formatEuro(results.finalReal)}</div>
+                    </div>
+                    <div class="scenario-result-item">
+                        <div class="scenario-result-label">Ø Jahresrendite</div>
+                        <div class="scenario-result-value">${formatPercent(results.annualizedReturn)}</div>
+                    </div>
+                </div>
             </div>
             <div class="scenario-result-grid">
                 <div class="scenario-result-item">
-                    <div class="scenario-result-label">Endbetrag (Nominal)</div>
-                    <div class="scenario-result-value" data-length="${getDataLength(scenario.results.finalNominal)}">${formatCurrency(scenario.results.finalNominal)}</div>
-                </div>
-                <div class="scenario-result-item">
-                    <div class="scenario-result-label">Endbetrag (Real)</div>
-                    <div class="scenario-result-value" data-length="${getDataLength(scenario.results.finalReal)}">${formatCurrency(scenario.results.finalReal)}</div>
-                </div>
-                <div class="scenario-result-item">
-                    <div class="scenario-result-label">Gesamt Eingezahlt</div>
-                    <div class="scenario-result-value" data-length="${getDataLength(scenario.results.totalInvested)}">${formatCurrency(scenario.results.totalInvested)}</div>
-                </div>
-                <div class="scenario-result-item">
-                    <div class="scenario-result-label">Gesamtrendite (brutto)</div>
-                    <div class="scenario-result-value" data-length="${getDataLength((scenario.results.totalReturn || 0) + (scenario.results.totalTaxesPaid || 0))}">${formatCurrency((scenario.results.totalReturn || 0) + (scenario.results.totalTaxesPaid || 0))}</div>
-                </div>
-                <div class="scenario-result-item">
-                    <div class="scenario-result-label">Gezahlte Steuern</div>
-                    <div class="scenario-result-value" style="color: #e74c3c;" data-length="${getDataLength(scenario.results.totalTaxesPaid || 0)}">${formatCurrency(scenario.results.totalTaxesPaid || 0)}</div>
+                    <div class="scenario-result-label">Eingezahlt</div>
+                    <div class="scenario-result-value" data-length="${getDataLength(results.totalInvested)}">${formatEuro(results.totalInvested)}</div>
                 </div>
                 <div class="scenario-result-item">
                     <div class="scenario-result-label">Netto-Rendite</div>
-                    <div class="scenario-result-value" style="color: #27ae60;" data-length="${getDataLength(scenario.results.totalReturn || 0)}">${formatCurrency(scenario.results.totalReturn || 0)}</div>
+                    <div class="scenario-result-value is-positive" data-length="${getDataLength(results.totalReturn || 0)}">${formatEuro(results.totalReturn || 0)}</div>
                 </div>
                 <div class="scenario-result-item">
-                    <div class="scenario-result-label">Ø Jahresrendite</div>
-                    <div class="scenario-result-value" data-length="">${formatPercent(scenario.results.annualizedReturn)}</div>
+                    <div class="scenario-result-label">Gezahlte Steuern</div>
+                    <div class="scenario-result-value is-tax" data-length="${getDataLength(results.totalTaxesPaid || 0)}">${formatEuro(results.totalTaxesPaid || 0)}</div>
                 </div>
             </div>
+            <p class="result-footnote">Gesamtrendite vor Steuern: ${formatEuro(grossReturn)}</p>
         `;
         
         resultsContainer.appendChild(resultCard);
@@ -96,7 +109,8 @@ export function refreshScenarioResultNames() {
     const titleEl = card.querySelector('.scenario-result-title');
     const name = map.get(sid);
     if (sid && titleEl && name) {
-      titleEl.textContent = `📊 ${name}`;
+const nameEl = titleEl.querySelector('.scenario-name');
+      if (nameEl) nameEl.textContent = name; else titleEl.textContent = name;
     }
   });
 }
@@ -184,8 +198,8 @@ export function updateTeilfreistellungToggleState(scenarioId) {
             
             if (teilfreistellungHelp) {
                 teilfreistellungHelp.innerHTML = `
-                    <small style="color: #7f8c8d; font-size: 0.85rem; display: block; line-height: 1.4;">
-                        💡 Bei Aktien-ETFs sind 30% der Erträge steuerfrei. Bei Renten-ETFs oder Mischfonds gelten andere Sätze.
+                    <small style="color: #6F6E62; font-size: 0.85rem; display: block; line-height: 1.4;">
+                        Bei Aktien-ETFs sind 30% der Erträge steuerfrei. Bei Renten-ETFs oder Mischfonds gelten andere Sätze.
                     </small>
                 `;
             }
@@ -200,7 +214,7 @@ export function updateTeilfreistellungToggleState(scenarioId) {
             if (teilfreistellungHelp) {
                 teilfreistellungHelp.innerHTML = `
                     <small style="color: #999; font-size: 0.85rem; display: block; line-height: 1.4;">
-                        ⚠️ Teilfreistellung ist nur verfügbar, wenn die Abgeltungssteuer aktiviert ist.
+                        Teilfreistellung ist nur verfügbar, wenn die Abgeltungssteuer aktiviert ist.
                     </small>
                 `;
             }
@@ -430,36 +444,36 @@ export function showNotification(title, message, type = 'info') {
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: white;
+                background: #FCFAF5;
                 border-radius: 10px;
                 padding: 20px;
                 box-shadow: 0 10px 30px rgba(0,0,0,0.2);
                 z-index: 10000;
                 max-width: 400px;
-                border-left: 5px solid #3498db;
+                border-left: 5px solid #53623D;
                 animation: slideIn 0.3s ease-out;
             }
             
             .notification-success {
-                border-left-color: #27ae60;
+                border-left-color: #53623D;
             }
             
             .notification-error {
-                border-left-color: #e74c3c;
+                border-left-color: #A65A3A;
             }
             
             .notification-warning {
-                border-left-color: #f39c12;
+                border-left-color: #B8862B;
             }
             
             .notification-title {
                 font-weight: bold;
                 margin-bottom: 8px;
-                color: #2c3e50;
+                color: #343A2E;
             }
             
             .notification-message {
-                color: #7f8c8d;
+                color: #6F6E62;
                 line-height: 1.4;
             }
             
@@ -471,7 +485,7 @@ export function showNotification(title, message, type = 'info') {
                 border: none;
                 font-size: 20px;
                 cursor: pointer;
-                color: #7f8c8d;
+                color: #6F6E62;
             }
             
             @keyframes slideIn {
@@ -534,25 +548,25 @@ export function displayChartErrorMessage(canvas, ctx, errorType = 'no-scenarios'
     // Define simple error messages
     const errorMessages = {
         'no-scenarios': {
-            icon: '📊',
+            icon: '',
             title: 'Keine Szenarien ausgewählt',
             subtitle: 'Für die Übersicht muss mindestens ein Szenario ausgewählt werden',
             action: 'Wählen Sie ein oder mehrere Szenarien aus'
         },
         'no-data': {
-            icon: '💰',
+            icon: '',
             title: 'Keine Daten verfügbar',
             subtitle: 'Es sind noch keine Berechnungen vorhanden.',
             action: 'Bitte Parameter eingeben und berechnen'
         },
         'no-scenario-data': {
-            icon: '⚠️',
+            icon: '',
             title: 'Szenario nicht berechnet',
             subtitle: 'Die Berechnung für dieses Szenario ist fehlgeschlagen.',
             action: 'Parameter überprüfen und erneut berechnen'
         },
         'calculation-error': {
-            icon: '❌',
+            icon: '',
             title: 'Berechnungsfehler',
             subtitle: 'Bei der Berechnung ist ein Fehler aufgetreten.',
             action: 'Eingaben überprüfen und erneut versuchen'
@@ -567,7 +581,7 @@ export function displayChartErrorMessage(canvas, ctx, errorType = 'no-scenarios'
         ctx.font = `${iconSize}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = '#bdc3c7';
+        ctx.fillStyle = '#CFC7B4';
         ctx.fillText(message.icon, centerX, centerY - 60);
     }
     
@@ -576,14 +590,14 @@ export function displayChartErrorMessage(canvas, ctx, errorType = 'no-scenarios'
     ctx.font = `bold ${titleSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#e74c3c';
+    ctx.fillStyle = '#A65A3A';
     ctx.fillText(message.title || 'Fehler', centerX, centerY - 10);
     
     // Draw subtitle
     if (message.subtitle) {
         const subtitleSize = Math.max(12, Math.min(16, canvas.width * 0.025));
         ctx.font = `${subtitleSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
-        ctx.fillStyle = '#7f8c8d';
+        ctx.fillStyle = '#6F6E62';
         ctx.fillText(message.subtitle, centerX, centerY + 20);
     }
     
@@ -591,7 +605,7 @@ export function displayChartErrorMessage(canvas, ctx, errorType = 'no-scenarios'
     if (message.action) {
         const actionSize = Math.max(11, Math.min(14, canvas.width * 0.022));
         ctx.font = `${actionSize}px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif`;
-        ctx.fillStyle = '#95a5a6';
+        ctx.fillStyle = '#8C8A7C';
         ctx.fillText(message.action, centerX, centerY + 50);
     }
     

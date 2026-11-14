@@ -125,8 +125,8 @@ export function setupWithdrawalListeners() {
         const totalContributions = (selectedScenario.monthlyContribution || 0) * 12 * (selectedScenario.duration || 0);
         const unrealizedGains = finalValue - totalContributions;
         showNotification(
-          '📊 Szenario übernommen',
-          `Endkapital: €${Math.round(finalValue).toLocaleString('de-DE')} | Einzahlungen: €${Math.round(totalContributions).toLocaleString('de-DE')} | Kursgewinne: €${Math.round(unrealizedGains).toLocaleString('de-DE')}`,
+          'Szenario übernommen',
+          `Endkapital: ${Math.round(finalValue).toLocaleString('de-DE')} € | Einzahlungen: ${Math.round(totalContributions).toLocaleString('de-DE')} € | Kursgewinne: ${Math.round(unrealizedGains).toLocaleString('de-DE')} €`,
           'success'
         );
       } else {

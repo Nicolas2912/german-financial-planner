@@ -46,3 +46,9 @@
    Animations, modals, tables, and helper classes
    ================================================================= */
 @import url('modules/utilities.css');
+
+/* =================================================================
+   EDITORIAL THEME
+   Warm paper design layer, loaded last
+   ================================================================= */
+@import url('modules/editorial.css');

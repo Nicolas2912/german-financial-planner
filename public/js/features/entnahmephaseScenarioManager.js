@@ -10,6 +10,7 @@ import { formatGermanNumber, parseGermanNumber } from '../utils.js';
 import { showNotification } from '../ui/dom.js';
 import { updateWithdrawalSliderValue } from '../ui/dom.js';
 import { calculateWithdrawal } from '../ui/setup/index.js';
+import * as state from '../state.js';
 
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -191,6 +192,7 @@ function loadEntnahmephaseScenarioFromManager(scenarioName) {
   // Set inputs
   const capitalEl = document.getElementById('retirementCapital');
   if (capitalEl) capitalEl.value = formatGermanNumber(p.retirementCapital || 0, 0);
+  state.setWithdrawalSourceScenarioId(null);
 
   const wdDur = document.getElementById('withdrawalDuration');
   if (wdDur) wdDur.value = String(p.withdrawalDuration || 0);

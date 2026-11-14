@@ -6,9 +6,10 @@ import { calculateWithdrawalPlan as calculateWithdrawalCore } from '../../core/w
 import { updateWithdrawalResults, updateWithdrawalTable, showNotification } from '../dom.js';
 import { updateWithdrawalChart, createIntegratedTimeline } from '../withdrawalChart.js';
 
-// Cost basis of the withdrawal capital, taken from the scenario the capital came from
+// Cost basis of the withdrawal capital, taken from the scenario the capital came from.
+// Capital entered by hand has no source, so the core falls back to its estimate.
 function getWithdrawalCostBasis(retirementCapital) {
-  const source = state.findScenario(state.withdrawalSourceScenarioId) || state.getActiveScenario();
+  const source = state.findScenario(state.withdrawalSourceScenarioId);
   const costBasis = Number(source?.results?.costBasis);
   if (!Number.isFinite(costBasis) || costBasis < 0) return undefined;
   return Math.min(costBasis, retirementCapital);
@@ -91,7 +92,10 @@ export function setupWithdrawalListeners() {
   });
 
   const capitalInput = document.getElementById('retirementCapital');
-  if (capitalInput) capitalInput.addEventListener('input', debouncedCalculateWithdrawal);
+  if (capitalInput) {
+    capitalInput.addEventListener('input', () => state.setWithdrawalSourceScenarioId(null));
+    capitalInput.addEventListener('input', debouncedCalculateWithdrawal);
+  }
 
   const taxToggle = document.getElementById('withdrawalTaxToggle');
   if (taxToggle) {

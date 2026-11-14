@@ -380,10 +380,12 @@ export function setupGermanNumberInputs() {
       const cursorPos = this.selectionStart;
       if (this.closest('.budget-section')) {
         calculateBudget();
+      } else if (this.closest('.withdrawal-section')) {
+        // Checked before .controls-section, which the withdrawal inputs also sit in;
+        // a full recalculation would auto-sync over the capital being typed
+        calculateWithdrawal();
       } else if (this.closest('.controls-section')) {
         if (window.recalculateAll) window.recalculateAll();
-      } else if (this.closest('.withdrawal-section')) {
-        calculateWithdrawal();
       }
       this.setSelectionRange(cursorPos, cursorPos);
     });

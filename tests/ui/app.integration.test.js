@@ -211,4 +211,21 @@ describe('ETF savings page (jsdom)', () => {
     });
     expect(series.finalNominal).toBeCloseTo(120_000, 0);
   });
+
+  test('capital typed by hand does not inherit a scenario cost basis', async () => {
+    document.getElementById('withdrawalTaxToggle').classList.add('active');
+    const input = document.getElementById('retirementCapital');
+    input.value = '100.000';
+    input.dispatchEvent(new Event('input'));
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Unknown basis: the core assumes 60% of the capital was paid in
+    const firstYear = state.withdrawalData.yearlyData[0];
+    const saleRatio = firstYear.grossWithdrawal / firstYear.capitalAfterReturns;
+    expect(firstYear.remainingCostBasis / (1 - saleRatio)).toBeCloseTo(60_000, 0);
+
+    document.getElementById('withdrawalTaxToggle').classList.remove('active');
+    window.recalculateAll();
+    expect(parseGermanNumber(input.value)).toBeCloseTo(state.findScenario('A').results.endCapital, -1);
+  });
 });

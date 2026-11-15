@@ -6,10 +6,12 @@ import { calculateWithdrawalPlan as calculateWithdrawalCore } from '../../core/w
 import { updateWithdrawalResults, updateWithdrawalTable, showNotification } from '../dom.js';
 import { updateWithdrawalChart, createIntegratedTimeline } from '../withdrawalChart.js';
 
-// Cost basis of the withdrawal capital, taken from the scenario the capital came from.
-// Capital entered by hand has no source, so the core falls back to its estimate.
+// Purchase lots (or the cost basis) of the withdrawal capital, taken from the scenario the
+// capital came from. Capital entered by hand has no source, so the core falls back to its estimate.
 function getWithdrawalCostBasis(retirementCapital) {
   const source = state.findScenario(state.withdrawalSourceScenarioId);
+  const lots = source?.results?.lots;
+  if (Array.isArray(lots) && lots.length > 0) return lots;
   const costBasis = Number(source?.results?.costBasis);
   if (!Number.isFinite(costBasis) || costBasis < 0) return undefined;
   return Math.min(costBasis, retirementCapital);

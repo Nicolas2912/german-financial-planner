@@ -203,7 +203,8 @@ export function createScenarioPanel(scenario) {
         salaryGrowth: getScenarioValue('salaryGrowth', 'A') || '3',
         duration: getScenarioValue('duration', 'A') || '25',
         baseSalary: getScenarioValue('baseSalary', 'A') || '60.000',
-        salaryToSavings: getScenarioValue('salaryToSavings', 'A') || '50'
+        salaryToSavings: getScenarioValue('salaryToSavings', 'A') || '50',
+        basiszins: document.getElementById('basiszins_A')?.value || '3.2'
     };
     
     panel.innerHTML = `
@@ -447,6 +448,18 @@ export function createScenarioPanel(scenario) {
             </small>
         </div>
 
+        <!-- Basiszins assumption for the Vorabpauschale -->
+        <div class="input-group">
+            <label>Basiszins für künftige Jahre (Annahme)</label>
+            <div class="slider-container">
+                <input type="range" id="basiszins_${scenario.id}" class="slider scenario-slider" min="0" max="6" value="${defaultValues.basiszins}" step="0.05" data-scenario="${scenario.id}">
+                <span class="slider-value" id="basiszinsValue_${scenario.id}">${parseFloat(defaultValues.basiszins).toFixed(2)}%</span>
+            </div>
+            <small class="hint">
+                Bestimmt die Vorabpauschale. Für 2024 bis 2026 gelten die veröffentlichten Werte (2,29 %, 2,53 %, 3,20 %), danach diese Annahme.
+            </small>
+        </div>
+
         <!-- Teilfreistellung Toggle -->
         <div class="toggle-container">
             <label>Teilfreistellung bei Aktienfonds anwenden (30% steuerfrei)</label>
@@ -547,7 +560,7 @@ export function createScenarioPanel(scenario) {
         setupScenarioInputListeners(scenario.id);
         
         // Also initialize the slider display values
-        const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings'];
+        const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings', 'basiszins'];
         sliders.forEach(sliderId => {
             if (window.updateScenarioSliderValue) {
                 window.updateScenarioSliderValue(sliderId, scenario.id);
@@ -579,7 +592,7 @@ export function copyScenario(scenarioId) {
     const newScenarioId = newScenario.id;
     
     // Copy all values from source scenario
-    const inputIds = ['monthlySavings', 'initialCapital', 'annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'baseSalary', 'salaryToSavings'];
+    const inputIds = ['monthlySavings', 'initialCapital', 'annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'baseSalary', 'salaryToSavings', 'basiszins'];
     
     inputIds.forEach(inputId => {
         const sourceElement = document.getElementById(`${inputId}_${scenarioId}`);
@@ -853,6 +866,9 @@ export function updateScenarioSliderValue(sliderId, scenarioId) {
             break;
         case 'duration':
             formattedValue = Math.round(value) + ' Jahre';
+            break;
+        case 'basiszins':
+            formattedValue = value.toFixed(2) + '%';
             break;
         default:
             formattedValue = value.toString();

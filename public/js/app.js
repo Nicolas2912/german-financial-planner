@@ -234,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize slider values for existing scenarios
     setTimeout(() => {
         state.scenarios.forEach(scenario => {
-            const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings'];
+            const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings', 'basiszins'];
             sliders.forEach(sliderId => {
                 updateScenarioSliderValue(sliderId, scenario.id);
             });

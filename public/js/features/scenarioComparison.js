@@ -170,6 +170,7 @@ class ScenarioComparisonManager {
             baseSalary: num(accP.baseSalary, 60000),
             teilfreistellung: !!accP.teilfreistellung,
             etfType: accP.etfType || 'thesaurierend',
+            basiszins: Number.isFinite(accP.basiszins) ? accP.basiszins : null,
             savingsMode: accP.savingsMode || 'simple',
             phases: Array.isArray(accP.multiPhaseData) ? accP.multiPhaseData : []
         };
@@ -1445,6 +1446,8 @@ class ScenarioComparisonManager {
         const baseSalary = Number(accumulation.baseSalary || 60000);
         const teilfreistellung = !!accumulation.teilfreistellung;
         const etfType = accumulation.etfType || 'thesaurierend';
+        // Saved plans without a Basiszins assumption use the default
+        const options = Number.isFinite(accumulation.basiszins) ? { basiszinsAssumption: accumulation.basiszins / 100 } : {};
 
         const phases = Array.isArray(accumulation.phases) ? accumulation.phases : [];
         const useMultiPhase = accumulation.savingsMode === 'multi-phase' && phases.length > 0;
@@ -1460,7 +1463,8 @@ class ScenarioComparisonManager {
                 includeTax,
                 baseSalary,
                 teilfreistellung,
-                etfType
+                etfType,
+                options
             ) : calculateWealthDevelopment(
                 monthlySavings,
                 initialCapital,
@@ -1472,7 +1476,8 @@ class ScenarioComparisonManager {
                 includeTax,
                 baseSalary,
                 teilfreistellung,
-                etfType
+                etfType,
+                options
             );
             const labels = result.yearlyData.map((_, index) => index === 0 ? 'Start' : `Jahr ${index}`);
             const values = result.yearlyData.map((entry) => entry.capital);

@@ -44,7 +44,8 @@ export function updateWithdrawalChart(yearlyData) {
 
     const years = yearlyData.map(d => d.year);
     const capitalValues = yearlyData.map(d => d.endCapital);
-    const realCapitalValues = yearlyData.map(d => d.endCapital / Math.pow(1 + inflationRate, d.year - 1)); // Real portfolio value
+    // Real portfolio value: the end capital sits at the end of the year, after `year` years of inflation
+    const realCapitalValues = yearlyData.map(d => d.endCapital / Math.pow(1 + inflationRate, d.year));
     const netWithdrawals = yearlyData.map(d => d.netWithdrawal);
     const taxes = yearlyData.map(d => d.taxesPaid);
 
@@ -258,13 +259,17 @@ export function createIntegratedTimeline() {
     let withdrawalData = [];
     try {
         // Calculate total contributions / cost basis for the withdrawal calculation
+        const scenarioLots = currentActiveScenario?.results?.lots;
         const scenarioCostBasis = Number(currentActiveScenario?.results?.costBasis);
         const calculatedTotalContributions = Number.isFinite(scenarioCostBasis) && scenarioCostBasis > 0
             ? scenarioCostBasis
             : calculateTotalContributionsFromAccumulation();
-        const validatedContributions = calculatedTotalContributions > 0 ? 
-            Math.min(calculatedTotalContributions, retirementCapital) : 
-            retirementCapital * 0.6; // fallback estimate
+        // Purchase lots let the withdrawal sell first-in-first-out; older results only have a total
+        const validatedContributions = Array.isArray(scenarioLots) && scenarioLots.length > 0
+            ? scenarioLots
+            : calculatedTotalContributions > 0
+                ? Math.min(calculatedTotalContributions, retirementCapital)
+                : retirementCapital * 0.6; // fallback estimate
         
         console.log(`💰 Calculating optimal withdrawal that depletes portfolio to €0 in ${withdrawalDuration} years`);
         console.log(`Starting capital: ${retirementCapital.toLocaleString()} €`);
@@ -372,7 +377,8 @@ export function createIntegratedTimeline() {
     // For real values, use endCapital to match the nominal values and show decline to €0
     const withdrawalRealFromEnd = withdrawalData.map(d => {
         // Calculate real value using total years from start of accumulation
-        const totalYears = maxAccumulationYear + d.year - 1;
+        // End of withdrawal year d.year, counted from the start of the accumulation phase
+        const totalYears = maxAccumulationYear + d.year;
         return d.endCapital / Math.pow(1 + accumulationInflationRate, totalYears);
     });
     const withdrawalRealWithTransition = [retirementCapital / Math.pow(1 + accumulationInflationRate, maxAccumulationYear), ...withdrawalRealFromEnd];

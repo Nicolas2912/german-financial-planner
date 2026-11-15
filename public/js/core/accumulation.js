@@ -9,7 +9,7 @@
 import { parseGermanNumber, formatGermanNumber, formatCurrency } from '../utils.js';
 
 // Import tax calculation functions
-import { applyCapitalGainsTax, calculateGermanNetSalary, normalizeEtfType, resetETFTaxAllowance, TAX_CONSTANTS } from './tax.js';
+import { applyCapitalGainsTax, calculateGermanNetSalary, BASISZINS_DEFAULT_ASSUMPTION, getBasiszins, normalizeEtfType, resetETFTaxAllowance, TAX_CONSTANTS } from './tax.js';
 
 const MONTHS_PER_YEAR = 12;
 const DISTRIBUTION_YIELD_ANNUAL = 0.02;
@@ -114,6 +114,40 @@ function normalizePhases(phases = []) {
         });
 }
 
+// Share of the Basiszins that counts as Basisertrag (§18 Abs. 1 InvStG)
+const BASISERTRAG_FACTOR = 0.7;
+
+/**
+ * Vorabpauschale per fund unit for one calendar year (§18 InvStG).
+ * The Basisertrag is capped at the year's price gain plus distributions,
+ * and distributions paid during the year are deducted from it.
+ *
+ * @param {number} startPrice - Unit price at the start of the year
+ * @param {number} endPrice - Unit price at the end of the year
+ * @param {number} distributionsPerUnit - Distributions paid per unit during the year
+ * @param {number} basiszins - Basiszins of the year (decimal)
+ * @returns {number} Vorabpauschale per unit held for the full year
+ */
+export function calculateVorabpauschalePerUnit(startPrice, endPrice, distributionsPerUnit, basiszins) {
+    const basisertrag = Math.max(0, startPrice * basiszins * BASISERTRAG_FACTOR);
+    const priceGain = Math.max(0, endPrice - startPrice + distributionsPerUnit);
+    return Math.max(0, Math.min(basisertrag, priceGain) - distributionsPerUnit);
+}
+
+/**
+ * Share of a year's Vorabpauschale that applies to units bought in that year:
+ * it is reduced by one twelfth for every full month before the purchase month
+ * (§18 Abs. 2 InvStG). Units held since before the year get the full amount.
+ *
+ * @param {Object} lot - Purchase lot with year and month (1-12) of purchase
+ * @param {number} yearNumber - Plan year being taxed
+ * @returns {number} Factor between 0 and 1
+ */
+function vorabpauschaleShare(lot, yearNumber) {
+    if (lot.year < yearNumber) return 1;
+    return (MONTHS_PER_YEAR - lot.month + 1) / MONTHS_PER_YEAR;
+}
+
 function simulateAccumulationPhase({
     initialCapital,
     durationYears,
@@ -126,7 +160,9 @@ function simulateAccumulationPhase({
     baseSalary,
     teilfreistellung,
     etfType,
-    phases
+    phases,
+    startYear,
+    basiszinsAssumption
 }) {
     const normalizedPhases = normalizePhases(phases);
     const effectiveEtfType = normalizeEtfType(etfType);
@@ -136,14 +172,43 @@ function simulateAccumulationPhase({
         : duration;
     const effectiveYears = Math.max(0, Math.round(totalYears));
     const totalMonths = effectiveYears * MONTHS_PER_YEAR;
+    // Plan year 1 is the current calendar year unless the caller pins it
+    const firstCalendarYear = Number.isFinite(startYear) ? startYear : new Date().getFullYear();
 
     resetETFTaxAllowance();
 
     const teilfreistellungRate = teilfreistellung ? TAX_CONSTANTS.TEILFREISTELLUNG_EQUITY : 0;
     const distributionMonthlyRate = (effectiveEtfType === 'ausschüttend') ? computeMonthlyRate(DISTRIBUTION_YIELD_ANNUAL) : 0;
 
-    let balance = initialCapital;
-    let costBasis = initialCapital;
+    // The portfolio is tracked as fund units in purchase lots, oldest first, so that
+    // sales can follow first-in-first-out (§20 Abs. 4 EStG) and losses never shrink
+    // the purchase cost. A lot's cost includes the Vorabpauschalen already taxed on it.
+    let unitPrice = 1;
+    let totalUnits = 0;
+    const lots = [];
+    const buy = (amount, year, month) => {
+        if (!(amount > 0)) return;
+        const units = amount / unitPrice;
+        lots.push({ units, cost: amount, year, month });
+        totalUnits += units;
+    };
+    const portfolioValue = () => totalUnits * unitPrice;
+    const totalCost = () => lots.reduce((sum, lot) => sum + lot.cost, 0);
+    // Taxes are paid out of the portfolio: every lot gives up the same share of its
+    // units and cost, so the paid tax does not realize gains of its own.
+    const payFromPortfolio = (amount) => {
+        const value = portfolioValue();
+        if (!(amount > 0) || !(value > 0)) return;
+        const keep = Math.max(0, 1 - amount / value);
+        lots.forEach(lot => {
+            lot.units *= keep;
+            lot.cost *= keep;
+        });
+        totalUnits *= keep;
+    };
+
+    buy(initialCapital, 0, MONTHS_PER_YEAR);
+
     let currentSalary = baseSalary;
     let currentMonthlyContribution = initialMonthlyContribution;
     let totalTaxesPaid = 0;
@@ -151,15 +216,15 @@ function simulateAccumulationPhase({
 
     const yearlyData = [{
         year: 0,
-        capital: balance,
-        realCapital: balance,
+        capital: portfolioValue(),
+        realCapital: portfolioValue(),
         totalInvested: totalUserContributions,
         monthlySavings: initialMonthlyContribution,
         yearlySalary: currentSalary,
         netSalary: calculateGermanNetSalary(currentSalary),
         taxesPaid: 0,
         cumulativeTaxesPaid: 0,
-        costBasis
+        costBasis: totalCost()
     }];
 
     const cashFlows = new Array(totalMonths + 1).fill(0);
@@ -167,8 +232,8 @@ function simulateAccumulationPhase({
 
     const phaseAdjustments = normalizedPhases.map(() => 0);
 
-    let yearlyStartCapital = balance;
-    let yearlyDeposits = 0;
+    let yearStartPrice = unitPrice;
+    let yearDistributionsPerUnit = 0;
     let yearlyTaxPaid = 0;
     let lastMonthlyContribution = initialMonthlyContribution;
 
@@ -198,67 +263,55 @@ function simulateAccumulationPhase({
         lastMonthlyContribution = monthlyContribution;
 
         const monthlyReturn = computeMonthlyRate(annualReturn);
-        if (monthlyReturn !== 0 && balance !== 0) {
-            balance *= (1 + monthlyReturn);
+        if (monthlyReturn !== 0) {
+            unitPrice *= (1 + monthlyReturn);
         }
 
-        if (includeTax && distributionMonthlyRate > 0 && balance > 0 && effectiveEtfType === 'ausschüttend') {
-            const grossDistribution = balance * distributionMonthlyRate;
+        if (includeTax && distributionMonthlyRate > 0 && totalUnits > 0) {
+            const distributionPerUnit = unitPrice * distributionMonthlyRate;
+            const grossDistribution = totalUnits * distributionPerUnit;
             if (grossDistribution > 0) {
-                balance -= grossDistribution;
+                unitPrice -= distributionPerUnit;
+                yearDistributionsPerUnit += distributionPerUnit;
                 const taxable = grossDistribution * (1 - teilfreistellungRate);
                 const { tax } = applyCapitalGainsTax(taxable);
-                const netDistribution = grossDistribution - tax;
-                balance += netDistribution;
-                costBasis += netDistribution;
                 totalTaxesPaid += tax;
                 yearlyTaxPaid += tax;
-                if (costBasis > balance) {
-                    costBasis = balance;
-                }
+                // The net distribution is reinvested as a new purchase
+                buy(grossDistribution - tax, yearNumber, monthWithinYear + 1);
             }
         }
 
         if (monthlyContribution > 0) {
-            balance += monthlyContribution;
-            costBasis += monthlyContribution;
+            buy(monthlyContribution, yearNumber, monthWithinYear + 1);
             totalUserContributions += monthlyContribution;
-            yearlyDeposits += monthlyContribution;
             cashFlows[monthIndex + 1] -= monthlyContribution;
-        }
-
-        if (costBasis > balance) {
-            costBasis = balance;
-        }
-        if (costBasis < 0) {
-            costBasis = 0;
         }
 
         const isYearEnd = (monthWithinYear === MONTHS_PER_YEAR - 1) || (monthIndex === totalMonths - 1);
         if (isYearEnd) {
-            if (includeTax && effectiveEtfType === 'thesaurierend') {
-                const basisertrag = yearlyStartCapital * TAX_CONSTANTS.BASISZINS * 0.7;
-                const capitalGains = Math.max(0, balance - (yearlyStartCapital + yearlyDeposits));
-                const vorabpauschale = Math.max(0, Math.min(basisertrag, capitalGains));
-                if (vorabpauschale > 0) {
-                    // Already-taxed Vorabpauschale is deducted from the gain on sale (§19 InvStG)
-                    costBasis += vorabpauschale;
+            if (includeTax) {
+                const basiszins = getBasiszins(firstCalendarYear + yearNumber - 1, basiszinsAssumption);
+                const perUnit = calculateVorabpauschalePerUnit(yearStartPrice, unitPrice, yearDistributionsPerUnit, basiszins);
+                if (perUnit > 0) {
+                    let vorabpauschale = 0;
+                    lots.forEach(lot => {
+                        const amount = lot.units * perUnit * vorabpauschaleShare(lot, yearNumber);
+                        // Already-taxed Vorabpauschale is deducted from the gain on sale (§19 Abs. 1 InvStG)
+                        lot.cost += amount;
+                        vorabpauschale += amount;
+                    });
                     const taxable = vorabpauschale * (1 - teilfreistellungRate);
                     const { tax } = applyCapitalGainsTax(taxable);
                     if (tax > 0) {
-                        balance -= tax;
+                        payFromPortfolio(tax);
                         totalTaxesPaid += tax;
                         yearlyTaxPaid += tax;
-                        if (balance < 0) {
-                            balance = 0;
-                        }
-                        if (costBasis > balance) {
-                            costBasis = balance;
-                        }
                     }
                 }
             }
 
+            const balance = portfolioValue();
             const realCapital = (1 + inflationRate) > 0 ? balance / Math.pow(1 + inflationRate, yearNumber) : balance;
             yearlyData.push({
                 year: yearNumber,
@@ -270,11 +323,11 @@ function simulateAccumulationPhase({
                 netSalary: calculateGermanNetSalary(currentSalary),
                 taxesPaid: yearlyTaxPaid,
                 cumulativeTaxesPaid: totalTaxesPaid,
-                costBasis
+                costBasis: totalCost()
             });
 
-            yearlyStartCapital = balance;
-            yearlyDeposits = 0;
+            yearStartPrice = unitPrice;
+            yearDistributionsPerUnit = 0;
             yearlyTaxPaid = 0;
             resetETFTaxAllowance();
 
@@ -299,6 +352,7 @@ function simulateAccumulationPhase({
         }
     }
 
+    const balance = portfolioValue();
     if (cashFlows.length > 0) {
         cashFlows[cashFlows.length - 1] += balance;
     }
@@ -318,7 +372,11 @@ function simulateAccumulationPhase({
         totalReturn,
         totalTaxesPaid,
         yearlyData,
-        costBasis,
+        costBasis: totalCost(),
+        // Purchase lots at the end, oldest first: market value and cost of each
+        lots: lots
+            .filter(lot => lot.units > 0)
+            .map(lot => ({ value: lot.units * unitPrice, cost: lot.cost })),
         annualizedReturn,
         phases: normalizedPhases,
         durationYears: effectiveYears
@@ -350,6 +408,8 @@ export function runScenario(scenario) {
     // Get Teilfreistellung and ETF type for main scenarios
     const teilfreistellung = getScenarioToggleValue('teilfreistellungToggle', scenarioId);
     const etfType = getScenarioETFType(scenarioId);
+    const basiszinsAssumption = getScenarioBasiszinsAssumption(scenarioId);
+    const options = { basiszinsAssumption };
 
     let results;
     let monthlySavings = 0;
@@ -378,7 +438,7 @@ export function runScenario(scenario) {
             results = calculateMultiPhaseWealthDevelopment(
                 phases, initialCapital, annualReturn, inflationRate, 
                 salaryGrowth, salaryToSavings, includeTax, baseSalary,
-                teilfreistellung, etfType
+                teilfreistellung, etfType, options
             );
         } else {
             // No active phases, use defaults
@@ -387,7 +447,7 @@ export function runScenario(scenario) {
             results = calculateWealthDevelopment(
                 0, initialCapital, annualReturn, inflationRate, 
                 salaryGrowth, duration, salaryToSavings, includeTax, baseSalary,
-                teilfreistellung, etfType
+                teilfreistellung, etfType, options
             );
         }
     } else {
@@ -398,7 +458,7 @@ export function runScenario(scenario) {
         results = calculateWealthDevelopment(
             monthlySavings, initialCapital, annualReturn, inflationRate, 
             salaryGrowth, duration, salaryToSavings, includeTax, baseSalary,
-            teilfreistellung, etfType
+            teilfreistellung, etfType, options
         );
     }
 
@@ -413,6 +473,7 @@ export function runScenario(scenario) {
         duration,
         salaryToSavings,
         includeTax,
+        basiszinsAssumption,
         savingsMode,
         phases: savingsMode === 'multi-phase' ? getMultiPhaseData(scenarioId) : null
     };
@@ -430,6 +491,7 @@ export function runScenario(scenario) {
         totalReturn: results.totalReturn,
         totalTaxesPaid: results.totalTaxesPaid,
         costBasis: results.costBasis,
+        lots: results.lots,
         annualizedReturn: results.annualizedReturn,
         durationYears: results.durationYears,
         endCapital: results.finalNominal  // Alias for backward compatibility
@@ -458,9 +520,10 @@ export function runScenario(scenario) {
  * @param {number} baseSalary - Base salary amount
  * @param {boolean} teilfreistellung - Whether to apply Teilfreistellung
  * @param {string} etfType - ETF type ('thesaurierend' or 'ausschüttend')
+ * @param {Object} [options] - startYear (calendar year of plan year 1) and basiszinsAssumption (decimal, for years without a published Basiszins)
  * @returns {Object} Calculation results
  */
-export function calculateWealthDevelopment(monthlySavings, initialCapital, annualReturn, inflationRate, salaryGrowth, duration, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
+export function calculateWealthDevelopment(monthlySavings, initialCapital, annualReturn, inflationRate, salaryGrowth, duration, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend', options = {}) {
     return simulateAccumulationPhase({
         initialCapital,
         durationYears: duration,
@@ -473,7 +536,9 @@ export function calculateWealthDevelopment(monthlySavings, initialCapital, annua
         baseSalary,
         teilfreistellung,
         etfType,
-        phases: []
+        phases: [],
+        startYear: options.startYear,
+        basiszinsAssumption: options.basiszinsAssumption
     });
 }
 
@@ -490,9 +555,10 @@ export function calculateWealthDevelopment(monthlySavings, initialCapital, annua
  * @param {number} baseSalary - Base salary amount
  * @param {boolean} teilfreistellung - Whether to apply Teilfreistellung
  * @param {string} etfType - ETF type ('thesaurierend' or 'ausschüttend')
+ * @param {Object} [options] - startYear (calendar year of plan year 1) and basiszinsAssumption (decimal, for years without a published Basiszins)
  * @returns {Object} Calculation results
  */
-export function calculateMultiPhaseWealthDevelopment(phases, initialCapital, annualReturn, inflationRate, salaryGrowth, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend') {
+export function calculateMultiPhaseWealthDevelopment(phases, initialCapital, annualReturn, inflationRate, salaryGrowth, salaryToSavings, includeTax, baseSalary = 60000, teilfreistellung = false, etfType = 'thesaurierend', options = {}) {
     return simulateAccumulationPhase({
         initialCapital,
         durationYears: 0,
@@ -505,7 +571,9 @@ export function calculateMultiPhaseWealthDevelopment(phases, initialCapital, ann
         baseSalary,
         teilfreistellung,
         etfType,
-        phases
+        phases,
+        startYear: options.startYear,
+        basiszinsAssumption: options.basiszinsAssumption
     });
 }
 
@@ -587,6 +655,19 @@ function getScenarioValue(inputId, scenarioId) {
 function getScenarioToggleValue(toggleId, scenarioId) {
     const element = document.getElementById(toggleId + '_' + scenarioId);
     return element ? element.classList.contains('active') : false;
+}
+
+/**
+ * Basiszins assumption (decimal) for years without a published rate.
+ * Falls back to the default when the scenario has no such input.
+ *
+ * @param {string} scenarioId - Scenario ID
+ * @returns {number} Basiszins assumption
+ */
+function getScenarioBasiszinsAssumption(scenarioId) {
+    const element = document.getElementById('basiszins_' + scenarioId);
+    const percent = element ? parseFloat(element.value) : NaN;
+    return Number.isFinite(percent) ? percent / 100 : BASISZINS_DEFAULT_ASSUMPTION;
 }
 
 /**

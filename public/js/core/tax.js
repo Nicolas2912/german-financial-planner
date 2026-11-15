@@ -55,12 +55,13 @@ export function applyCapitalGainsTax(taxableAmount) {
  * @param {number} year - Year number (1-based)
  * @param {boolean} teilfreistellung - Whether partial exemption applies (default: false)
  * @param {string} etfType - Type of ETF ('thesaurierend' or 'ausschüttend')
+ * @param {number} basiszins - Basiszins of the year (decimal); defaults to the latest published rate
  * @returns {number} Tax amount to be paid
  */
-export function calculateGermanETFTax(startCapital, endCapital, annualReturn, year, teilfreistellung = false, etfType = 'thesaurierend') {
+export function calculateGermanETFTax(startCapital, endCapital, annualReturn, year, teilfreistellung = false, etfType = 'thesaurierend', basiszins = TAX_CONSTANTS.BASISZINS) {
     const normalizedEtfType = normalizeEtfType(etfType);
     const TEILFREISTELLUNG_EQUITY = TAX_CONSTANTS.TEILFREISTELLUNG_EQUITY;
-    const BASISZINS = TAX_CONSTANTS.BASISZINS;
+    const BASISZINS = basiszins;
     
     // Reset allowance tracking at the beginning of calculation
     if (year === 1) {
@@ -352,13 +353,39 @@ export function getRemainingETFTaxAllowance() {
 }
 
 /**
+ * Basiszins for the Vorabpauschale (§18 Abs. 4 InvStG), published by the BMF each January.
+ * Years without a published rate use the plan's assumption.
+ */
+export const BASISZINS_BY_YEAR = {
+    2024: 0.0229,
+    2025: 0.0253,
+    2026: 0.0320
+};
+
+// Default assumption for years without a published rate: the latest published rate
+export const BASISZINS_DEFAULT_ASSUMPTION = 0.0320;
+
+/**
+ * Basiszins for a calendar year: the published rate, otherwise the assumption.
+ *
+ * @param {number} calendarYear - Calendar year of the Vorabpauschale
+ * @param {number} assumption - Rate (decimal) for years without a published rate
+ * @returns {number} Basiszins as decimal
+ */
+export function getBasiszins(calendarYear, assumption = BASISZINS_DEFAULT_ASSUMPTION) {
+    const published = BASISZINS_BY_YEAR[calendarYear];
+    if (typeof published === 'number') return published;
+    return Number.isFinite(assumption) ? Math.max(0, assumption) : BASISZINS_DEFAULT_ASSUMPTION;
+}
+
+/**
  * Tax constants for 2025
  */
 export const TAX_CONSTANTS = {
     ABGELTUNGSSTEUER_RATE: 0.25,
     SPARERPAUSCHBETRAG: 1000,
     TEILFREISTELLUNG_EQUITY: 0.30,
-    BASISZINS: 0.0253,
+    BASISZINS: BASISZINS_BY_YEAR[2026],
     GRUNDFREIBETRAG: 12096,
     KINDERFREIBETRAG: 9600,
     ARBEITNEHMER_PAUSCHBETRAG: 1230,

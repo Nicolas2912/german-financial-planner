@@ -49,7 +49,7 @@ function setupScenarioTabs() {
 
 // Expose for scenarioManager.js dependency
 export function setupScenarioInputListeners(scenarioId) {
-  const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings'];
+  const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings', 'basiszins'];
   sliders.forEach(sliderId => {
     const fullId = sliderId + '_' + scenarioId;
     const slider = document.getElementById(fullId);
@@ -206,7 +206,7 @@ function setupScenarioSelectorListeners() {
 }
 
 function initializeScenarioSliderValues(scenarioId) {
-  const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings'];
+  const sliders = ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings', 'basiszins'];
   sliders.forEach(sliderId => updateScenarioSliderValue(sliderId, scenarioId));
 }
 

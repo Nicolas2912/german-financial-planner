@@ -121,6 +121,7 @@ export function confirmSaveAnsparphaseScenario() {
     duration: parseInt(document.getElementById(`duration_${current.id}`)?.value || '0') || 0,
     baseSalary: parseGermanNumber(document.getElementById(`baseSalary_${current.id}`)?.value || '0') || 0,
     salaryToSavings: parseFloat(document.getElementById(`salaryToSavings_${current.id}`)?.value || '0') || 0,
+    basiszins: parseFloat(document.getElementById(`basiszins_${current.id}`)?.value || ''),
     includeTax: document.getElementById(`taxToggle_${current.id}`)?.classList.contains('active') || false,
     teilfreistellung: document.getElementById(`teilfreistellungToggle_${current.id}`)?.classList.contains('active') || false,
     etfType: (document.querySelector(`input[name="etfType-${current.id}"]:checked`)?.value) ||
@@ -300,6 +301,8 @@ export function loadAnsparphaseScenarioFromManager(scenarioName) {
     setVal('duration', p.duration);
     setVal('baseSalary', p.baseSalary);
     setVal('salaryToSavings', p.salaryToSavings);
+    // Older saves have no Basiszins assumption: keep the panel's default
+    if (Number.isFinite(p.basiszins)) setVal('basiszins', p.basiszins);
 
     // Toggles and radios
     const taxToggle = document.getElementById(`taxToggle_${newScenario.id}`);
@@ -322,7 +325,7 @@ export function loadAnsparphaseScenarioFromManager(scenarioName) {
     applySavingsConfiguration(newScenario.id, p.savingsMode, savedPhases);
 
     // Update slider displays
-    ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings'].forEach(sliderId => {
+    ['annualReturn', 'inflationRate', 'salaryGrowth', 'duration', 'salaryToSavings', 'basiszins'].forEach(sliderId => {
       if (window.updateScenarioSliderValue) window.updateScenarioSliderValue(sliderId, newScenario.id);
     });
   });

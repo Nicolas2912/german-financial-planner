@@ -58,11 +58,10 @@ describe('ETF savings page (jsdom)', () => {
     const retirementCapital = parseGermanNumber(document.getElementById('retirementCapital').value);
     expect(retirementCapital).toBeCloseTo(scenarioA.results.endCapital, -1);
 
-    // Recover the cost basis used by the withdrawal from the first year's proportional sale
-    const firstYear = state.withdrawalData.yearlyData[0];
-    const saleRatio = firstYear.grossWithdrawal / firstYear.capitalAfterReturns;
-    const usedCostBasis = firstYear.remainingCostBasis / (1 - saleRatio);
-    expect(usedCostBasis).toBeCloseTo(Math.min(scenarioA.results.costBasis, retirementCapital), 0);
+    // The withdrawal takes over the scenario's purchase lots, scaled to the synced capital
+    expect(scenarioA.results.lots.length).toBeGreaterThan(1);
+    const scale = retirementCapital / scenarioA.results.endCapital;
+    expect(state.withdrawalData.initialCostBasis).toBeCloseTo(scenarioA.results.costBasis * scale, 0);
   });
 
   test('auto-sync recalculates the withdrawal when only the cost basis changes', () => {
@@ -72,6 +71,7 @@ describe('ETF savings page (jsdom)', () => {
     const taxesBefore = state.withdrawalData.totalTaxesPaid;
 
     scenarioA.results.costBasis = 0;
+    scenarioA.results.lots = scenarioA.results.lots.map(lot => ({ ...lot, cost: 0 }));
     window.autoSyncWithdrawalCapital(false);
     expect(state.withdrawalData.totalTaxesPaid).toBeGreaterThan(taxesBefore);
 

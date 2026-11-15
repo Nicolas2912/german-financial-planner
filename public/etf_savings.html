@@ -657,6 +657,18 @@
                                 </small>
                             </div>
 
+                            <!-- Basiszins assumption for the Vorabpauschale -->
+                            <div class="input-group">
+                                <label>Basiszins für künftige Jahre (Annahme)</label>
+                                <div class="slider-container">
+                                    <input type="range" id="basiszins_A" class="slider scenario-slider" min="0" max="6" value="3.2" step="0.05" data-scenario="A">
+                                    <span class="slider-value" id="basiszinsValue_A">3.20%</span>
+                                </div>
+                                <small class="hint">
+                                    Bestimmt die Vorabpauschale. Für 2024 bis 2026 gelten die veröffentlichten Werte (2,29 %, 2,53 %, 3,20 %), danach diese Annahme.
+                                </small>
+                            </div>
+
                             <!-- Teilfreistellung Toggle -->
                             <div class="toggle-container">
                                 <label>Teilfreistellung bei Aktienfonds anwenden (30% steuerfrei)</label>
@@ -887,7 +899,7 @@
                                 <div class="result-value" id="totalTaxesPaid">0 €</div>
                             </div>
                             <div class="result-card">
-                                <h3>Reale Kaufkraft (heute)</h3>
+                                <h3>Reale Kaufkraft netto / Monat</h3>
                                 <div class="result-value" id="realPurchasingPower">0 €</div>
                             </div>
                         </div>
@@ -896,8 +908,8 @@
                             <h4>Deutsche Steuerregelung bei ETF-Entnahmen</h4>
                             <p><strong>Sparerpauschbetrag:</strong> 1.000 € jährlich steuerfrei (2.000 € bei Verheirateten)</p>
                             <p><strong>Besteuerung:</strong> Nur realisierte Gewinne werden mit 25% besteuert</p>
-                            <p><strong>FIFO-Prinzip:</strong> First-In-First-Out bei der Gewinnermittlung</p>
-                            <p><strong>Vorabpauschale:</strong> Jährliche Besteuerung thesaurierender ETFs basierend auf Basiszins (2,53% für 2025)</p>
+                            <p><strong>FIFO-Prinzip:</strong> Die ältesten Anteile werden zuerst verkauft. Verluste werden mit späteren Gewinnen verrechnet.</p>
+                            <p><strong>Vorabpauschale:</strong> Jährliche Besteuerung thesaurierender ETFs basierend auf Basiszins (3,20 % für 2026, danach die Annahme aus der Ansparphase)</p>
                             
                             <h4>Steueroptimierungsstrategien</h4>
                             <p><strong>1. Entnahme-Timing:</strong> Sparerpauschbetrag jährlich vollständig ausschöpfen</p>

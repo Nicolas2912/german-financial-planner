@@ -13,10 +13,10 @@ describe('tax calculations', () => {
   });
 
   test('applies Teilfreistellung and Sparpauschbetrag for accumulating ETFs', () => {
-    const yearOneTax = calculateGermanETFTax(100_000, 110_000, 0.07, 1, true, 'thesaurierend');
+    const yearOneTax = calculateGermanETFTax(100_000, 110_000, 0.07, 1, true, 'thesaurierend', 0.0253);
     expect(yearOneTax).toBeCloseTo(59.925, 3);
 
-    const yearTwoTax = calculateGermanETFTax(110_000, 121_000, 0.07, 2, true, 'thesaurierend');
+    const yearTwoTax = calculateGermanETFTax(110_000, 121_000, 0.07, 2, true, 'thesaurierend', 0.0253);
     expect(yearTwoTax).toBeCloseTo(340.9175, 3);
   });
 

@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { updateScenarioResults, refreshScenarioResultNames } from '../../public/js/ui/dom.js';
+import { updateScenarioResults, refreshScenarioResultNames, updateWithdrawalTable } from '../../public/js/ui/dom.js';
 import * as state from '../../public/js/state.js';
 
 describe('UI DOM helpers', () => {
@@ -82,5 +82,20 @@ describe('UI DOM helpers', () => {
 
     refreshScenarioResultNames();
     expect(header.textContent).toContain('Neuer Name');
+  });
+
+  test('updateWithdrawalTable deflates the end capital by the full year count', () => {
+    document.body.innerHTML = `
+      <input id="withdrawalInflation" value="10">
+      <table id="withdrawalTable"><tbody></tbody></table>`;
+
+    updateWithdrawalTable([
+      { year: 1, startCapital: 100_000, grossWithdrawal: 0, taxesPaid: 0, netWithdrawal: 0, endCapital: 110_000 },
+      { year: 2, startCapital: 110_000, grossWithdrawal: 0, taxesPaid: 0, netWithdrawal: 0, endCapital: 121_000 }
+    ]);
+
+    // The end capital sits at the end of the year: 110.000 / 1,1 and 121.000 / 1,21
+    const realCells = [...document.querySelectorAll('#withdrawalTable tbody tr')].map(row => row.cells[6].textContent);
+    expect(realCells).toEqual(['100.000,00 €', '100.000,00 €']);
   });
 });

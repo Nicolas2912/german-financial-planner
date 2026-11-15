@@ -157,8 +157,8 @@ export function updateWithdrawalTable(yearlyData) {
             row.classList.add('highlight-row');
         }
 
-        // Calculate real value of end capital (today's purchasing power)
-        const realEndCapital = data.endCapital / Math.pow(1 + inflationRate, data.year - 1);
+        // Real value of the end capital: it sits at the end of the year, after `year` years of inflation
+        const realEndCapital = data.endCapital / Math.pow(1 + inflationRate, data.year);
 
         row.innerHTML = `
             <td>${data.year}</td>
@@ -293,6 +293,9 @@ export function updateScenarioSliderValue(sliderId, scenarioId) {
             break;
         case 'salaryToSavings':
             valueSpan.textContent = value.toFixed(0) + '%';
+            break;
+        case 'basiszins':
+            valueSpan.textContent = value.toFixed(2) + '%';
             break;
         default:
             valueSpan.textContent = value.toString();

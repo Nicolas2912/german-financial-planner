@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach } from 'vitest';
 import { calculateWealthDevelopment, runScenario } from '../../public/js/core/accumulation.js';
-import { resetETFTaxAllowance } from '../../public/js/core/tax.js';
+import { getBasiszins, resetETFTaxAllowance } from '../../public/js/core/tax.js';
 
 describe('accumulation calculations', () => {
   beforeEach(() => {
@@ -113,11 +113,79 @@ describe('accumulation calculations', () => {
   });
 
   test('Vorabpauschale is added to the cost basis', () => {
-    const withoutTax = calculateWealthDevelopment(0, 100_000, 0.1, 0, 0, 1, 0, false, 60_000, true, 'thesaurierend');
-    const withTax = calculateWealthDevelopment(0, 100_000, 0.1, 0, 0, 1, 0, true, 60_000, true, 'thesaurierend');
+    const options = { startYear: 2025 };
+    const withoutTax = calculateWealthDevelopment(0, 100_000, 0.1, 0, 0, 1, 0, false, 60_000, true, 'thesaurierend', options);
+    const withTax = calculateWealthDevelopment(0, 100_000, 0.1, 0, 0, 1, 0, true, 60_000, true, 'thesaurierend', options);
 
-    expect(withoutTax.costBasis).toBe(100_000);
+    expect(withoutTax.costBasis).toBeCloseTo(100_000, 6);
     // Basisertrag = 100.000 * 2,53% * 70% = 1.771 (below the 10% gain)
-    expect(withTax.costBasis).toBeCloseTo(101_771, 0);
+    // Tax = (1.771 * 70% - 1.000) * 25% = 59,925, paid out of the portfolio of 110.000
+    expect(withTax.totalTaxesPaid).toBeCloseTo(59.925, 3);
+    expect(withTax.costBasis).toBeCloseTo(101_771 * (1 - 59.925 / 110_000), 2);
+  });
+
+  test('Vorabpauschale counts money invested during the year pro rata', () => {
+    // No start capital, 1.000 per month, 10% return, 2025 Basiszins 2,53%, no Teilfreistellung
+    const result = calculateWealthDevelopment(1_000, 0, 0.1, 0, 0, 1, 0, true, 60_000, false, 'thesaurierend', { startYear: 2025 });
+
+    // Each deposit buys units at the price after that month's return. The Vorabpauschale per unit
+    // is 1 * 2,53% * 70% (below the 10% gain), cut by one twelfth per full month before the purchase.
+    const monthlyFactor = Math.pow(1.1, 1 / 12);
+    let vorabpauschale = 0;
+    for (let month = 1; month <= 12; month++) {
+      const units = 1_000 / Math.pow(monthlyFactor, month);
+      vorabpauschale += units * 0.0253 * 0.7 * (13 - month) / 12;
+    }
+    expect(vorabpauschale).toBeGreaterThan(100);
+    // It stays below the 1.000 allowance, so no tax is due, but it raises the cost basis
+    expect(result.totalTaxesPaid).toBe(0);
+    expect(result.costBasis).toBeCloseTo(12_000 + vorabpauschale, 6);
+  });
+
+  test('Basiszins follows the calendar year and the assumption after the published years', () => {
+    expect(getBasiszins(2024)).toBe(0.0229);
+    expect(getBasiszins(2025)).toBe(0.0253);
+    expect(getBasiszins(2026)).toBe(0.032);
+    expect(getBasiszins(2031, 0.04)).toBe(0.04);
+
+    const run = (startYear, basiszinsAssumption) => {
+      resetETFTaxAllowance();
+      return calculateWealthDevelopment(0, 100_000, 0.1, 0, 0, 1, 0, true, 60_000, false, 'thesaurierend', { startYear, basiszinsAssumption });
+    };
+    // 2026: 100.000 * 3,20% * 70% = 2.240, tax (2.240 - 1.000) * 25% = 310
+    expect(run(2026, 0.04).totalTaxesPaid).toBeCloseTo(310, 6);
+    // 2031 has no published rate: 100.000 * 4% * 70% = 2.800, tax (2.800 - 1.000) * 25% = 450
+    expect(run(2031, 0.04).totalTaxesPaid).toBeCloseTo(450, 6);
+
+    // A two-year plan from 2025 uses 2,53% in year 1 and 3,20% in year 2
+    resetETFTaxAllowance();
+    const twoYears = calculateWealthDevelopment(0, 100_000, 0.1, 0, 0, 2, 0, true, 60_000, false, 'thesaurierend', { startYear: 2025 });
+    const yearOneTax = (1_771 - 1_000) * 0.25;
+    const unitsAfterYearOne = 100_000 * (1 - yearOneTax / 110_000);
+    const yearTwoBasisertrag = unitsAfterYearOne * 1.1 * 0.032 * 0.7;
+    expect(twoYears.yearlyData[1].taxesPaid).toBeCloseTo(yearOneTax, 6);
+    expect(twoYears.yearlyData[2].taxesPaid).toBeCloseTo((yearTwoBasisertrag - 1_000) * 0.25, 6);
+  });
+
+  test('losses do not lower the cost basis', () => {
+    const result = calculateWealthDevelopment(0, 100_000, -0.2, 0, 0, 1, 0, false, 60_000, false, 'thesaurierend');
+
+    expect(result.finalNominal).toBeCloseTo(80_000, 6);
+    expect(result.costBasis).toBeCloseTo(100_000, 6);
+    expect(result.lots).toHaveLength(1);
+    expect(result.lots[0].value).toBeCloseTo(80_000, 6);
+    expect(result.lots[0].cost).toBeCloseTo(100_000, 6);
+  });
+
+  test('purchase lots are returned oldest first with their own cost', () => {
+    const result = calculateWealthDevelopment(100, 1_000, 0.12, 0, 0, 1, 0, false, 60_000, false, 'thesaurierend');
+
+    expect(result.lots).toHaveLength(13);
+    expect(result.lots[0].cost).toBeCloseTo(1_000, 6);
+    // The start capital has grown for a full year, the December deposit not at all
+    expect(result.lots[0].value).toBeCloseTo(1_120, 6);
+    expect(result.lots[12].value).toBeCloseTo(100, 6);
+    const totalValue = result.lots.reduce((sum, lot) => sum + lot.value, 0);
+    expect(totalValue).toBeCloseTo(result.finalNominal, 6);
   });
 });

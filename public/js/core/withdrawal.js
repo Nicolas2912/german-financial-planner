@@ -100,7 +100,7 @@ export function calculateRealInterestRate(nominalRate, inflationRate) {
  * @param {number} interestRate - Annual interest rate
  * @param {number} inflationRate - Annual inflation rate
  * @param {boolean} includeTax - Whether to include tax calculations
- * @param {number} userDefinedTotalContributions - Total contributions (cost basis)
+ * @param {number|Array<{value: number, cost: number}>} userDefinedTotalContributions - Cost basis, or purchase lots oldest first
  * @returns {number} Adjusted withdrawal amount
  */
 export function adjustForInflationAndReturns(initialGuess, presentValue, periods, interestRate, inflationRate, includeTax, userDefinedTotalContributions) {
@@ -169,7 +169,7 @@ export function adjustForInflationAndReturns(initialGuess, presentValue, periods
  * @param {number} inflationRate - Annual inflation rate
  * @param {number} taxFreeAllowance - Annual tax-free allowance (€1,000)
  * @param {number} taxRate - Tax rate (25% Abgeltungssteuer)
- * @param {number} userDefinedTotalContributions - Total contributions (cost basis)
+ * @param {number|Array<{value: number, cost: number}>} userDefinedTotalContributions - Cost basis, or purchase lots oldest first
  * @returns {number} Adjusted withdrawal amount
  */
 export function adjustForTaxes(initialGuess, presentValue, periods, interestRate, inflationRate, taxFreeAllowance, taxRate, userDefinedTotalContributions) {
@@ -285,18 +285,21 @@ export function printCalculationSummary(initialCapital, duration, annualReturn, 
  * @param {number} annualReturn - Annual return rate (as decimal)
  * @param {number} inflationRate - Annual inflation rate (as decimal)
  * @param {boolean} includeTax - Whether to include German tax calculations
- * @param {number} userDefinedTotalContributions - Total contributions (cost basis)
+ * @param {number|Array<{value: number, cost: number}>} userDefinedTotalContributions - Cost basis, or purchase lots oldest first
  * @returns {Object} Withdrawal plan results
  */
 export function calculateWithdrawalPlan(initialCapital, duration, annualReturn, inflationRate, includeTax, userDefinedTotalContributions) {
     const TAX_FREE_ALLOWANCE = 1000; // Sparerpauschbetrag
-    // Unknown cost basis: assume 60% of the capital was paid in
-    userDefinedTotalContributions = Number.isFinite(userDefinedTotalContributions) ? userDefinedTotalContributions : initialCapital * 0.6;
+    // Unknown cost basis: assume 60% of the capital was paid in. Purchase lots pass through unchanged.
+    if (!Array.isArray(userDefinedTotalContributions)) {
+        userDefinedTotalContributions = Number.isFinite(userDefinedTotalContributions) ? userDefinedTotalContributions : initialCapital * 0.6;
+    }
     const TAX_RATE = 0.25; // Abgeltungssteuer
     
     console.log(`🧮 Starting direct mathematical calculation...`);
     console.log(`Parameters: Capital=€${initialCapital.toLocaleString()}, Duration=${duration}y, Return=${(annualReturn*100).toFixed(1)}%, Inflation=${(inflationRate*100).toFixed(1)}%`);
-    console.log(`Cost Basis: €${userDefinedTotalContributions.toLocaleString()}, Unrealized Gains: €${(initialCapital - userDefinedTotalContributions).toLocaleString()}`);
+    const startingCostBasis = buildWithdrawalLots(initialCapital, userDefinedTotalContributions).reduce((sum, lot) => sum + lot.cost, 0);
+    console.log(`Cost Basis: €${startingCostBasis.toLocaleString()}, Unrealized Gains: €${(initialCapital - startingCostBasis).toLocaleString()}`);
     
     // Step 1: Calculate base withdrawal using direct annuity formula
     // We need to adjust for inflation-adjusted withdrawals by using the real return rate
@@ -326,6 +329,30 @@ export function calculateWithdrawalPlan(initialCapital, duration, annualReturn, 
 }
 
 /**
+ * Purchase lots for the withdrawal phase, oldest first, scaled to the withdrawal capital.
+ * A single cost basis becomes one lot; an unknown cost basis assumes 60% of the capital was paid in.
+ *
+ * @param {number} initialCapital - Capital at the start of the withdrawal phase
+ * @param {number|Array<{value: number, cost: number}>} costBasisOrLots - Cost basis or purchase lots
+ * @returns {Array<{value: number, cost: number}>} Lots whose values add up to the capital
+ */
+export function buildWithdrawalLots(initialCapital, costBasisOrLots) {
+    if (Array.isArray(costBasisOrLots)) {
+        const valid = costBasisOrLots.filter(lot => lot && Number(lot.value) > 0 && Number.isFinite(Number(lot.cost)));
+        const totalValue = valid.reduce((sum, lot) => sum + Number(lot.value), 0);
+        if (totalValue > 0) {
+            const scale = initialCapital / totalValue;
+            return valid.map(lot => ({
+                value: Number(lot.value) * scale,
+                cost: Math.max(0, Number(lot.cost)) * scale
+            }));
+        }
+    }
+    const costBasis = Number.isFinite(costBasisOrLots) ? costBasisOrLots : initialCapital * 0.6;
+    return [{ value: initialCapital, cost: Math.max(0, costBasis) }];
+}
+
+/**
  * Simulate withdrawal with German tax calculations
  * 
  * @param {number} initialCapital - Initial capital amount
@@ -334,7 +361,7 @@ export function calculateWithdrawalPlan(initialCapital, duration, annualReturn, 
  * @param {number} inflationRate - Annual inflation rate (as decimal)
  * @param {boolean} includeTax - Whether to include German tax calculations
  * @param {number} baseAnnualWithdrawal - Base annual withdrawal amount
- * @param {number} userDefinedTotalContributions - Total contributions (cost basis)
+ * @param {number|Array<{value: number, cost: number}>} userDefinedTotalContributions - Cost basis, or purchase lots oldest first
  * @returns {Object} Simulation results with yearly data
  */
 export function simulateWithdrawal(initialCapital, duration, annualReturn, inflationRate, includeTax, baseAnnualWithdrawal, userDefinedTotalContributions) {
@@ -350,8 +377,14 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
     if (isNaN(baseAnnualWithdrawal) || baseAnnualWithdrawal <= 0) throw new Error('Base annual withdrawal must be positive');
     
     let capital = initialCapital;
-    let remainingCostBasis = Number.isFinite(userDefinedTotalContributions) ? userDefinedTotalContributions : initialCapital * 0.6; // Track remaining cost basis
+    // Purchase lots, oldest first; sales follow first-in-first-out (§20 Abs. 4 EStG)
+    const lots = buildWithdrawalLots(initialCapital, userDefinedTotalContributions);
+    const initialCostBasis = lots.reduce((sum, lot) => sum + lot.cost, 0);
+    let remainingCostBasis = initialCostBasis;
+    // Taxable losses are carried forward and offset later gains (Verlustverrechnung)
+    let lossCarryforward = 0;
     let totalTaxesPaid = 0;
+    let totalRealNetWithdrawals = 0;
     let totalNetWithdrawals = 0;
     let annualTaxFreeAllowanceUsed = 0; // Track annual tax-free allowance usage (resets each year)
     
@@ -371,7 +404,7 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
         }
     }
     
-    console.log(`💰 Tax calculation setup (Proportional Cost Basis Method):`);
+    console.log(`💰 Tax calculation setup (FIFO cost basis):`);
     console.log(`   Initial Capital: €${initialCapital.toLocaleString()}`);
     console.log(`   Initial Cost Basis: €${remainingCostBasis.toLocaleString()}`);
     console.log(`   Initial Embedded Gains: €${(initialCapital - remainingCostBasis).toLocaleString()}`);
@@ -386,6 +419,7 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
         // Step 1: Apply investment returns for the year
         const clampedReturn = Math.max(-0.5, Math.min(0.5, annualReturn)); // Clamp return rate for safety
         const capitalAfterReturns = startCapital * (1 + clampedReturn);
+        lots.forEach(lot => { lot.value *= (1 + clampedReturn); });
         
         // Step 2: Calculate inflation-adjusted withdrawal for this specific year
         const clampedInflation = Math.max(0, Math.min(0.2, inflationRate)); // Clamp inflation rate
@@ -395,23 +429,43 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
         // Step 3: Use the calculated withdrawal amount (trust the mathematical formula)
         const grossAnnualWithdrawal = inflationAdjustedWithdrawal;
         
-        // Step 4: Calculate German taxes using proportional cost basis method
+        // Step 4: Sell the oldest lots first and work out the realized gain or loss
         let taxesPaid = 0;
         let costBasisOut = 0;
         let realizedGain = 0;
 
         if (grossAnnualWithdrawal > 0) {
-            const saleRatio = capitalAfterReturns > 0
-                ? Math.min(1, Math.max(0, grossAnnualWithdrawal / capitalAfterReturns))
-                : 0;
-            costBasisOut = remainingCostBasis * saleRatio;
-            realizedGain = Math.max(0, grossAnnualWithdrawal - costBasisOut);
-            remainingCostBasis = Math.max(0, remainingCostBasis - costBasisOut);
+            let toSell = grossAnnualWithdrawal;
+            while (toSell > 1e-9 && lots.length > 0) {
+                const lot = lots[0];
+                if (!(lot.value > 0)) {
+                    lots.shift();
+                    continue;
+                }
+                const sold = Math.min(toSell, lot.value);
+                const share = sold / lot.value;
+                const lotCostOut = lot.cost * share;
+                costBasisOut += lotCostOut;
+                lot.cost -= lotCostOut;
+                lot.value -= sold;
+                toSell -= sold;
+                if (share >= 1 - 1e-12) lots.shift();
+            }
+            realizedGain = grossAnnualWithdrawal - costBasisOut;
+            remainingCostBasis = lots.reduce((sum, lot) => sum + lot.cost, 0);
         }
 
         if (includeTax && grossAnnualWithdrawal > 0) {
-            // Step 4.4: Apply Teilfreistellung (30% of gains from equity ETFs are tax-free)
-            const taxableGainBeforeAllowance = realizedGain * (1 - teilfreistellungRate);
+            // Step 4.4: Apply Teilfreistellung (30% of gains and losses from equity ETFs stay out of tax)
+            const taxableResult = realizedGain * (1 - teilfreistellungRate);
+            let taxableGainBeforeAllowance = 0;
+            if (taxableResult < 0) {
+                lossCarryforward += -taxableResult;
+            } else {
+                const offset = Math.min(lossCarryforward, taxableResult);
+                lossCarryforward -= offset;
+                taxableGainBeforeAllowance = taxableResult - offset;
+            }
 
             // Step 4.5: Apply annual tax-free allowance (€1,000 per year)
             const remainingAllowance = Math.max(0, TAX_FREE_ALLOWANCE - annualTaxFreeAllowanceUsed);
@@ -422,11 +476,11 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
             // Step 4.6: Calculate final tax (25% Abgeltungssteuer)
             taxesPaid = taxableGainAfterAllowance * EFFECTIVE_TAX_RATE;
 
-            console.log(`📊 Year ${year} Tax Calculation (Proportional Cost Basis):`);
+            console.log(`📊 Year ${year} Tax Calculation (FIFO Cost Basis):`);
             console.log(`   Portfolio before withdrawal: €${capitalAfterReturns.toFixed(2)}`);
             console.log(`   Gross Withdrawal: €${grossAnnualWithdrawal.toFixed(2)}`);
             console.log(`   Cost Basis out: €${costBasisOut.toFixed(2)}`);
-            console.log(`   Realized Gain: €${realizedGain.toFixed(2)}`);
+            console.log(`   Realized Gain: €${realizedGain.toFixed(2)} (loss carryforward: €${lossCarryforward.toFixed(2)})`);
             console.log(`   Remaining Cost Basis: €${remainingCostBasis.toFixed(2)}`);
             console.log(`   Taxable Gain (after Teilfreistellung ${(teilfreistellungRate*100).toFixed(0)}%): €${taxableGainBeforeAllowance.toFixed(2)}`);
             console.log(`   Allowance Used: €${allowanceUsed.toFixed(2)} (remaining: €${(remainingAllowance - allowanceUsed).toFixed(2)})`);
@@ -440,12 +494,15 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
         // Step 6: Update portfolio capital (allow negative for mathematical accuracy)
         capital = capitalAfterReturns - grossAnnualWithdrawal;
         
-        // Step 7: Calculate real value (constant purchasing power)
-        const realWithdrawal = grossAnnualWithdrawal / inflationMultiplier;
+        // Step 7: Real value of the net withdrawal, paid at the end of the year,
+        // in money of the start of the withdrawal phase
+        const deflator = Math.pow(1 + clampedInflation, year);
+        const realWithdrawal = netAnnualWithdrawal / deflator;
         
         // Step 8: Accumulate totals
         totalTaxesPaid += taxesPaid;
         totalNetWithdrawals += netAnnualWithdrawal;
+        totalRealNetWithdrawals += realWithdrawal;
         
         // Step 9: Store yearly data for display and analysis
         yearlyData.push({
@@ -457,8 +514,10 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
             netWithdrawal: netAnnualWithdrawal,
             endCapital: capital, // Allow negative values for accurate calculation
             realValue: realWithdrawal,
+            realEndCapital: capital / deflator,
             inflationMultiplier: inflationMultiplier,
             remainingCostBasis: remainingCostBasis, // Track cost basis over time
+            lossCarryforward: lossCarryforward,
             teilfreistellungApplied: teilfreistellungRate * 100, // For debugging/display
             allowanceUsedThisYear: annualTaxFreeAllowanceUsed // Track allowance usage
         });
@@ -493,12 +552,9 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
     console.log(`- Average Monthly Tax (${duration} years): €${avgTaxNominal.toFixed(2)}`);
     console.log(`- Average Monthly Net (${duration} years): €${avgNetNominal.toFixed(2)}`);
     
-    // Real purchasing power calculation:
-    // The real purchasing power is the constant purchasing power throughout withdrawal
-    // expressed in today's money (year 0). Since withdrawals are inflation-adjusted,
-    // the real purchasing power is simply the first year's withdrawal amount.
-    const realPurchasingPowerMonthly = firstYearGross; // Already in today's purchasing power
-    const realPurchasingPower = realPurchasingPowerMonthly;
+    // Real purchasing power: the average monthly net withdrawal after taxes,
+    // in money of the start of the withdrawal phase
+    const realPurchasingPower = totalRealNetWithdrawals / totalMonths;
     
     // Handle small rounding errors in final capital
     if (Math.abs(capital) < 1) {
@@ -512,7 +568,7 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
     
     console.log(`\n🏁 ETF Withdrawal Tax Calculation Summary:`);
     console.log(`- Initial Portfolio: €${initialCapital.toLocaleString()}`);
-    console.log(`- Initial Cost Basis: €${(userDefinedTotalContributions || initialCapital * 0.6).toLocaleString()}`);
+    console.log(`- Initial Cost Basis: €${initialCostBasis.toLocaleString()}`);
     console.log(`- Final Remaining Cost Basis: €${remainingCostBasis.toFixed(2)}`);
     console.log(`- Teilfreistellung applied: ${teilfreistellungRate * 100}%`);
     console.log(`- Effective tax rate on taxable gains: ${EFFECTIVE_TAX_RATE * 100}%`);
@@ -528,6 +584,7 @@ export function simulateWithdrawal(initialCapital, duration, annualReturn, infla
         averageMonthlyTax: avgTaxNominal,               // True average monthly tax
         totalTaxesPaid: totalTaxesPaid,
         realPurchasingPower: realPurchasingPower,
+        initialCostBasis: initialCostBasis,
         yearlyData,
         finalCapital: capital
     };
